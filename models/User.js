@@ -1,0 +1,30 @@
+import mongoose from "mongoose";
+
+const auditoriaSchema = new mongoose.Schema({
+  data: { type: Date, required: true },
+  contador: { type: Number, default: 0 },
+  detalhes: [
+    {
+      codigo: String,
+      produto: String,
+      local: String,
+      situacao: String,
+      estoque: String,
+    },
+  ],
+});
+
+const userSchema = new mongoose.Schema(
+  {
+    id: { type: String },
+    nome: { type: String, required: true },
+    email: { type: String },
+    telefone: { type: String },
+    cargo: { type: String },
+    contadorTotal: { type: Number, default: 0 },
+    auditorias: [auditoriaSchema],
+  },
+  { timestamps: true }
+);
+
+export default mongoose.model("User", userSchema);
