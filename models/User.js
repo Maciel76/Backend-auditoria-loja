@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String },
     telefone: { type: String },
     cargo: { type: String },
+    foto: { type: String }, // Adicione este campo
     contadorTotal: { type: Number, default: 0 },
     auditorias: [auditoriaSchema],
   },
