@@ -9,5 +9,4 @@ const planilhaSchema = new mongoose.Schema({
   usuariosEnvolvidos: [String],
 });
 
-// Exporte corretamente como default
 export default mongoose.model("Planilha", planilhaSchema);

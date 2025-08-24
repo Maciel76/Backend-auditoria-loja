@@ -6,48 +6,22 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
-    const { periodo } = req.query;
+    const { periodo, data } = req.query;
 
     let dataInicio, dataFim;
     const hoje = new Date();
 
     // Definir período com base no filtro
-    switch (periodo) {
-      case "semanal":
-        dataInicio = new Date(
-          hoje.getFullYear(),
-          hoje.getMonth(),
-          hoje.getDate() - hoje.getDay()
-        );
-        dataFim = new Date(
-          hoje.getFullYear(),
-          hoje.getMonth(),
-          hoje.getDate() - hoje.getDay() + 6
-        );
-        break;
-      case "mensal":
-        dataInicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-        dataFim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-        break;
-      default: // diário
-        dataInicio = new Date(
-          hoje.getFullYear(),
-          hoje.getMonth(),
-          hoje.getDate(),
-          0,
-          0,
-          0,
-          0
-        );
-        dataFim = new Date(
-          hoje.getFullYear(),
-          hoje.getMonth(),
-          hoje.getDate(),
-          23,
-          59,
-          59,
-          999
-        );
+    if (data) {
+      // Data específica
+      dataInicio = new Date(data);
+      dataInicio.setHours(0, 0, 0, 0);
+      dataFim = new Date(data);
+      dataFim.setHours(23, 59, 59, 999);
+    } else {
+      // Período padrão (hoje)
+      dataInicio = new Date(hoje.setHours(0, 0, 0, 0));
+      dataFim = new Date(hoje.setHours(23, 59, 59, 999));
     }
 
     // Buscar planilhas do período
@@ -75,27 +49,31 @@ router.get("/", async (req, res) => {
       },
     });
 
-    const colaboradores = usuarios.map((user) => {
-      const itensPeriodo = user.auditorias
-        .filter((aud) => aud.data >= dataInicio && aud.data <= dataFim)
-        .reduce((sum, aud) => sum + aud.contador, 0);
+    const colaboradores = usuarios
+      .map((user) => {
+        const itensPeriodo = user.auditorias
+          .filter((aud) => aud.data >= dataInicio && aud.data <= dataFim)
+          .reduce((sum, aud) => sum + aud.contador, 0);
 
-      return {
-        nome: user.nome,
-        itens: itensPeriodo,
-        percentual:
-          totalItens > 0 ? ((itensPeriodo / totalItens) * 100).toFixed(2) : 0,
-      };
-    });
+        return {
+          id: user.id,
+          nome: user.nome,
+          itens: itensPeriodo,
+          percentual:
+            totalItens > 0 ? ((itensPeriodo / totalItens) * 100).toFixed(2) : 0,
+        };
+      })
+      .filter((colab) => colab.itens > 0) // Filtrar apenas colaboradores com atividade
+      .sort((a, b) => b.itens - a.itens);
 
     res.json({
-      periodo,
+      periodo: data ? "diario" : periodo,
       dataInicio,
       dataFim,
       totalItens,
       totalItensLidos,
       taxaConclusao,
-      colaboradores: colaboradores.sort((a, b) => b.itens - a.itens),
+      colaboradores,
     });
   } catch (error) {
     console.error("Erro ao gerar relatório:", error);
