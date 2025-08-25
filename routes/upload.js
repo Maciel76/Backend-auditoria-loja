@@ -165,17 +165,22 @@ router.post("/upload", upload.single("file"), async (req, res) => {
       await usuario.save();
     }
 
-    // Salvar metadados da planilha
-    await new Planilha({
-      nomeArquivo: req.file.originalname,
-      dataAuditoria,
-      totalItens: jsonData.length,
-      totalItensLidos: jsonData.filter(
-        (item) =>
-          item.Situação === "Atualizado" || item.Situacao === "Atualizado"
-      ).length,
-      usuariosEnvolvidos: Array.from(usuariosMap.keys()),
-    }).save();
+    // Atualizar ou criar planilha do dia
+    const totalItensLidos = jsonData.filter(
+      (item) => item.Situação === "Atualizado" || item.Situacao === "Atualizado"
+    ).length;
+    await Planilha.findOneAndUpdate(
+      { dataAuditoria },
+      {
+        nomeArquivo: req.file.originalname,
+        dataAuditoria,
+        totalItens: jsonData.length,
+        totalItensLidos,
+        usuariosEnvolvidos: Array.from(usuariosMap.keys()),
+        dataUpload: new Date(),
+      },
+      { upsert: true, new: true }
+    );
 
     res.json({
       mensagem: "Planilha processada com sucesso!",
