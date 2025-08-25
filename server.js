@@ -3,6 +3,7 @@ import conectarBanco from "./config/db.js";
 import uploadRouter from "./routes/upload.js";
 import relatoriosRouter from "./routes/relatorios.js"; // Adicione esta linha
 import rankingRouter from "./routes/ranking.js"; // Adicione esta linha
+import setoresRouter from "./routes/setores.js"; // Adicione esta linha
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use((req, res, next) => {
 app.use("/", uploadRouter);
 app.use("/relatorios", relatoriosRouter); // Adicione esta linha
 app.use("/", rankingRouter); // Adicione esta linha
+app.use("/", setoresRouter); // Adicione esta linha
 
 // Start
 const PORT = 3000;

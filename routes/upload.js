@@ -3,6 +3,7 @@ import multer from "multer";
 import xlsx from "xlsx";
 import User from "../models/User.js";
 import Planilha from "../models/Planilha.js";
+import Setor from "../models/Setor.js";
 
 const upload = multer({ dest: "uploads/" });
 const router = express.Router();
@@ -36,6 +37,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     const usuariosMap = new Map();
 
     // Processar cada item da planilha
+    const setoresBatch = [];
     for (const item of jsonData) {
       const usuarioKey = Object.keys(item).find(
         (key) =>
@@ -50,7 +52,57 @@ router.post("/upload", upload.single("file"), async (req, res) => {
         }
         usuariosMap.get(usuarioStr).push(item);
         totalItensProcessados++;
+
+        // Salvar também em Setor
+        const situacaoKey = Object.keys(item).find(
+          (key) =>
+            key.toLowerCase().includes("situação") ||
+            key.toLowerCase().includes("situacao")
+        );
+        const localKey = Object.keys(item).find((key) =>
+          key.toLowerCase().includes("local")
+        );
+        const produtoKey = Object.keys(item).find((key) =>
+          key.toLowerCase().includes("produto")
+        );
+        const codigoKey = Object.keys(item).find(
+          (key) =>
+            key.toLowerCase().includes("código") ||
+            key.toLowerCase().includes("codigo")
+        );
+        const estoqueKey = Object.keys(item).find((key) =>
+          key.toLowerCase().includes("estoque")
+        );
+        const compraKey = Object.keys(item).find((key) =>
+          key.toLowerCase().includes("compra")
+        );
+
+        setoresBatch.push({
+          codigo: codigoKey ? String(item[codigoKey] || "") : "",
+          produto: produtoKey ? String(item[produtoKey] || "") : "",
+          local: localKey
+            ? String(item[localKey] || "Não especificado")
+            : "Não especificado",
+          usuario: usuarioStr,
+          situacao: situacaoKey
+            ? String(item[situacaoKey] || "Não lido")
+            : "Não lido",
+          estoque: estoqueKey ? String(item[estoqueKey] || "0") : "0",
+          ultimaCompra: compraKey
+            ? String(item[compraKey] || new Date().toLocaleDateString("pt-BR"))
+            : new Date().toLocaleDateString("pt-BR"),
+          dataAuditoria,
+        });
       }
+    }
+
+    // Limpar dados antigos da mesma data de auditoria
+    await Setor.deleteMany({
+      dataAuditoria: { $gte: new Date(dataAuditoria.setHours(0, 0, 0, 0)) },
+    });
+    // Salvar todos os setores de uma vez
+    if (setoresBatch.length > 0) {
+      await Setor.insertMany(setoresBatch);
     }
 
     // Processar cada usuário
