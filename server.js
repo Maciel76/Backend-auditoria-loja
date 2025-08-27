@@ -4,6 +4,8 @@ import uploadRouter from "./routes/upload.js";
 import relatoriosRouter from "./routes/relatorios.js"; // Adicione esta linha
 import rankingRouter from "./routes/ranking.js"; // Adicione esta linha
 import setoresRouter from "./routes/setores.js"; // Adicione esta linha
+import relatoriosAvancadosRouter from "./routes/relatorios-avancados.js"; // NOVA LINHA
+import { sincronizarSetoresParaAuditoria } from "./services/processador-auditoria.js"; // NOVA I
 
 const app = express();
 
@@ -29,6 +31,30 @@ app.use("/", uploadRouter);
 app.use("/relatorios", relatoriosRouter); // Adicione esta linha
 app.use("/", rankingRouter); // Adicione esta linha
 app.use("/", setoresRouter); // Adicione esta linha
+
+// NOVAS ROTAS AVANÇADAS (adicionar no final)
+app.use("/api/avancado", relatoriosAvancadosRouter); // NOVA LINHA
+
+// NOVA ROTA PARA SINCRONIZAÇÃO MANUAL
+app.get("/api/sincronizar-auditoria", async (req, res) => {
+  try {
+    const resultado = await sincronizarSetoresParaAuditoria();
+    if (resultado.success) {
+      res.json({
+        mensagem: "Sincronização concluída",
+        totalSetores: resultado.totalSetores,
+      });
+    } else {
+      res
+        .status(500)
+        .json({ erro: "Falha na sincronização", detalhes: resultado.error });
+    }
+  } catch (error) {
+    res
+      .status(500)
+      .json({ erro: "Erro na sincronização", detalhes: error.message });
+  }
+});
 
 // Start
 const PORT = 3000;

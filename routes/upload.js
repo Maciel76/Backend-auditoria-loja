@@ -4,6 +4,7 @@ import xlsx from "xlsx";
 import User from "../models/User.js";
 import Planilha from "../models/Planilha.js";
 import Setor from "../models/Setor.js";
+import { processarParaAuditoria } from "../services/processador-auditoria.js"; // NOVA IMPORT
 
 const upload = multer({ dest: "uploads/" });
 const router = express.Router();
@@ -188,6 +189,21 @@ router.post("/upload", upload.single("file"), async (req, res) => {
       totalProcessados: totalItensProcessados,
       totalUsuarios: usuariosMap.size,
     });
+    processarParaAuditoria({
+      jsonData,
+      nomeArquivo: req.file.originalname,
+      dataAuditoria,
+    }).then((resultado) => {
+      if (resultado.success) {
+        console.log(
+          "✅ Dados processados para Auditoria:",
+          resultado.totalProcessados
+        );
+      } else {
+        console.log("⚠️ Processamento secundário falhou:", resultado.error);
+      }
+    });
+    // ... (o restante do código permanece igual)
   } catch (error) {
     console.error("Erro:", error);
     res
