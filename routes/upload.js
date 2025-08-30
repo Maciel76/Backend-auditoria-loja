@@ -41,10 +41,10 @@ function processarDataBrasileira(dataString) {
 // Função para processar ruptura
 async function processarRuptura(file, dataAuditoria) {
   try {
-    const workbook = xlsx.readFile(file.path);
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const jsonData = xlsx.utils.sheet_to_json(sheet);
+   const workbook = xlsx.readFile(req.file.path, { cellDates: true });
+const sheetName = workbook.SheetNames[0];
+const sheet = workbook.Sheets[sheetName];
+
 
     const dadosProcessados = jsonData.map((item) => {
       // Encontrar chaves dinamicamente (case insensitive)
@@ -111,10 +111,11 @@ async function processarRuptura(file, dataAuditoria) {
 // Função para processar presença
 async function processarPresenca(file, dataAuditoria) {
   try {
-    const workbook = xlsx.readFile(file.path);
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const jsonData = xlsx.utils.sheet_to_json(sheet);
+    const workbook = xlsx.readFile(req.file.path, { cellDates: true });
+const sheetName = workbook.SheetNames[0];
+const sheet = workbook.Sheets[sheetName];
+
+    const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
 
     const dadosProcessados = jsonData.map((item) => {
       const findKey = (patterns) => {
@@ -167,70 +168,44 @@ async function processarPresenca(file, dataAuditoria) {
 
 // Função para processar etiqueta (mantida igual para compatibilidade)
 async function processarEtiqueta(file, dataAuditoria) {
-  const workbook = xlsx.readFile(file.path);
+  const workbook = xlsx.readFile(file.path, { cellDates: true });
   const sheetName = workbook.SheetNames[0];
   const sheet = workbook.Sheets[sheetName];
-  const jsonData = xlsx.utils.sheet_to_json(sheet);
+  const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
 
-  let totalItensProcessados = 0;
-  const usuariosMap = new Map();
   const setoresBatch = [];
+  const usuariosMap = new Map();
+  let totalItensProcessados = 0;
 
   for (const item of jsonData) {
-    const usuarioKey = Object.keys(item).find(
-      (key) =>
-        key.toLowerCase().includes("usuário") ||
-        key.toLowerCase().includes("usuario")
-    );
+  const usuarioKey = Object.keys(item).find(
+    (key) => key.toLowerCase().includes("usuário") || key.toLowerCase().includes("usuario")
+  );
+  const situacaoKey = Object.keys(item).find(
+    (key) => key.toLowerCase().includes("situação") || key.toLowerCase().includes("situacao")
+  );
+  const localKey = Object.keys(item).find((key) => key.toLowerCase().includes("local"));
+  const produtoKey = Object.keys(item).find((key) => key.toLowerCase().includes("produto"));
+  const codigoKey = Object.keys(item).find(
+    (key) => key.toLowerCase().includes("código") || key.toLowerCase().includes("codigo")
+  );
+  const estoqueKey = Object.keys(item).find((key) => key.toLowerCase().includes("estoque"));
+  const compraKey = Object.keys(item).find((key) => key.toLowerCase().includes("compra"));
 
-    if (usuarioKey && item[usuarioKey]) {
-      const usuarioStr = item[usuarioKey].toString().trim();
-      if (!usuariosMap.has(usuarioStr)) {
-        usuariosMap.set(usuarioStr, []);
-      }
-      usuariosMap.get(usuarioStr).push(item);
-      totalItensProcessados++;
+  const usuarioStr = usuarioKey ? String(item[usuarioKey]) : "Produto não auditado";
 
-      const situacaoKey = Object.keys(item).find(
-        (key) =>
-          key.toLowerCase().includes("situação") ||
-          key.toLowerCase().includes("situacao")
-      );
-      const localKey = Object.keys(item).find((key) =>
-        key.toLowerCase().includes("local")
-      );
-      const produtoKey = Object.keys(item).find((key) =>
-        key.toLowerCase().includes("produto")
-      );
-      const codigoKey = Object.keys(item).find(
-        (key) =>
-          key.toLowerCase().includes("código") ||
-          key.toLowerCase().includes("codigo")
-      );
-      const estoqueKey = Object.keys(item).find((key) =>
-        key.toLowerCase().includes("estoque")
-      );
-      const compraKey = Object.keys(item).find((key) =>
-        key.toLowerCase().includes("compra")
-      );
-
-      setoresBatch.push({
-        codigo: codigoKey ? String(item[codigoKey] || "") : "",
-        produto: produtoKey ? String(item[produtoKey] || "") : "",
-        local: localKey
-          ? String(item[localKey] || "Não especificado")
-          : "Não especificado",
-        usuario: usuarioStr,
-        situacao: situacaoKey
-          ? String(item[situacaoKey] || "Não lido")
-          : "Não lido",
-        estoque: estoqueKey ? String(item[estoqueKey] || "0") : "0",
-        ultimaCompra: compraKey
-          ? String(item[compraKey] || new Date().toLocaleDateString("pt-BR"))
-          : new Date().toLocaleDateString("pt-BR"),
-        dataAuditoria,
-      });
-    }
+  setoresBatch.push({
+    codigo: codigoKey ? String(item[codigoKey] || "") : "",
+    produto: produtoKey ? String(item[produtoKey] || "") : "",
+    local: localKey ? String(item[localKey] || "Não especificado") : "Não especificado",
+    usuario: usuarioStr,
+    situacao: situacaoKey ? String(item[situacaoKey] || "Não lido") : "Não lido",
+    estoque: estoqueKey ? String(item[estoqueKey] || "0") : "0",
+    ultimaCompra: compraKey
+      ? String(item[compraKey] || new Date().toLocaleDateString("pt-BR"))
+      : new Date().toLocaleDateString("pt-BR"),
+    dataAuditoria,
+    });
   }
 
   await Setor.deleteMany({
@@ -358,10 +333,12 @@ router.post("/upload", upload.single("file"), async (req, res) => {
 
     // Processamento secundário para auditoria (mantido para compatibilidade)
     if (tipoAuditoria === "etiqueta") {
-      const workbook = xlsx.readFile(req.file.path);
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const jsonData = xlsx.utils.sheet_to_json(sheet);
+       const workbook = xlsx.readFile(req.file.path, { cellDates: true });
+
+const sheetName = workbook.SheetNames[0];
+const sheet = workbook.Sheets[sheetName];
+
+      const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
 
       processarParaAuditoria({
         jsonData,

@@ -15,10 +15,13 @@ router.post("/upload-setores", upload.single("file"), async (req, res) => {
       return res.status(400).json({ erro: "Nenhum arquivo enviado." });
     }
 
-    const workbook = xlsx.readFile(req.file.path);
+    // Forçar leitura de datas como datas reais
+    const workbook = xlsx.readFile(req.file.path, { cellDates: true });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
-    const jsonData = xlsx.utils.sheet_to_json(sheet);
+
+    // Converter para JSON mas formatando as datas automaticamente
+    const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
 
     // Limpar dados antigos
     await Setor.deleteMany({});
@@ -64,6 +67,14 @@ router.post("/upload-setores", upload.single("file"), async (req, res) => {
         (key) => key && key.toLowerCase().includes("compra")
       );
 
+      // --- Agora jsonData já traz a data formatada como string dd/mm/yyyy ---
+      let ultimaCompra = "";
+      if (compraKey && item[compraKey] != null) {
+        ultimaCompra = String(item[compraKey]);
+      } else {
+        ultimaCompra = new Date().toLocaleDateString("pt-BR");
+      }
+
       const setorData = {
         codigo: codigoKey ? String(item[codigoKey] || "") : "",
         produto: produtoKey ? String(item[produtoKey] || "") : "",
@@ -77,9 +88,7 @@ router.post("/upload-setores", upload.single("file"), async (req, res) => {
           ? String(item[situacaoKey] || "Não lido")
           : "Não lido",
         estoque: estoqueKey ? String(item[estoqueKey] || "0") : "0",
-        ultimaCompra: compraKey
-          ? String(item[compraKey] || new Date().toLocaleDateString("pt-BR"))
-          : new Date().toLocaleDateString("pt-BR"),
+        ultimaCompra,
         dataAuditoria: new Date(),
       };
 
@@ -165,7 +174,6 @@ router.get("/estatisticas-setores", async (req, res) => {
     });
   }
 });
-// routes/setores.js - ADICIONE ESTA ROTA NO FINAL DO ARQUIVO
 
 // Rota SIMPLES para buscar dados da planilha (usa dados crus)
 router.get("/dados-simples", async (req, res) => {
@@ -179,7 +187,6 @@ router.get("/dados-simples", async (req, res) => {
     }
     // Transformar para o formato esperado pelo frontend
     const dadosFormatados = dados.map((item) => {
-      // Log para debug - veja a estrutura real
       console.log("Item keys:", Object.keys(item));
       return {
         Código: item.Código || item.Codigo || "",
