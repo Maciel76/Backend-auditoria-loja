@@ -167,136 +167,184 @@ const sheet = workbook.Sheets[sheetName];
 }
 
 // Função para processar etiqueta (mantida igual para compatibilidade)
+// Função para processar etiqueta - VERSÃO CORRIGIDA
+// Função para processar etiqueta - VERSÃO CORRIGIDA
 async function processarEtiqueta(file, dataAuditoria) {
-  const workbook = xlsx.readFile(file.path, { cellDates: true });
-  const sheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[sheetName];
-  const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
+  try {
+    const workbook = xlsx.readFile(file.path, { cellDates: true });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
 
-  const setoresBatch = [];
-  const usuariosMap = new Map();
-  let totalItensProcessados = 0;
+    const setoresBatch = [];
+    const usuariosMap = new Map();
+    let totalItensProcessados = 0;
 
-  for (const item of jsonData) {
-  const usuarioKey = Object.keys(item).find(
-    (key) => key.toLowerCase().includes("usuário") || key.toLowerCase().includes("usuario")
-  );
-  const situacaoKey = Object.keys(item).find(
-    (key) => key.toLowerCase().includes("situação") || key.toLowerCase().includes("situacao")
-  );
-  const localKey = Object.keys(item).find((key) => key.toLowerCase().includes("local"));
-  const produtoKey = Object.keys(item).find((key) => key.toLowerCase().includes("produto"));
-  const codigoKey = Object.keys(item).find(
-    (key) => key.toLowerCase().includes("código") || key.toLowerCase().includes("codigo")
-  );
-  const estoqueKey = Object.keys(item).find((key) => key.toLowerCase().includes("estoque"));
-  const compraKey = Object.keys(item).find((key) => key.toLowerCase().includes("compra"));
-
-  const usuarioStr = usuarioKey ? String(item[usuarioKey]) : "Produto não auditado";
-
-  setoresBatch.push({
-    codigo: codigoKey ? String(item[codigoKey] || "") : "",
-    produto: produtoKey ? String(item[produtoKey] || "") : "",
-    local: localKey ? String(item[localKey] || "Não especificado") : "Não especificado",
-    usuario: usuarioStr,
-    situacao: situacaoKey ? String(item[situacaoKey] || "Não lido") : "Não lido",
-    estoque: estoqueKey ? String(item[estoqueKey] || "0") : "0",
-    ultimaCompra: compraKey
-      ? String(item[compraKey] || new Date().toLocaleDateString("pt-BR"))
-      : new Date().toLocaleDateString("pt-BR"),
-    dataAuditoria,
-    });
-  }
-
-  await Setor.deleteMany({
-    dataAuditoria: { $gte: new Date(dataAuditoria.setHours(0, 0, 0, 0)) },
-  });
-
-  if (setoresBatch.length > 0) {
-    await Setor.insertMany(setoresBatch);
-  }
-
-  for (const [usuarioStr, itens] of usuariosMap.entries()) {
-    const match = usuarioStr.match(/^(\d+)\s*\((.*)\)$/);
-    const id = match ? match[1].trim() : usuarioStr;
-    const nome = match ? match[2].trim() : usuarioStr;
-
-    let usuario =
-      (await User.findOne({ nome })) ||
-      new User({ id, nome, contadorTotal: 0 });
-
-    const auditoriaIndex = usuario.auditorias.findIndex(
-      (a) => a.data.toDateString() === dataAuditoria.toDateString()
+    // Primeiro: encontrar todas as chaves uma única vez
+    const primeiraLinha = jsonData[0] || {};
+    const todasChaves = Object.keys(primeiraLinha);
+    
+    const usuarioKey = todasChaves.find(
+      key => key.toLowerCase().includes("usuário") || key.toLowerCase().includes("usuario")
     );
+    const situacaoKey = todasChaves.find(
+      key => key.toLowerCase().includes("situação") || key.toLowerCase().includes("situacao")
+    );
+    const localKey = todasChaves.find(key => key.toLowerCase().includes("local"));
+    const produtoKey = todasChaves.find(key => key.toLowerCase().includes("produto"));
+    const codigoKey = todasChaves.find(
+      key => key.toLowerCase().includes("código") || key.toLowerCase().includes("codigo")
+    );
+    const estoqueKey = todasChaves.find(key => key.toLowerCase().includes("estoque"));
+    const compraKey = todasChaves.find(key => key.toLowerCase().includes("compra"));
 
-    if (auditoriaIndex === -1) {
-      usuario.auditorias.push({
-        data: dataAuditoria,
-        contador: 0,
-        detalhes: [],
+    // Processar cada item da planilha
+    for (const item of jsonData) {
+      const usuarioStr = usuarioKey ? String(item[usuarioKey] || "Produto não auditado") : "Produto não auditado";
+
+      // Adicionar ao batch de setores
+      setoresBatch.push({
+        codigo: codigoKey ? String(item[codigoKey] || "") : "",
+        produto: produtoKey ? String(item[produtoKey] || "") : "",
+        local: localKey ? String(item[localKey] || "Não especificado") : "Não especificado",
+        usuario: usuarioStr,
+        situacao: situacaoKey ? String(item[situacaoKey] || "Não lido") : "Não lido",
+        estoque: estoqueKey ? String(item[estoqueKey] || "0") : "0",
+        ultimaCompra: compraKey
+          ? String(item[compraKey] || new Date().toLocaleDateString("pt-BR"))
+          : new Date().toLocaleDateString("pt-BR"),
+        dataAuditoria,
       });
-    }
 
-    const auditoria =
-      usuario.auditorias[
-        auditoriaIndex === -1 ? usuario.auditorias.length - 1 : auditoriaIndex
-      ];
-    auditoria.detalhes = [];
-    auditoria.contador = 0;
-
-    for (const item of itens) {
-      const situacaoKey = Object.keys(item).find(
-        (key) =>
-          key.toLowerCase().includes("situação") ||
-          key.toLowerCase().includes("situacao")
-      );
-
-      const detalhe = {
-        codigo: item.Código || item.Codigo || "",
-        produto: item.Produto || "",
-        local: item.Local || "",
-        situacao: situacaoKey ? item[situacaoKey] : "",
-        estoque: processarValorEstoque(item["Estoque atual"]),
-      };
-
-      auditoria.detalhes.push(detalhe);
-
-      if (detalhe.situacao === "Atualizado") {
-        auditoria.contador++;
+      // Mapear usuários para processamento posterior
+      if (usuarioStr && usuarioStr !== "Produto não auditado") {
+        if (!usuariosMap.has(usuarioStr)) {
+          usuariosMap.set(usuarioStr, []);
+        }
+        usuariosMap.get(usuarioStr).push(item);
+        totalItensProcessados++;
       }
     }
 
-    usuario.contadorTotal = usuario.auditorias.reduce(
-      (total, aud) => total + aud.contador,
-      0
+    // Limpar dados antigos da mesma data
+    await Setor.deleteMany({
+      dataAuditoria: { 
+        $gte: new Date(dataAuditoria.setHours(0, 0, 0, 0)),
+        $lte: new Date(dataAuditoria.setHours(23, 59, 59, 999))
+      },
+    });
+
+    // Salvar setores
+    if (setoresBatch.length > 0) {
+      await Setor.insertMany(setoresBatch);
+    }
+
+    // Processar e salvar usuários
+    for (const [usuarioStr, itens] of usuariosMap.entries()) {
+      try {
+        // Extrair ID e nome do usuário (formato esperado: "123 (Nome Completo)")
+        const match = usuarioStr.match(/^(\d+)\s*\((.*)\)$/);
+        const id = match ? match[1].trim() : usuarioStr;
+        const nome = match ? match[2].trim() : usuarioStr;
+
+        // Buscar usuário existente ou criar novo
+        let usuario = await User.findOne({ id }) || await User.findOne({ nome });
+        
+        if (!usuario) {
+          usuario = new User({
+            id,
+            nome,
+            contadorTotal: 0,
+            auditorias: []
+          });
+        }
+
+        // Encontrar ou criar auditoria para a data atual
+        const auditoriaIndex = usuario.auditorias.findIndex(
+          a => a.data.toDateString() === dataAuditoria.toDateString()
+        );
+
+        if (auditoriaIndex === -1) {
+          usuario.auditorias.push({
+            data: dataAuditoria,
+            contador: 0,
+            detalhes: [],
+          });
+        }
+
+        const auditoria = usuario.auditorias[
+          auditoriaIndex === -1 ? usuario.auditorias.length - 1 : auditoriaIndex
+        ];
+
+        // Limpar detalhes existentes e processar novos itens
+        auditoria.detalhes = [];
+        auditoria.contador = 0;
+
+        for (const item of itens) {
+          const detalhe = {
+            codigo: codigoKey ? String(item[codigoKey] || "") : "",
+            produto: produtoKey ? String(item[produtoKey] || "") : "",
+            local: localKey ? String(item[localKey] || "") : "",
+            situacao: situacaoKey ? String(item[situacaoKey] || "") : "",
+            estoque: estoqueKey ? processarValorEstoque(item[estoqueKey]) : "0",
+          };
+
+          auditoria.detalhes.push(detalhe);
+
+          if (detalhe.situacao === "Atualizado") {
+            auditoria.contador++;
+          }
+        }
+
+        // Atualizar contador total
+        usuario.contadorTotal = usuario.auditorias.reduce(
+          (total, aud) => total + aud.contador,
+          0
+        );
+
+        // SALVAR o usuário
+        await usuario.save();
+        
+      } catch (error) {
+        console.error(`Erro ao processar usuário ${usuarioStr}:`, error);
+      }
+    }
+
+    // Calcular total de itens lidos
+    const totalItensLidos = jsonData.filter(
+      item => situacaoKey && (item[situacaoKey] === "Atualizado")
+    ).length;
+
+    // Salvar informações da planilha
+    await Planilha.findOneAndUpdate(
+      { dataAuditoria: { 
+          $gte: new Date(dataAuditoria.setHours(0, 0, 0, 0)),
+          $lte: new Date(dataAuditoria.setHours(23, 59, 59, 999))
+        } 
+      },
+      {
+        nomeArquivo: file.originalname,
+        dataAuditoria,
+        totalItens: jsonData.length,
+        totalItensLidos,
+        usuariosEnvolvidos: Array.from(usuariosMap.keys()),
+        dataUpload: new Date(),
+      },
+      { upsert: true, new: true }
     );
-    await usuario.save();
-  }
 
-  const totalItensLidos = jsonData.filter(
-    (item) => item.Situação === "Atualizado" || item.Situacao === "Atualizado"
-  ).length;
-
-  await Planilha.findOneAndUpdate(
-    { dataAuditoria },
-    {
-      nomeArquivo: file.originalname,
-      dataAuditoria,
+    return {
+      success: true,
       totalItens: jsonData.length,
-      totalItensLidos,
-      usuariosEnvolvidos: Array.from(usuariosMap.keys()),
-      dataUpload: new Date(),
-    },
-    { upsert: true, new: true }
-  );
+      totalProcessados: totalItensProcessados,
+      totalUsuarios: usuariosMap.size,
+      tipo: "etiqueta",
+    };
 
-  return {
-    success: true,
-    totalItens: jsonData.length,
-    totalProcessados: totalItensProcessados,
-    totalUsuarios: usuariosMap.size,
-    tipo: "etiqueta",
-  };
+  } catch (error) {
+    console.error("Erro ao processar etiqueta:", error);
+    return { success: false, error: error.message };
+  }
 }
 
 // Rota principal de upload
