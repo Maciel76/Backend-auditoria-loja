@@ -7,8 +7,9 @@ import setoresRouter from "./routes/setores.js"; // Adicione esta linha
 import relatoriosAvancadosRouter from "./routes/relatorios-avancados.js"; // NOVA LINHA
 import estatiscas from "./routes/estatisticas.js"; // NOVA LINHA
 import { sincronizarSetoresParaAuditoria } from "./services/processador-auditoria.js"; // NOVA I
-import rupturaRouter from "./routes/ruptura.js";
-import presencaRouter from "./routes/presenca.js";
+import uploadRupturaRouter from "./routes/upload-ruptura.js";
+import uploadPresencaRouter from "./routes/upload-presenca.js";
+import "./utils/planilhaHelpers.js"; // Para garantir que as funções estejam disponíveis
 
 const app = express();
 
@@ -35,8 +36,8 @@ app.use("/relatorios", relatoriosRouter); // Adicione esta linha
 app.use("/", rankingRouter); // Adicione esta linha
 app.use("/", setoresRouter); // Adicione esta linha
 app.use("/", estatiscas); // Adicione esta linha
-app.use("/", rupturaRouter); // ← NOVA
-app.use("/", presencaRouter); // ← NOVA
+app.use("/", uploadRupturaRouter);
+app.use("/", uploadPresencaRouter);
 
 // NOVAS ROTAS AVANÇADAS (adicionar no final)
 app.use("/api/avancado", relatoriosAvancadosRouter); // NOVA LINHA

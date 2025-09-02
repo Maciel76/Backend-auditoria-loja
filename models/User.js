@@ -10,6 +10,11 @@ const auditoriaSchema = new mongoose.Schema({
       local: String,
       situacao: String,
       estoque: String,
+      tipoAuditoria: {
+        type: String,
+        enum: ["etiqueta", "presenca", "ruptura"],
+        default: "etiqueta",
+      },
     },
   ],
 });
