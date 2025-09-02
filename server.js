@@ -3,6 +3,7 @@ import conectarBanco from "./config/db.js";
 import uploadRouter from "./routes/upload.js";
 import relatoriosRouter from "./routes/relatorios.js"; // Adicione esta linha
 import rankingRouter from "./routes/ranking.js"; // Adicione esta linha
+import RankingPresen from "./routes/RankingPresen.js";
 import setoresRouter from "./routes/setores.js"; // Adicione esta linha
 import relatoriosAvancadosRouter from "./routes/relatorios-avancados.js"; // NOVA LINHA
 import estatiscas from "./routes/estatisticas.js"; // NOVA LINHA
@@ -38,6 +39,7 @@ app.use("/", setoresRouter); // Adicione esta linha
 app.use("/", estatiscas); // Adicione esta linha
 app.use("/", uploadRupturaRouter);
 app.use("/", uploadPresencaRouter);
+app.use("/", RankingPresen); // Adicione esta linha
 
 // NOVAS ROTAS AVANÇADAS (adicionar no final)
 app.use("/api/avancado", relatoriosAvancadosRouter); // NOVA LINHA
