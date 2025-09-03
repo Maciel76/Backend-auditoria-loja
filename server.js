@@ -1,16 +1,17 @@
 import express from "express";
 import conectarBanco from "./config/db.js";
 import uploadRouter from "./routes/upload.js";
-import relatoriosRouter from "./routes/relatorios.js"; // Adicione esta linha
-import rankingRouter from "./routes/ranking.js"; // Adicione esta linha
-import RankingPresen from "./routes/RankingPresen.js";
-import setoresRouter from "./routes/setores.js"; // Adicione esta linha
-import relatoriosAvancadosRouter from "./routes/relatorios-avancados.js"; // NOVA LINHA
-import estatiscas from "./routes/estatisticas.js"; // NOVA LINHA
-import { sincronizarSetoresParaAuditoria } from "./services/processador-auditoria.js"; // NOVA I
+import relatoriosRouter from "./routes/relatorios.js";
+import rankingRouter from "./routes/ranking.js"; // Para etiqueta
+import rankingPresencaRouter from "./routes/rankingPresenca.js"; // Para presença
+import rankingRupturaRouter from "./routes/rankingRuptura.js"; // Para ruptura
+import setoresRouter from "./routes/setores.js";
+import relatoriosAvancadosRouter from "./routes/relatorios-avancados.js";
+import estatiscas from "./routes/estatisticas.js";
+import { sincronizarSetoresParaAuditoria } from "./services/processador-auditoria.js";
 import uploadRupturaRouter from "./routes/upload-ruptura.js";
 import uploadPresencaRouter from "./routes/upload-presenca.js";
-import "./utils/planilhaHelpers.js"; // Para garantir que as funções estejam disponíveis
+import "./utils/planilhaHelpers.js";
 
 const app = express();
 
@@ -34,12 +35,13 @@ app.use((req, res, next) => {
 // Rotas
 app.use("/", uploadRouter);
 app.use("/relatorios", relatoriosRouter); // Adicione esta linha
-app.use("/", rankingRouter); // Adicione esta linha
 app.use("/", setoresRouter); // Adicione esta linha
 app.use("/", estatiscas); // Adicione esta linha
 app.use("/", uploadRupturaRouter);
 app.use("/", uploadPresencaRouter);
-app.use("/", RankingPresen); // Adicione esta linha
+app.use("/", rankingRouter); // Já existe - para etiqueta
+app.use("/", rankingPresencaRouter); // Nova - para presença
+app.use("/", rankingRupturaRouter); // Nova - para ruptura
 
 // NOVAS ROTAS AVANÇADAS (adicionar no final)
 app.use("/api/avancado", relatoriosAvancadosRouter); // NOVA LINHA
