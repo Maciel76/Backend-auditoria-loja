@@ -22,19 +22,16 @@ const auditoriaSchema = new mongoose.Schema({
 
 const userAuditSchema = new mongoose.Schema(
   {
-    userId: { type: String, required: true },
+    id: { type: String },
     nome: { type: String, required: true },
     email: { type: String },
     telefone: { type: String },
     cargo: { type: String },
-    foto: { type: String },
+    foto: { type: String }, // Adicione este campo
     contadorTotal: { type: Number, default: 0 },
     auditorias: [auditoriaSchema],
   },
   { timestamps: true }
 );
-
-// Criar índice composto para melhor performance nas consultas
-userAuditSchema.index({ userId: 1, "auditorias.data": 1 });
 
 export default mongoose.model("UserRuptura", userAuditSchema);

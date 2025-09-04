@@ -3,8 +3,7 @@ import multer from "multer";
 import xlsx from "xlsx";
 import Presenca from "../models/Presenca.js";
 import Planilha from "../models/Planilha.js";
-import User from "../models/User.js";
-import UserAudit from "../models/UserAudit.js"; // ⬅️ NOVO MODELO ADICIONADO
+import UserAudit from "../models/UserAudit.js"; // ⬅️ USANDO UserAudit EM VEZ DE User
 import {
   mapearColunasRepetidas,
   extrairValorMapeado,
@@ -40,6 +39,7 @@ async function processarPresenca(file, dataAuditoriaParam) {
       dataAuditoria = dataAuditoriaParam;
     }
 
+    const usuariosMap = new Map();
     const dadosProcessados = jsonData
       .map((item, index) => {
         try {
@@ -63,6 +63,14 @@ async function processarPresenca(file, dataAuditoriaParam) {
             item["Presença confirmada"],
             item["Presença confirmada_1"]
           );
+
+          // Mapear usuários para processamento posterior (igual à função processarEtiqueta)
+          if (usuario && usuario !== "Usuário não identificado") {
+            if (!usuariosMap.has(usuario)) {
+              usuariosMap.set(usuario, []);
+            }
+            usuariosMap.get(usuario).push(item);
+          }
 
           return {
             codigo: codigo,
@@ -145,7 +153,7 @@ async function processarPresenca(file, dataAuditoriaParam) {
       },
       { upsert: true, new: true }
     );
-    
+
     // Logs detalhados
     console.log(`🔄 Processando dados para coleção Presenca...`);
     console.log(`📊 Total de linhas na planilha: ${jsonData.length}`);
@@ -156,20 +164,82 @@ async function processarPresenca(file, dataAuditoriaParam) {
     console.log(
       `✅ Dados processados para Presenca: ${dadosProcessados.length} itens`
     );
-    
-    // Processar e salvar usuários (mantido para compatibilidade)
-    const totalUsuarios = await processarUsuarios(
-      dadosProcessados,
-      dataAuditoria,
-      "presenca"
-    );
 
-    // NOVA LINHA: Processar e salvar usuários no modelo UserAudit
-    const totalUsuariosAudit = await processarUsuariosAudit(
-      dadosProcessados,
-      dataAuditoria,
-      "presenca"
-    );
+    // Processar e salvar usuários no mesmo formato que processarEtiqueta, mas na coleção UserAudit
+    for (const [usuarioStr, itens] of usuariosMap.entries()) {
+      try {
+        // Extrair ID e nome do usuário (formato esperado: "123 (Nome Completo)")
+        const match = usuarioStr.match(/^(\d+)\s*\((.*)\)$/);
+        const id = match ? match[1].trim() : usuarioStr;
+        const nome = match ? match[2].trim() : usuarioStr;
+
+        // Buscar usuário existente ou criar novo NA COLEÇÃO UserAudit
+        let usuario =
+          (await UserAudit.findOne({ id })) ||
+          (await UserAudit.findOne({ nome }));
+
+        if (!usuario) {
+          usuario = new UserAudit({
+            id,
+            nome,
+            contadorTotal: 0,
+            auditorias: [],
+          });
+        }
+
+        // Encontrar ou criar auditoria para la data atual
+        const auditoriaIndex = usuario.auditorias.findIndex(
+          (a) => a.data.toDateString() === dataAuditoria.toDateString()
+        );
+
+        if (auditoriaIndex === -1) {
+          usuario.auditorias.push({
+            data: dataAuditoria,
+            contador: 0,
+            detalhes: [],
+          });
+        }
+
+        const auditoria =
+          usuario.auditorias[
+            auditoriaIndex === -1
+              ? usuario.auditorias.length - 1
+              : auditoriaIndex
+          ];
+
+        // Limpar detalhes existentes e processar novos itens
+        auditoria.detalhes = [];
+        auditoria.contador = 0;
+
+        for (const item of itens) {
+          const detalhe = {
+            codigo: item["Código"] || "",
+            produto: item["Produto"] || "",
+            local: item["Local"] || "",
+            situacao: normalizarSituacao(item["Situação"] || ""),
+            estoque: processarValorEstoque(item["Estoque atual"] || "0"),
+            tipoAuditoria: "presenca", // Adicionando o tipo de auditoria
+          };
+
+          auditoria.detalhes.push(detalhe);
+
+          if (detalhe.situacao === "Atualizado") {
+            auditoria.contador++;
+          }
+        }
+
+        // Atualizar contador total
+        usuario.contadorTotal = usuario.auditorias.reduce(
+          (total, aud) => total + aud.contador,
+          0
+        );
+
+        // SALVAR o usuário NA COLEÇÃO UserAudit
+        await usuario.save();
+      } catch (error) {
+        console.error(`Erro ao processar usuário ${usuarioStr}:`, error);
+      }
+    }
 
     return {
       success: true,
@@ -179,199 +249,6 @@ async function processarPresenca(file, dataAuditoriaParam) {
   } catch (error) {
     console.error("Erro ao processar presença:", error);
     return { success: false, error: error.message };
-  }
-}
-
-// Função para processar e salvar usuários (mantida para compatibilidade)
-async function processarUsuarios(dadosProcessados, dataAuditoria, tipoAuditoria) {
-  try {
-    console.log(`👥 Processando usuários para ${tipoAuditoria}...`);
-
-    const usuariosMap = new Map();
-
-    // Agrupar itens por usuário
-    for (const item of dadosProcessados) {
-      if (item.usuario && item.usuario !== "Usuário não identificado") {
-        if (!usuariosMap.has(item.usuario)) {
-          usuariosMap.set(item.usuario, []);
-        }
-        usuariosMap.get(item.usuario).push(item);
-      }
-    }
-
-    console.log(`📊 ${usuariosMap.size} usuários únicos encontrados`);
-
-    // Processar cada usuário
-    for (const [usuarioStr, itens] of usuariosMap.entries()) {
-      // Extrair ID e nome do formato "3284972 (LAIZA RODRIGUES DE OLIVEIRA)"
-      const match = usuarioStr.match(/^(\d+)\s*\((.*)\)$/);
-      const id = match ? match[1].trim() : usuarioStr;
-      const nome = match ? match[2].trim() : usuarioStr;
-
-      let usuario = await User.findOne({
-        $or: [{ id: id }, { nome: nome }],
-      });
-
-      if (!usuario) {
-        // Criar novo usuário se não existir
-        usuario = new User({
-          id: id,
-          nome: nome,
-          contadorTotal: 0,
-          auditorias: [],
-        });
-        console.log(`➕ Novo usuário criado: ${nome}`);
-      }
-
-      // Verificar se já existe auditoria nesta data
-      const auditoriaIndex = usuario.auditorias.findIndex(
-        (a) => a.data.toDateString() === dataAuditoria.toDateString()
-      );
-
-      if (auditoriaIndex === -1) {
-        // Criar nova auditoria
-        usuario.auditorias.push({
-          data: dataAuditoria,
-          contador: 0,
-          detalhes: [],
-        });
-      }
-
-      const auditoria =
-        usuario.auditorias[
-          auditoriaIndex === -1 ? usuario.auditorias.length - 1 : auditoriaIndex
-        ];
-
-      // Adicionar detalhes da auditoria
-      for (const item of itens) {
-        // Usar estoque correto baseado no tipo de auditoria
-        const estoque =
-          tipoAuditoria === "ruptura" ? item.estoqueAtual : item.estoque;
-
-        auditoria.detalhes.push({
-          codigo: item.codigo,
-          produto: item.produto,
-          local: item.local,
-          situacao: item.situacao,
-          estoque: estoque || "0",
-          tipoAuditoria: tipoAuditoria,
-        });
-
-        if (item.situacao === "Atualizado") {
-          auditoria.contador++;
-        }
-      }
-
-      // Atualizar contador total
-      usuario.contadorTotal = usuario.auditorias.reduce(
-        (total, aud) => total + aud.contador,
-        0
-      );
-
-      await usuario.save();
-    }
-
-    console.log(`✅ Usuários processados com sucesso`);
-    return usuariosMap.size;
-  } catch (error) {
-    console.error("❌ Erro ao processar usuários:", error);
-    return 0;
-  }
-}
-
-// NOVA FUNÇÃO para salvar usuários no modelo UserAudit
-async function processarUsuariosAudit(dadosProcessados, dataAuditoria, tipoAuditoria) {
-  try {
-    console.log(`👥 Processando usuários para ${tipoAuditoria} no modelo UserAudit...`);
-
-    const usuariosMap = new Map();
-
-    // Agrupar itens por usuário
-    for (const item of dadosProcessados) {
-      if (item.usuario && item.usuario !== "Usuário não identificado") {
-        if (!usuariosMap.has(item.usuario)) {
-          usuariosMap.set(item.usuario, []);
-        }
-        usuariosMap.get(item.usuario).push(item);
-      }
-    }
-
-    console.log(`📊 ${usuariosMap.size} usuários únicos encontrados para UserAudit`);
-
-    // Processar cada usuário
-    for (const [usuarioStr, itens] of usuariosMap.entries()) {
-      // Extrair ID e nome do formato "3284972 (LAIZA RODRIGUES DE OLIVEIRA)"
-      const match = usuarioStr.match(/^(\d+)\s*\((.*)\)$/);
-      const userId = match ? match[1].trim() : usuarioStr;
-      const nome = match ? match[2].trim() : usuarioStr;
-
-      // Buscar no novo modelo UserAudit
-      let userAudit = await UserAudit.findOne({ userId: userId });
-
-      if (!userAudit) {
-        // Criar novo registro se não existir
-        userAudit = new UserAudit({
-          userId: userId,
-          nome: nome,
-          contadorTotal: 0,
-          auditorias: [],
-        });
-        console.log(`➕ Novo registro de auditoria criado para usuário: ${nome}`);
-      }
-
-      // Verificar se já existe auditoria nesta data
-      const auditoriaIndex = userAudit.auditorias.findIndex(
-        (a) => a.data.toDateString() === dataAuditoria.toDateString()
-      );
-
-      if (auditoriaIndex === -1) {
-        // Criar nova auditoria
-        userAudit.auditorias.push({
-          data: dataAuditoria,
-          contador: 0,
-          detalhes: [],
-        });
-      }
-
-      const auditoria =
-        userAudit.auditorias[
-          auditoriaIndex === -1 ? userAudit.auditorias.length - 1 : auditoriaIndex
-        ];
-
-      // Adicionar detalhes da auditoria
-      for (const item of itens) {
-        // Usar estoque correto baseado no tipo de auditoria
-        const estoque =
-          tipoAuditoria === "ruptura" ? item.estoqueAtual : item.estoque;
-
-        auditoria.detalhes.push({
-          codigo: item.codigo,
-          produto: item.produto,
-          local: item.local,
-          situacao: item.situacao,
-          estoque: estoque || "0",
-          tipoAuditoria: tipoAuditoria,
-        });
-
-        if (item.situacao === "Atualizado") {
-          auditoria.contador++;
-        }
-      }
-
-      // Atualizar contador total
-      userAudit.contadorTotal = userAudit.auditorias.reduce(
-        (total, aud) => total + aud.contador,
-        0
-      );
-
-      await userAudit.save();
-    }
-
-    console.log(`✅ Usuários processados com sucesso no modelo UserAudit`);
-    return usuariosMap.size;
-  } catch (error) {
-    console.error("❌ Erro ao processar usuários no UserAudit:", error);
-    return 0;
   }
 }
 
