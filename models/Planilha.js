@@ -37,6 +37,11 @@ const planilhaSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    loja: {
+      type: String,
+      required: true,
+      default: "000", // loja padrão
+    },
     usuariosEnvolvidos: [String],
     metadata: {
       // ⬅️ CAMPO ADICIONADO (para informações extras)
@@ -46,6 +51,11 @@ const planilhaSchema = new mongoose.Schema(
       processamentoCompleto: {
         type: Boolean,
         default: false,
+      },
+      loja: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Loja",
+        required: true,
       },
     },
   },

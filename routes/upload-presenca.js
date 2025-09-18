@@ -3,7 +3,7 @@ import multer from "multer";
 import xlsx from "xlsx";
 import Presenca from "../models/Presenca.js";
 import Planilha from "../models/Planilha.js";
-import UserAudit from "../models/UserAudit.js"; // ⬅️ USANDO UserAudit EM VEZ DE User
+import UserAudit from "../models/UserAudit.js";
 import {
   mapearColunasRepetidas,
   extrairValorMapeado,
@@ -19,8 +19,8 @@ import {
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
-// Função para processar presença
-async function processarPresenca(file, dataAuditoriaParam) {
+// Função para processar presença - AGORA COM PARÂMETRO LOJA
+async function processarPresenca(file, dataAuditoriaParam, loja) {
   try {
     const workbook = xlsx.readFile(file.path, { cellDates: true });
     const sheetName = workbook.SheetNames[0];
@@ -102,6 +102,7 @@ async function processarPresenca(file, dataAuditoriaParam) {
 
             dataAuditoria: dataAuditoria,
             tipo: "presenca",
+            loja: loja, // ← LOJA ADICIONADA AQUI
 
             metadata: {
               nomeArquivo: file.originalname,
@@ -116,7 +117,7 @@ async function processarPresenca(file, dataAuditoriaParam) {
       })
       .filter((item) => item !== null);
 
-    // Limpar dados antigos da mesma data
+    // Limpar dados antigos da mesma data E MESMA LOJA
     const inicioDia = new Date(dataAuditoria);
     inicioDia.setHours(0, 0, 0, 0);
     const fimDia = new Date(dataAuditoria);
@@ -124,19 +125,21 @@ async function processarPresenca(file, dataAuditoriaParam) {
 
     await Presenca.deleteMany({
       dataAuditoria: { $gte: inicioDia, $lte: fimDia },
+      loja: loja, // ← FILTRAR POR LOJA
     });
 
     if (dadosProcessados.length > 0) {
       await Presenca.insertMany(dadosProcessados);
     }
 
-    // Salvar registro da planilha
+    // Salvar registro da planilha - COM LOJA
     await Planilha.findOneAndUpdate(
-      { dataAuditoria, tipoAuditoria: "presenca" },
+      { dataAuditoria, tipoAuditoria: "presenca", loja: loja },
       {
         nomeArquivo: file.originalname,
         dataAuditoria,
         tipoAuditoria: "presenca",
+        loja: loja, // ← LOJA ADICIONADA
         totalItens: dadosProcessados.length,
         totalItensLidos: dadosProcessados.filter(
           (item) => item.situacao === "Atualizado"
@@ -158,8 +161,9 @@ async function processarPresenca(file, dataAuditoriaParam) {
     console.log(`🔄 Processando dados para coleção Presenca...`);
     console.log(`📊 Total de linhas na planilha: ${jsonData.length}`);
     console.log(`📁 Arquivo: ${file.originalname}`);
+    console.log(`🏪 Loja: ${loja}`);
     console.log(`📅 Data de auditoria detectada: ${dataAuditoria}`);
-    console.log(`🗑️ Dados antigos de Presenca removidos para a data`);
+    console.log(`🗑️ Dados antigos de Presenca removidos para a data e loja`);
     console.log(`💾 Presenças salvas: ${dadosProcessados.length}`);
     console.log(
       `✅ Dados processados para Presenca: ${dadosProcessados.length} itens`
@@ -218,7 +222,8 @@ async function processarPresenca(file, dataAuditoriaParam) {
             local: item["Local"] || "",
             situacao: normalizarSituacao(item["Situação"] || ""),
             estoque: processarValorEstoque(item["Estoque atual"] || "0"),
-            tipoAuditoria: "presenca", // Adicionando o tipo de auditoria
+            tipoAuditoria: "presenca",
+            loja: loja, // ← LOJA AGORA DEFINIDA (não mais undefined)
           };
 
           auditoria.detalhes.push(detalhe);
@@ -245,6 +250,7 @@ async function processarPresenca(file, dataAuditoriaParam) {
       success: true,
       totalItens: dadosProcessados.length,
       dataAuditoria: dataAuditoria,
+      loja: loja,
     };
   } catch (error) {
     console.error("Erro ao processar presença:", error);
@@ -252,14 +258,24 @@ async function processarPresenca(file, dataAuditoriaParam) {
   }
 }
 
-// Rota principal
+// Rota principal - AGORA COM VERIFICAÇÃO DE LOJA
 router.post("/upload-presenca", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ erro: "Nenhum arquivo enviado." });
     }
 
-    const resultado = await processarPresenca(req.file, new Date());
+    // Obter a loja da sessão, header ou body
+    const loja =
+      req.headers["x-loja"] || req.body.loja || req.session.loja || "000";
+
+    if (!loja) {
+      return res.status(400).json({
+        erro: "Loja não selecionada. Por favor, selecione uma loja primeiro.",
+      });
+    }
+
+    const resultado = await processarPresenca(req.file, new Date(), loja);
 
     if (!resultado.success) {
       return res.status(500).json({
@@ -272,6 +288,7 @@ router.post("/upload-presenca", upload.single("file"), async (req, res) => {
       mensagem: "Planilha de presença processada com sucesso!",
       totalItens: resultado.totalItens,
       dataAuditoria: resultado.dataAuditoria,
+      loja: resultado.loja,
       tipo: "presenca",
     });
   } catch (error) {

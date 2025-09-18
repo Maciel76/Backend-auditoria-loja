@@ -4,7 +4,7 @@ import xlsx from "xlsx";
 import Ruptura from "../models/Ruptura.js";
 import Planilha from "../models/Planilha.js";
 import User from "../models/User.js";
-import UserAudit from "../models/userRuptura.js"; // ⬅️ NOVO MODELO ADICIONADO
+import UserAudit from "../models/userRuptura.js";
 import {
   mapearColunasRepetidas,
   extrairValorMapeado,
@@ -20,8 +20,8 @@ import {
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
-// Função para processar ruptura
-async function processarRuptura(file, dataAuditoriaParam) {
+// Função para processar ruptura - AGORA COM PARÂMETRO LOJA
+async function processarRuptura(file, dataAuditoriaParam, loja) {
   try {
     const workbook = xlsx.readFile(file.path, { cellDates: true });
     const sheetName = workbook.SheetNames[0];
@@ -86,10 +86,9 @@ async function processarRuptura(file, dataAuditoriaParam) {
             custoRuptura: parseFloat(
               (item["Custo Ruptura"] || "0").replace(".", "").replace(",", ".")
             ),
-
             dataAuditoria: dataAuditoria,
             tipo: "ruptura",
-
+            loja: loja, // ← LOJA ADICIONADA AQUI
             metadata: {
               nomeArquivo: file.originalname,
               dataUpload: new Date(),
@@ -103,7 +102,7 @@ async function processarRuptura(file, dataAuditoriaParam) {
       })
       .filter((item) => item !== null);
 
-    // Limpar dados antigos da mesma data
+    // Limpar dados antigos da mesma data E MESMA LOJA
     const inicioDia = new Date(dataAuditoria);
     inicioDia.setHours(0, 0, 0, 0);
     const fimDia = new Date(dataAuditoria);
@@ -111,19 +110,21 @@ async function processarRuptura(file, dataAuditoriaParam) {
 
     await Ruptura.deleteMany({
       dataAuditoria: { $gte: inicioDia, $lte: fimDia },
+      loja: loja, // ← FILTRAR POR LOJA
     });
 
     if (dadosProcessados.length > 0) {
       await Ruptura.insertMany(dadosProcessados);
     }
 
-    // Salvar registro da planilha
+    // Salvar registro da planilha - COM LOJA
     await Planilha.findOneAndUpdate(
-      { dataAuditoria, tipoAuditoria: "ruptura" },
+      { dataAuditoria, tipoAuditoria: "ruptura", loja: loja },
       {
         nomeArquivo: file.originalname,
         dataAuditoria,
         tipoAuditoria: "ruptura",
+        loja: loja, // ← LOJA ADICIONADA
         totalItens: dadosProcessados.length,
         totalItensLidos: dadosProcessados.filter(
           (item) => item.situacao === "Atualizado"
@@ -140,13 +141,14 @@ async function processarRuptura(file, dataAuditoriaParam) {
       },
       { upsert: true, new: true }
     );
-    
+
     // Logs detalhados
     console.log(`🔄 Processando dados para coleção Ruptura...`);
     console.log(`📊 Total de linha na planilha: ${jsonData.length}`);
     console.log(`📁 Arquivo: ${file.originalname}`);
+    console.log(`🏪 Loja: ${loja}`);
     console.log(`📅 Data de auditoria detectada: ${dataAuditoria}`);
-    console.log(`🗑️ Dados antigos de Ruptura removidos para a data`);
+    console.log(`🗑️ Dados antigos de Ruptura removidos para a data e loja`);
     console.log(`💾 Rupturas salvas: ${dadosProcessados.length}`);
     console.log(
       `✅ Dados processados para Ruptura: ${dadosProcessados.length} itens`
@@ -156,20 +158,23 @@ async function processarRuptura(file, dataAuditoriaParam) {
     const totalUsuarios = await processarUsuarios(
       dadosProcessados,
       dataAuditoria,
-      "ruptura"
+      "ruptura",
+      loja // ← PASSE A LOJA
     );
 
-    // NOVA LINHA: Processar e salvar usuários no modelo UserAudit
+    // Processar e salvar usuários no modelo UserAudit
     const totalUsuariosAudit = await processarUsuariosAudit(
       dadosProcessados,
       dataAuditoria,
-      "ruptura"
+      "ruptura",
+      loja // ← PASSE A LOJA
     );
 
     return {
       success: true,
       totalItens: dadosProcessados.length,
       dataAuditoria: dataAuditoria,
+      loja: loja,
     };
   } catch (error) {
     console.error("Erro ao processar ruptura:", error);
@@ -177,8 +182,13 @@ async function processarRuptura(file, dataAuditoriaParam) {
   }
 }
 
-// Função para processar e salvar usuários (mantida para compatibilidade)
-async function processarUsuarios(dadosProcessados, dataAuditoria, tipoAuditoria) {
+// Função para processar e salvar usuários - AGORA COM LOJA
+async function processarUsuarios(
+  dadosProcessados,
+  dataAuditoria,
+  tipoAuditoria,
+  loja
+) {
   try {
     console.log(`👥 Processando usuários para ${tipoAuditoria}...`);
 
@@ -237,7 +247,7 @@ async function processarUsuarios(dadosProcessados, dataAuditoria, tipoAuditoria)
           auditoriaIndex === -1 ? usuario.auditorias.length - 1 : auditoriaIndex
         ];
 
-      // Adicionar detalhes da auditoria
+      // Adicionar detalhes da auditoria - COM LOJA
       for (const item of itens) {
         // Usar estoque correto baseado no tipo de auditoria
         const estoque =
@@ -250,6 +260,7 @@ async function processarUsuarios(dadosProcessados, dataAuditoria, tipoAuditoria)
           situacao: item.situacao,
           estoque: estoque || "0",
           tipoAuditoria: tipoAuditoria,
+          loja: loja, // ← LOJA ADICIONADA
         });
 
         if (item.situacao === "Atualizado") {
@@ -274,10 +285,17 @@ async function processarUsuarios(dadosProcessados, dataAuditoria, tipoAuditoria)
   }
 }
 
-// NOVA FUNÇÃO para salvar usuários no modelo UserAudit
-async function processarUsuariosAudit(dadosProcessados, dataAuditoria, tipoAuditoria) {
+// Função para salvar usuários no modelo UserAudit - AGORA COM LOJA
+async function processarUsuariosAudit(
+  dadosProcessados,
+  dataAuditoria,
+  tipoAuditoria,
+  loja
+) {
   try {
-    console.log(`👥 Processando usuários para ${tipoAuditoria} no modelo UserAudit...`);
+    console.log(
+      `👥 Processando usuários para ${tipoAuditoria} no modelo UserAudit...`
+    );
 
     const usuariosMap = new Map();
 
@@ -291,7 +309,9 @@ async function processarUsuariosAudit(dadosProcessados, dataAuditoria, tipoAudit
       }
     }
 
-    console.log(`📊 ${usuariosMap.size} Novos Usuarios encontrados para coleção usuarios ruptura`);
+    console.log(
+      `📊 ${usuariosMap.size} Novos Usuarios encontrados para coleção usuarios ruptura`
+    );
 
     // Processar cada usuário
     for (const [usuarioStr, itens] of usuariosMap.entries()) {
@@ -311,7 +331,9 @@ async function processarUsuariosAudit(dadosProcessados, dataAuditoria, tipoAudit
           contadorTotal: 0,
           auditorias: [],
         });
-        console.log(`➕ Novo registro de auditoria criado para usuário: ${nome}`);
+        console.log(
+          `➕ Novo registro de auditoria criado para usuário: ${nome}`
+        );
       }
 
       // Verificar se já existe auditoria nesta data
@@ -330,10 +352,12 @@ async function processarUsuariosAudit(dadosProcessados, dataAuditoria, tipoAudit
 
       const auditoria =
         userAudit.auditorias[
-          auditoriaIndex === -1 ? userAudit.auditorias.length - 1 : auditoriaIndex
+          auditoriaIndex === -1
+            ? userAudit.auditorias.length - 1
+            : auditoriaIndex
         ];
 
-      // Adicionar detalhes da auditoria
+      // Adicionar detalhes da auditoria - COM LOJA
       for (const item of itens) {
         // Usar estoque correto baseado no tipo de auditoria
         const estoque =
@@ -346,6 +370,7 @@ async function processarUsuariosAudit(dadosProcessados, dataAuditoria, tipoAudit
           situacao: item.situacao,
           estoque: estoque || "0",
           tipoAuditoria: tipoAuditoria,
+          loja: loja, // ← LOJA ADICIONADA (agora definida)
         });
 
         if (item.situacao === "Atualizado") {
@@ -370,14 +395,24 @@ async function processarUsuariosAudit(dadosProcessados, dataAuditoria, tipoAudit
   }
 }
 
-// Rota principal
+// Rota principal - AGORA COM VERIFICAÇÃO DE LOJA
 router.post("/upload-ruptura", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ erro: "Nenhum arquivo enviado." });
     }
 
-    const resultado = await processarRuptura(req.file, new Date());
+    // Obter a loja da sessão, header ou body
+    const loja =
+      req.headers["x-loja"] || req.body.loja || req.session.loja || "000";
+
+    if (!loja) {
+      return res.status(400).json({
+        erro: "Loja não selecionada. Por favor, selecione uma loja primeiro.",
+      });
+    }
+
+    const resultado = await processarRuptura(req.file, new Date(), loja);
 
     if (!resultado.success) {
       return res.status(500).json({
@@ -390,6 +425,7 @@ router.post("/upload-ruptura", upload.single("file"), async (req, res) => {
       mensagem: "Planilha de ruptura processada com sucesso!",
       totalItens: resultado.totalItens,
       dataAuditoria: resultado.dataAuditoria,
+      loja: resultado.loja,
       tipo: "ruptura",
     });
   } catch (error) {

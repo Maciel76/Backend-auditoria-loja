@@ -36,6 +36,11 @@ const auditoriaSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    loja: {
+      type: String,
+      required: true,
+      default: "000", // loja padrão
+    },
     metadata: {
       planilhaOrigem: String,
       dataUpload: Date,

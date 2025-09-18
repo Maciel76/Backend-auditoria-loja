@@ -15,6 +15,11 @@ const auditoriaSchema = new mongoose.Schema({
         enum: ["etiqueta", "presenca", "ruptura"],
         default: "etiqueta",
       },
+      loja: {
+        type: String,
+        required: true,
+        default: "000", // loja padrão
+      },
     },
   ],
 });
@@ -26,9 +31,14 @@ const userSchema = new mongoose.Schema(
     email: { type: String },
     telefone: { type: String },
     cargo: { type: String },
-    foto: { type: String }, // Adicione este campo
+    foto: { type: String },
     contadorTotal: { type: Number, default: 0 },
     auditorias: [auditoriaSchema],
+    // ADICIONE ESTE CAMPO NO NÍVEL PRINCIPAL DO USUÁRIO TAMBÉM
+    loja: {
+      type: String,
+      default: "000", // loja padrão para o usuário
+    },
   },
   { timestamps: true }
 );

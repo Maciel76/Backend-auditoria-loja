@@ -9,6 +9,11 @@ const SetorSchema = new mongoose.Schema({
   estoque: String,
   ultimaCompra: String,
   dataAuditoria: Date,
+  loja: {
+    type: String,
+    required: true,
+    default: "000", // loja padrão
+  },
 });
 
 const Setor = mongoose.model("Setor", SetorSchema);

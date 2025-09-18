@@ -16,6 +16,11 @@ const auditoriaSchema = new mongoose.Schema({
         enum: ["etiqueta", "presenca", "ruptura"],
         default: "etiqueta",
       },
+      loja: {
+        type: String,
+        required: true,
+        default: "000", // loja padrão
+      },
     },
   ],
 });

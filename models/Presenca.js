@@ -9,6 +9,11 @@ const presencaSchema = new mongoose.Schema({
   auditadoEm: Date,
   estoque: String,
   presenca: Boolean,
+  loja: {
+    type: String,
+    required: true,
+    default: "000", // loja padrão
+  },
   dataAuditoria: Date,
   tipo: { type: String, default: "presenca" },
 });

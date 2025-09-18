@@ -16,6 +16,11 @@ const rupturaSchema = new mongoose.Schema({
   diasSemVenda: Number,
   custoRuptura: Number,
   dataAuditoria: Date,
+  loja: {
+    type: String,
+    required: true,
+    default: "000", // loja padrão
+  },
   tipo: { type: String, default: "ruptura" },
 });
 
