@@ -1,208 +1,60 @@
+// routes/upload.js - VERSÃO CORRIGIDA COM LOJA OBRIGATÓRIA - COMPLETA
 import express from "express";
 import multer from "multer";
 import xlsx from "xlsx";
+import fs from "fs";
+import path from "path";
 import User from "../models/User.js";
 import Planilha from "../models/Planilha.js";
 import Setor from "../models/Setor.js";
 import Ruptura from "../models/Ruptura.js";
 import Presenca from "../models/Presenca.js";
+import UserAudit from "../models/userRuptura.js";
+import { verificarLojaObrigatoria, getFiltroLoja } from "../middleware/loja.js";
 import { processarParaAuditoria } from "../services/processador-auditoria.js";
+
+// Importações condicionais dos helpers
+let processarValorEstoque,
+  normalizarSituacao,
+  extrairDataDaPlanilha,
+  combinarDataHoraBrasileira;
+try {
+  const helpers = await import("../utils/planilhaHelpers.js");
+  processarValorEstoque = helpers.processarValorEstoque;
+  normalizarSituacao = helpers.normalizarSituacao;
+  extrairDataDaPlanilha = helpers.extrairDataDaPlanilha;
+  combinarDataHoraBrasileira = helpers.combinarDataHoraBrasileira;
+} catch (error) {
+  console.log("Helpers não encontrados, usando funções padrão");
+  // Funções fallback
+  processarValorEstoque = (valor) => String(valor || "0");
+  normalizarSituacao = (situacao) => String(situacao || "");
+  extrairDataDaPlanilha = () => null;
+  combinarDataHoraBrasileira = () => null;
+}
 
 const upload = multer({ dest: "uploads/" });
 const router = express.Router();
 
-// Função para processar valor de estoque
-function processarValorEstoque(valor) {
-  if (!valor) return "0";
-  if (typeof valor === "number") return valor.toString();
-
-  const valorString = valor.toString().trim();
-  let valorLimpo = valorString.replace(/[^\d,.-]/g, "");
-  valorLimpo = valorLimpo.replace(",", ".");
-
-  return valorLimpo || "0";
-}
-
-// Função para processar data brasileira (DD/MM/AAAA)
-function processarDataBrasileira(dataString) {
-  if (!dataString) return new Date();
-
+// Função auxiliar para limpeza de arquivos temporários
+function limparArquivoTemporario(filePath) {
   try {
-    const partes = dataString.toString().split("/");
-    if (partes.length === 3) {
-      return new Date(partes[2], partes[1] - 1, partes[0]);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`Arquivo temporário removido: ${filePath}`);
     }
-    return new Date(dataString);
   } catch (error) {
-    return new Date();
+    console.error(`Erro ao remover arquivo temporário: ${error.message}`);
   }
 }
 
-// Middleware para verificar loja
-// Middleware para verificar loja - VERSÃO CORRIGIDA E SEGURA
-function verificarLoja(req, res, next) {
-  try {
-    let loja;
-
-    // Tenta obter a loja de várias fontes possíveis
-    if (req.headers["x-loja"]) {
-      loja = req.headers["x-loja"];
-    } else if (req.body && req.body.loja) {
-      loja = req.body.loja;
-    } else if (req.session && req.session.loja) {
-      loja = req.session.loja;
-    } else {
-      loja = "056"; // Valor padrão para testes - altere conforme necessário
-    }
-
-    console.log("Loja selecionada:", loja);
-    req.loja = loja;
-    next();
-  } catch (error) {
-    console.error("Erro no middleware verificarLoja:", error);
-    // Define uma loja padrão em caso de erro
-    req.loja = "056";
-    next();
-  }
-}
-
-// Função para processar ruptura - AGORA COM LOJA
-async function processarRuptura(file, dataAuditoria, loja) {
-  try {
-    const workbook = xlsx.readFile(file.path, { cellDates: true });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
-
-    const dadosProcessados = jsonData.map((item) => {
-      // Encontrar chaves dinamicamente (case insensitive)
-      const findKey = (patterns) => {
-        return Object.keys(item).find((key) =>
-          patterns.some(
-            (pattern) =>
-              key && key.toLowerCase().includes(pattern.toLowerCase())
-          )
-        );
-      };
-
-      return {
-        codigo: item[findKey(["código", "codigo"])] || "",
-        produto: item[findKey(["produto"])] || "",
-        classeProdutoRaiz:
-          item[findKey(["classe de produto raiz", "classe produto raiz"])] ||
-          "",
-        classeProduto:
-          item[findKey(["classe de produto", "classe produto"])] || "",
-        setor: item[findKey(["setor"])] || "",
-        local: item[findKey(["local"])] || "Não especificado",
-        usuario:
-          item[findKey(["usuário", "usuario"])] || "Usuário não identificado",
-        situacao: item[findKey(["situação", "situacao"])] || "Não lido",
-        situacaoAuditoria:
-          item[
-            findKey(["situação atual da auditoria", "situacao atual auditoria"])
-          ] || "",
-        auditadoEm: processarDataBrasileira(item[findKey(["auditado em"])]),
-        estoqueAtual: processarValorEstoque(item[findKey(["estoque atual"])]),
-        presencaConfirmada:
-          item[findKey(["presença confirmada", "presenca confirmada"])] || "",
-        diasSemVenda: parseInt(item[findKey(["dias sem venda"])]) || 0,
-        custoRuptura: parseFloat(item[findKey(["custo ruptura"])]) || 0,
-        dataAuditoria: dataAuditoria,
-        tipo: "ruptura",
-        loja: loja, // ← LOJA ADICIONADA
-      };
-    });
-
-    // Limpar dados antigos da mesma data E MESMA LOJA
-    await Ruptura.deleteMany({
-      dataAuditoria: {
-        $gte: new Date(dataAuditoria.setHours(0, 0, 0, 0)),
-        $lte: new Date(dataAuditoria.setHours(23, 59, 59, 999)),
-      },
-      loja: loja, // ← FILTRAR POR LOJA
-    });
-
-    if (dadosProcessados.length > 0) {
-      await Ruptura.insertMany(dadosProcessados);
-    }
-
-    return {
-      success: true,
-      totalItens: dadosProcessados.length,
-      tipo: "ruptura",
-      loja: loja,
-    };
-  } catch (error) {
-    console.error("Erro ao processar ruptura:", error);
-    return { success: false, error: error.message };
-  }
-}
-
-// Função para processar presença - AGORA COM LOJA
-async function processarPresenca(file, dataAuditoria, loja) {
-  try {
-    const workbook = xlsx.readFile(file.path, { cellDates: true });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
-
-    const dadosProcessados = jsonData.map((item) => {
-      const findKey = (patterns) => {
-        return Object.keys(item).find((key) =>
-          patterns.some(
-            (pattern) =>
-              key && key.toLowerCase().includes(pattern.toLowerCase())
-          )
-        );
-      };
-
-      return {
-        codigo: item[findKey(["código", "codigo"])] || "",
-        produto: item[findKey(["produto"])] || "",
-        local: item[findKey(["local"])] || "Não especificado",
-        usuario:
-          item[findKey(["usuário", "usuario"])] || "Usuário não identificado",
-        situacao: item[findKey(["situação", "situacao"])] || "Não lido",
-        auditadoEm: processarDataBrasileira(item[findKey(["auditado em"])]),
-        estoque: processarValorEstoque(item[findKey(["estoque"])]),
-        presenca:
-          item[findKey(["presença", "presenca"])] === "Sim" ||
-          item[findKey(["presença", "presenca"])] === true,
-        dataAuditoria: dataAuditoria,
-        tipo: "presenca",
-        loja: loja, // ← LOJA ADICIONADA
-      };
-    });
-
-    // Limpar dados antigos da mesma data E MESMA LOJA
-    await Presenca.deleteMany({
-      dataAuditoria: {
-        $gte: new Date(dataAuditoria.setHours(0, 0, 0, 0)),
-        $lte: new Date(dataAuditoria.setHours(23, 59, 59, 999)),
-      },
-      loja: loja, // ← FILTRAR POR LOJA
-    });
-
-    if (dadosProcessados.length > 0) {
-      await Presenca.insertMany(dadosProcessados);
-    }
-
-    return {
-      success: true,
-      totalItens: dadosProcessados.length,
-      tipo: "presenca",
-      loja: loja,
-    };
-  } catch (error) {
-    console.error("Erro ao processar presença:", error);
-    return { success: false, error: error.message };
-  }
-}
-
-// Função para processar etiqueta - AGORA COM LOJA
+// Função para processar etiqueta - MANTIDA IGUAL
 async function processarEtiqueta(file, dataAuditoria, loja) {
   try {
+    console.log(
+      `🏷️ Processando etiquetas para loja: ${loja.codigo} - ${loja.nome}`
+    );
+
     const workbook = xlsx.readFile(file.path, { cellDates: true });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
@@ -212,7 +64,7 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
     const usuariosMap = new Map();
     let totalItensProcessados = 0;
 
-    // Primeiro: encontrar todas as chaves uma única vez
+    // Encontrar chaves das colunas
     const primeiraLinha = jsonData[0] || {};
     const todasChaves = Object.keys(primeiraLinha);
 
@@ -250,7 +102,7 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
         ? String(item[usuarioKey] || "Produto não auditado")
         : "Produto não auditado";
 
-      // Adicionar ao batch de setores - COM LOJA
+      // Adicionar ao batch de setores - COM LOJA OBRIGATÓRIA
       setoresBatch.push({
         codigo: codigoKey ? String(item[codigoKey] || "") : "",
         produto: produtoKey ? String(item[produtoKey] || "") : "",
@@ -266,10 +118,10 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
           ? String(item[compraKey] || new Date().toLocaleDateString("pt-BR"))
           : new Date().toLocaleDateString("pt-BR"),
         dataAuditoria,
-        loja: loja, // ← LOJA ADICIONADA
+        loja: loja._id,
       });
 
-      // Mapear usuários para processamento posterior
+      // Mapear usuários
       if (usuarioStr && usuarioStr !== "Produto não auditado") {
         if (!usuariosMap.has(usuarioStr)) {
           usuariosMap.set(usuarioStr, []);
@@ -279,39 +131,64 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
       }
     }
 
-    // Limpar dados antigos da mesma data E MESMA LOJA
+    // Limpar dados antigos APENAS DESTA LOJA para esta data
+    const inicioDia = new Date(dataAuditoria);
+    inicioDia.setHours(0, 0, 0, 0);
+    const fimDia = new Date(dataAuditoria);
+    fimDia.setHours(23, 59, 59, 999);
+
     await Setor.deleteMany({
-      dataAuditoria: {
-        $gte: new Date(dataAuditoria.setHours(0, 0, 0, 0)),
-        $lte: new Date(dataAuditoria.setHours(23, 59, 59, 999)),
-      },
-      loja: loja, // ← FILTRAR POR LOJA
+      dataAuditoria: { $gte: inicioDia, $lte: fimDia },
+      loja: loja._id,
     });
+
+    console.log(
+      `🗑️ Dados antigos removidos para loja ${
+        loja.codigo
+      } na data ${dataAuditoria.toLocaleDateString()}`
+    );
 
     // Salvar setores
     if (setoresBatch.length > 0) {
       await Setor.insertMany(setoresBatch);
+      console.log(
+        `💾 ${setoresBatch.length} setores salvos para loja ${loja.codigo}`
+      );
     }
 
-    // Processar e salvar usuários
+    // Processar usuários
     for (const [usuarioStr, itens] of usuariosMap.entries()) {
       try {
-        // Extrair ID e nome do usuário (formato esperado: "123 (Nome Completo)")
         const match = usuarioStr.match(/^(\d+)\s*\((.*)\)$/);
         const id = match ? match[1].trim() : usuarioStr;
         const nome = match ? match[2].trim() : usuarioStr;
 
-        // Buscar usuário existente ou criar novo
-        let usuario =
-          (await User.findOne({ id })) || (await User.findOne({ nome }));
+        // Buscar usuário existente por ID e loja
+        let usuario = await User.findOne({
+          id,
+          loja: loja._id,
+        });
 
         if (!usuario) {
+          // Se não encontrou por ID, buscar por nome
+          usuario = await User.findOne({
+            nome,
+            loja: loja._id,
+          });
+        }
+
+        if (!usuario) {
+          // Criar novo usuário apenas se não existir
           usuario = new User({
             id,
             nome,
             contadorTotal: 0,
             auditorias: [],
+            loja: loja._id,
           });
+          console.log(`➕ Novo usuário criado: ${nome} (${id})`);
+        } else {
+          console.log(`👤 Usuário encontrado: ${usuario.nome} (${usuario.id})`);
         }
 
         // Encontrar ou criar auditoria para a data atual
@@ -344,8 +221,9 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
             produto: produtoKey ? String(item[produtoKey] || "") : "",
             local: localKey ? String(item[localKey] || "") : "",
             situacao: situacaoKey ? String(item[situacaoKey] || "") : "",
-            estoque: estoqueKey ? processarValorEstoque(item[estoqueKey]) : "0",
-            loja: loja, // ← LOJA AGORA DEFINIDA
+            estoque: estoqueKey ? String(item[estoqueKey] || "0") : "0",
+            tipoAuditoria: "etiqueta",
+            loja: loja._id,
           };
 
           auditoria.detalhes.push(detalhe);
@@ -361,10 +239,12 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
           0
         );
 
-        // SALVAR o usuário
         await usuario.save();
+        console.log(
+          `👤 Usuário processado: ${nome} (${auditoria.contador} itens)`
+        );
       } catch (error) {
-        console.error(`Erro ao processar usuário ${usuarioStr}:`, error);
+        console.error(`❌ Erro ao processar usuário ${usuarioStr}:`, error);
       }
     }
 
@@ -376,23 +256,30 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
     // Salvar informações da planilha - COM LOJA
     await Planilha.findOneAndUpdate(
       {
-        dataAuditoria: {
-          $gte: new Date(dataAuditoria.setHours(0, 0, 0, 0)),
-          $lte: new Date(dataAuditoria.setHours(23, 59, 59, 999)),
-        },
-        loja: loja, // ← FILTRAR POR LOJA
+        dataAuditoria: { $gte: inicioDia, $lte: fimDia },
+        tipoAuditoria: "etiqueta",
+        loja: loja._id,
       },
       {
         nomeArquivo: file.originalname,
         dataAuditoria,
-        loja: loja, // ← LOJA ADICIONADA
+        tipoAuditoria: "etiqueta",
+        loja: loja._id,
         totalItens: jsonData.length,
         totalItensLidos,
         usuariosEnvolvidos: Array.from(usuariosMap.keys()),
         dataUpload: new Date(),
+        metadata: {
+          tamanhoArquivo: file.size,
+          formato: file.originalname.split(".").pop(),
+          totalLinhas: jsonData.length,
+          processamentoCompleto: true,
+        },
       },
       { upsert: true, new: true }
     );
+
+    console.log(`✅ Planilha processada com sucesso para loja ${loja.codigo}`);
 
     return {
       success: true,
@@ -403,15 +290,512 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
       loja: loja,
     };
   } catch (error) {
-    console.error("Erro ao processar etiqueta:", error);
+    console.error("❌ Erro ao processar etiqueta:", error);
     return { success: false, error: error.message };
   }
 }
 
-// Rota principal de upload - AGORA COM VERIFICAÇÃO DE LOJA
+// Função para processar ruptura
+async function processarRuptura(file, dataAuditoria, loja) {
+  try {
+    console.log(
+      `💔 Processando rupturas para loja: ${loja.codigo} - ${loja.nome}`
+    );
+
+    const workbook = xlsx.readFile(file.path, { cellDates: true });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
+
+    // Extrair data real da planilha
+    let dataAuditoriaFinal = extrairDataDaPlanilha(jsonData, file.originalname);
+    if (!dataAuditoriaFinal || isNaN(dataAuditoriaFinal.getTime())) {
+      dataAuditoriaFinal = dataAuditoria;
+    }
+
+    const dadosProcessados = [];
+    const usuariosMap = new Map();
+
+    for (let index = 0; index < jsonData.length; index++) {
+      const item = jsonData[index];
+
+      const codigo = String(item["Código"] || "").trim();
+      const produto = String(
+        item["Produto"] || "Produto não especificado"
+      ).trim();
+
+      if (!codigo && !produto) {
+        continue;
+      }
+
+      const local = String(item["Local"] || "Não especificado").trim();
+      const usuario = String(
+        item["Usuário"] || "Usuário não identificado"
+      ).trim();
+      const situacao = String(item["Situação"] || "Não lido").trim();
+
+      const dadosItem = {
+        codigo,
+        produto,
+        local,
+        usuario,
+        situacao: normalizarSituacao(situacao),
+        situacaoAuditoria: String(
+          item["Situação atual da auditoria"] || ""
+        ).trim(),
+        auditadoEm: combinarDataHoraBrasileira(
+          item["Auditado em"],
+          item["Auditado em_1"]
+        ),
+        estoqueAtual: processarValorEstoque(item["Estoque atual"] || "0"),
+        presencaConfirmada: String(item["Presença confirmada"] || "").trim(),
+        presencaConfirmadaEm: combinarDataHoraBrasileira(
+          item["Presença confirmada"],
+          item["Presença confirmada_1"]
+        ),
+        estoqueLeitura: processarValorEstoque(item["Estoque Leitura"] || "0"),
+        residuo: String(item["Resíduo"] || "").trim(),
+        fornecedor: String(item["Fornecedor"] || "").trim(),
+        ultimaCompra: String(item["Última compra"] || "").trim(),
+        ultimaCompraEm: combinarDataHoraBrasileira(
+          item["Última compra"],
+          item["Última compra_1"]
+        ),
+        diasSemVenda: parseInt(item["Dias sem venda"] || 0),
+        custoRuptura: parseFloat(
+          String(item["Custo Ruptura"] || "0")
+            .replace(".", "")
+            .replace(",", ".")
+        ),
+        dataAuditoria: dataAuditoriaFinal,
+        tipo: "ruptura",
+        loja: loja._id,
+        metadata: {
+          nomeArquivo: file.originalname,
+          dataUpload: new Date(),
+          linhaPlanilha: index + 2,
+        },
+      };
+
+      dadosProcessados.push(dadosItem);
+
+      // Mapear usuários
+      if (usuario && usuario !== "Usuário não identificado") {
+        if (!usuariosMap.has(usuario)) {
+          usuariosMap.set(usuario, []);
+        }
+        usuariosMap.get(usuario).push(item);
+      }
+    }
+
+    // Limpar dados antigos
+    const inicioDia = new Date(dataAuditoriaFinal);
+    inicioDia.setHours(0, 0, 0, 0);
+    const fimDia = new Date(dataAuditoriaFinal);
+    fimDia.setHours(23, 59, 59, 999);
+
+    await Ruptura.deleteMany({
+      dataAuditoria: { $gte: inicioDia, $lte: fimDia },
+      loja: loja._id,
+    });
+
+    console.log(`🗑️ Rupturas antigas removidas para loja ${loja.codigo}`);
+
+    // Salvar rupturas
+    if (dadosProcessados.length > 0) {
+      await Ruptura.insertMany(dadosProcessados);
+      console.log(
+        `💾 ${dadosProcessados.length} rupturas salvas para loja ${loja.codigo}`
+      );
+    }
+
+    // Processar usuários no UserAudit
+    for (const [usuarioStr, itens] of usuariosMap.entries()) {
+      try {
+        const match = usuarioStr.match(/^(\d+)\s*\((.*)\)$/);
+        const userId = match ? match[1].trim() : usuarioStr;
+        const nome = match ? match[2].trim() : usuarioStr;
+
+        let userAudit = await UserAudit.findOne({
+          userId,
+          // Não usar loja aqui pois UserAudit pode não ter este campo
+        });
+
+        if (!userAudit) {
+          // Se não encontrou por userId, buscar por nome
+          userAudit = await UserAudit.findOne({ nome });
+        }
+
+        if (!userAudit) {
+          // Criar novo usuário apenas se não existir
+          userAudit = new UserAudit({
+            userId,
+            nome,
+            contadorTotal: 0,
+            auditorias: [],
+          });
+          console.log(`➕ Novo UserAudit criado: ${nome} (${userId})`);
+        } else {
+          console.log(
+            `👤 UserAudit encontrado: ${userAudit.nome} (${userAudit.userId})`
+          );
+        }
+
+        const auditoriaIndex = userAudit.auditorias.findIndex(
+          (a) => a.data.toDateString() === dataAuditoriaFinal.toDateString()
+        );
+
+        if (auditoriaIndex === -1) {
+          userAudit.auditorias.push({
+            data: dataAuditoriaFinal,
+            contador: 0,
+            detalhes: [],
+          });
+        }
+
+        const auditoria =
+          userAudit.auditorias[
+            auditoriaIndex === -1
+              ? userAudit.auditorias.length - 1
+              : auditoriaIndex
+          ];
+
+        auditoria.detalhes = [];
+        auditoria.contador = 0;
+
+        for (const item of itens) {
+          const detalhe = {
+            codigo: String(item["Código"] || ""),
+            produto: String(item["Produto"] || ""),
+            local: String(item["Local"] || ""),
+            situacao: String(item["Situação"] || ""),
+            estoque: String(item["Estoque atual"] || "0"),
+            tipoAuditoria: "ruptura",
+            loja: loja._id,
+          };
+
+          auditoria.detalhes.push(detalhe);
+
+          if (detalhe.situacao === "Atualizado") {
+            auditoria.contador++;
+          }
+        }
+
+        userAudit.contadorTotal = userAudit.auditorias.reduce(
+          (total, aud) => total + aud.contador,
+          0
+        );
+
+        await userAudit.save();
+      } catch (userError) {
+        console.error(`❌ Erro ao processar usuário ${usuarioStr}:`, userError);
+      }
+    }
+
+    // Salvar informações da planilha
+    await Planilha.findOneAndUpdate(
+      {
+        dataAuditoria: { $gte: inicioDia, $lte: fimDia },
+        tipoAuditoria: "ruptura",
+        loja: loja._id,
+      },
+      {
+        nomeArquivo: file.originalname,
+        dataAuditoria: dataAuditoriaFinal,
+        tipoAuditoria: "ruptura",
+        loja: loja._id,
+        totalItens: jsonData.length,
+        totalItensLidos: dadosProcessados.filter(
+          (item) => item.situacao === "Atualizado"
+        ).length,
+        usuariosEnvolvidos: Array.from(usuariosMap.keys()),
+        dataUpload: new Date(),
+        metadata: {
+          tamanhoArquivo: file.size,
+          formato: file.originalname.split(".").pop(),
+          totalLinhas: dadosProcessados.length,
+          processamentoCompleto: true,
+        },
+      },
+      { upsert: true, new: true }
+    );
+
+    console.log(`✅ Ruptura processada com sucesso para loja ${loja.codigo}`);
+
+    return {
+      success: true,
+      totalItens: jsonData.length,
+      totalProcessados: dadosProcessados.length,
+      totalUsuarios: usuariosMap.size,
+      tipo: "ruptura",
+      loja: loja,
+      dataAuditoria: dataAuditoriaFinal,
+    };
+  } catch (error) {
+    console.error("❌ Erro ao processar ruptura:", error);
+    return { success: false, error: error.message };
+  } finally {
+    // Limpar arquivo temporário
+    limparArquivoTemporario(file.path);
+  }
+}
+
+// Função para processar presença
+async function processarPresenca(file, dataAuditoria, loja) {
+  try {
+    console.log(
+      `👥 Processando presenças para loja: ${loja.codigo} - ${loja.nome}`
+    );
+
+    const workbook = xlsx.readFile(file.path, { cellDates: true });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
+
+    // Extrair data real da planilha
+    let dataAuditoriaFinal = extrairDataDaPlanilha(jsonData, file.originalname);
+    if (!dataAuditoriaFinal || isNaN(dataAuditoriaFinal.getTime())) {
+      dataAuditoriaFinal = dataAuditoria;
+    }
+
+    const dadosProcessados = [];
+    const usuariosMap = new Map();
+
+    for (let index = 0; index < jsonData.length; index++) {
+      const item = jsonData[index];
+
+      const codigo = String(item["Código"] || "").trim();
+      const produto = String(
+        item["Produto"] || "Produto não especificado"
+      ).trim();
+
+      if (!codigo && !produto) {
+        continue;
+      }
+
+      const local = String(item["Local"] || "Não especificado").trim();
+      const usuario = String(
+        item["Usuário"] || "Usuário não identificado"
+      ).trim();
+      const situacao = String(item["Situação"] || "Não lido").trim();
+
+      // Processar presença baseado na coluna situação
+      const situacaoStr = item["Situação"] || "";
+      const presenca = String(situacaoStr)
+        .toLowerCase()
+        .includes("com presença");
+
+      const dadosItem = {
+        codigo,
+        produto,
+        local,
+        usuario,
+        situacao: normalizarSituacao(situacao),
+        estoque: processarValorEstoque(item["Estoque atual"] || "0"),
+        presenca,
+        presencaConfirmada: String(item["Presença confirmada"] || "").trim(),
+        auditadoEm: combinarDataHoraBrasileira(
+          item["Auditado em"],
+          item["Auditado em_1"]
+        ),
+        presencaConfirmadaEm: combinarDataHoraBrasileira(
+          item["Presença confirmada"],
+          item["Presença confirmada_1"]
+        ),
+        classeProdutoRaiz: String(item["Classe de Produto Raiz"] || "").trim(),
+        classeProduto: String(item["Classe de Produto"] || "").trim(),
+        setor: String(item["Setor"] || "").trim(),
+        situacaoAuditoria: String(
+          item["Situação atual da auditoria"] || ""
+        ).trim(),
+        estoqueLeitura: processarValorEstoque(item["Estoque Leitura"] || "0"),
+        residuo: String(item["Resíduo"] || "").trim(),
+        fornecedor: String(item["Fornecedor"] || "").trim(),
+        ultimaCompra: String(item["Última compra"] || "").trim(),
+        diasSemVenda: parseInt(item["Dias sem venda"] || 0),
+        custoRuptura: parseFloat(
+          String(item["Custo Ruptura"] || "0")
+            .replace(".", "")
+            .replace(",", ".")
+        ),
+        dataAuditoria: dataAuditoriaFinal,
+        tipo: "presenca",
+        loja: loja._id,
+        metadata: {
+          nomeArquivo: file.originalname,
+          dataUpload: new Date(),
+          linhaPlanilha: index + 2,
+        },
+      };
+
+      dadosProcessados.push(dadosItem);
+
+      // Mapear usuários
+      if (usuario && usuario !== "Usuário não identificado") {
+        if (!usuariosMap.has(usuario)) {
+          usuariosMap.set(usuario, []);
+        }
+        usuariosMap.get(usuario).push(item);
+      }
+    }
+
+    // Limpar dados antigos
+    const inicioDia = new Date(dataAuditoriaFinal);
+    inicioDia.setHours(0, 0, 0, 0);
+    const fimDia = new Date(dataAuditoriaFinal);
+    fimDia.setHours(23, 59, 59, 999);
+
+    await Presenca.deleteMany({
+      dataAuditoria: { $gte: inicioDia, $lte: fimDia },
+      loja: loja._id,
+    });
+
+    console.log(`🗑️ Presenças antigas removidas para loja ${loja.codigo}`);
+
+    // Salvar presenças
+    if (dadosProcessados.length > 0) {
+      await Presenca.insertMany(dadosProcessados);
+      console.log(
+        `💾 ${dadosProcessados.length} presenças salvas para loja ${loja.codigo}`
+      );
+    }
+
+    // Processar usuários no UserAudit
+    for (const [usuarioStr, itens] of usuariosMap.entries()) {
+      try {
+        const match = usuarioStr.match(/^(\d+)\s*\((.*)\)$/);
+        const userId = match ? match[1].trim() : usuarioStr;
+        const nome = match ? match[2].trim() : usuarioStr;
+
+        let userAudit = await UserAudit.findOne({
+          userId,
+        });
+
+        if (!userAudit) {
+          // Se não encontrou por userId, buscar por nome
+          userAudit = await UserAudit.findOne({ nome });
+        }
+
+        if (!userAudit) {
+          // Criar novo usuário apenas se não existir
+          userAudit = new UserAudit({
+            userId,
+            nome,
+            contadorTotal: 0,
+            auditorias: [],
+          });
+          console.log(
+            `➕ Novo UserAudit criado para presença: ${nome} (${userId})`
+          );
+        } else {
+          console.log(
+            `👤 UserAudit encontrado para presença: ${userAudit.nome} (${userAudit.userId})`
+          );
+        }
+
+        const auditoriaIndex = userAudit.auditorias.findIndex(
+          (a) => a.data.toDateString() === dataAuditoriaFinal.toDateString()
+        );
+
+        if (auditoriaIndex === -1) {
+          userAudit.auditorias.push({
+            data: dataAuditoriaFinal,
+            contador: 0,
+            detalhes: [],
+          });
+        }
+
+        const auditoria =
+          userAudit.auditorias[
+            auditoriaIndex === -1
+              ? userAudit.auditorias.length - 1
+              : auditoriaIndex
+          ];
+
+        auditoria.detalhes = [];
+        auditoria.contador = 0;
+
+        for (const item of itens) {
+          const detalhe = {
+            codigo: String(item["Código"] || ""),
+            produto: String(item["Produto"] || ""),
+            local: String(item["Local"] || ""),
+            situacao: String(item["Situação"] || ""),
+            estoque: String(item["Estoque atual"] || "0"),
+            tipoAuditoria: "presenca",
+            loja: loja._id,
+          };
+
+          auditoria.detalhes.push(detalhe);
+
+          if (detalhe.situacao === "Atualizado") {
+            auditoria.contador++;
+          }
+        }
+
+        userAudit.contadorTotal = userAudit.auditorias.reduce(
+          (total, aud) => total + aud.contador,
+          0
+        );
+
+        await userAudit.save();
+      } catch (userError) {
+        console.error(`❌ Erro ao processar usuário ${usuarioStr}:`, userError);
+      }
+    }
+
+    // Salvar informações da planilha
+    await Planilha.findOneAndUpdate(
+      {
+        dataAuditoria: { $gte: inicioDia, $lte: fimDia },
+        tipoAuditoria: "presenca",
+        loja: loja._id,
+      },
+      {
+        nomeArquivo: file.originalname,
+        dataAuditoria: dataAuditoriaFinal,
+        tipoAuditoria: "presenca",
+        loja: loja._id,
+        totalItens: jsonData.length,
+        totalItensLidos: dadosProcessados.filter(
+          (item) => item.situacao === "Atualizado"
+        ).length,
+        usuariosEnvolvidos: Array.from(usuariosMap.keys()),
+        dataUpload: new Date(),
+        metadata: {
+          tamanhoArquivo: file.size,
+          formato: file.originalname.split(".").pop(),
+          totalLinhas: dadosProcessados.length,
+          processamentoCompleto: true,
+        },
+      },
+      { upsert: true, new: true }
+    );
+
+    console.log(`✅ Presença processada com sucesso para loja ${loja.codigo}`);
+
+    return {
+      success: true,
+      totalItens: jsonData.length,
+      totalProcessados: dadosProcessados.length,
+      totalUsuarios: usuariosMap.size,
+      tipo: "presenca",
+      loja: loja,
+      dataAuditoria: dataAuditoriaFinal,
+    };
+  } catch (error) {
+    console.error("❌ Erro ao processar presença:", error);
+    return { success: false, error: error.message };
+  } finally {
+    // Limpar arquivo temporário
+    limparArquivoTemporario(file.path);
+  }
+}
+
+// Rota principal de upload - ATUALIZADA
 router.post(
   "/upload",
-  verificarLoja,
+  verificarLojaObrigatoria,
   upload.single("file"),
   async (req, res) => {
     try {
@@ -421,21 +805,26 @@ router.post(
 
       const { tipoAuditoria = "etiqueta" } = req.body;
       const dataAuditoria = new Date();
-      const loja = req.loja; // Loja da sessão/middleware
+      const loja = req.loja;
+
+      console.log(
+        `📤 Iniciando upload de ${tipoAuditoria} para loja ${loja.codigo}`
+      );
 
       let resultado;
 
       switch (tipoAuditoria) {
+        case "etiqueta":
+          resultado = await processarEtiqueta(req.file, dataAuditoria, loja);
+          break;
         case "ruptura":
           resultado = await processarRuptura(req.file, dataAuditoria, loja);
           break;
         case "presenca":
           resultado = await processarPresenca(req.file, dataAuditoria, loja);
           break;
-        case "etiqueta":
         default:
-          resultado = await processarEtiqueta(req.file, dataAuditoria, loja);
-          break;
+          return res.status(400).json({ erro: "Tipo de auditoria inválido" });
       }
 
       if (!resultado.success) {
@@ -445,31 +834,35 @@ router.post(
         });
       }
 
-      // Processamento secundário para auditoria (mantido para compatibilidade)
+      // Processamento secundário para auditoria (apenas para etiqueta)
       if (tipoAuditoria === "etiqueta") {
-        const workbook = xlsx.readFile(req.file.path, { cellDates: true });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
+        try {
+          const workbook = xlsx.readFile(req.file.path, { cellDates: true });
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
 
-        processarParaAuditoria({
-          jsonData,
-          nomeArquivo: req.file.originalname,
-          dataAuditoria,
-          loja: loja, // ← PASSE A LOJA
-        }).then((resultadoSecundario) => {
-          if (resultadoSecundario.success) {
-            console.log(
-              "✅ Dados processados para Auditoria:",
-              resultadoSecundario.totalProcessados
-            );
-          } else {
-            console.log(
-              "⚠️ Processamento secundário falhou:",
-              resultadoSecundario.error
-            );
-          }
-        });
+          processarParaAuditoria({
+            jsonData,
+            nomeArquivo: req.file.originalname,
+            dataAuditoria,
+            loja: loja._id,
+          }).then((resultadoSecundario) => {
+            if (resultadoSecundario.success) {
+              console.log(
+                "✅ Dados processados para Auditoria:",
+                resultadoSecundario.totalProcessados
+              );
+            } else {
+              console.log(
+                "⚠️ Processamento secundário falhou:",
+                resultadoSecundario.error
+              );
+            }
+          });
+        } catch (secondaryError) {
+          console.error("⚠️ Erro no processamento secundário:", secondaryError);
+        }
       }
 
       res.json({
@@ -478,10 +871,14 @@ router.post(
         totalProcessados: resultado.totalProcessados || resultado.totalItens,
         totalUsuarios: resultado.totalUsuarios || 0,
         tipo: tipoAuditoria,
-        loja: resultado.loja,
+        loja: {
+          codigo: loja.codigo,
+          nome: loja.nome,
+        },
+        dataAuditoria: resultado.dataAuditoria || dataAuditoria,
       });
     } catch (error) {
-      console.error("Erro:", error);
+      console.error("❌ Erro no upload:", error);
       res.status(500).json({
         erro: "Falha no processamento",
         detalhes: error.message,
@@ -490,13 +887,11 @@ router.post(
   }
 );
 
-// Rotas para frontend (atualizadas para filtrar por loja)
-router.get("/usuarios", async (req, res) => {
+// Rotas para frontend - TODAS COM FILTRO DE LOJA
+router.get("/usuarios", verificarLojaObrigatoria, async (req, res) => {
   try {
-    const loja = req.headers["x-loja"] || req.query.loja;
-    const query = loja ? { loja: loja } : {};
+    const usuarios = await User.find({ loja: req.loja._id });
 
-    const usuarios = await User.find(query);
     res.json(
       usuarios.map((u) => ({
         id: u.id,
@@ -507,7 +902,7 @@ router.get("/usuarios", async (req, res) => {
           .map((n) => n[0])
           .join("")
           .substring(0, 2),
-        loja: u.loja || "000",
+        loja: req.loja.codigo,
       }))
     );
   } catch (error) {
@@ -515,65 +910,407 @@ router.get("/usuarios", async (req, res) => {
   }
 });
 
-router.get("/datas-auditoria", async (req, res) => {
+router.get("/datas-auditoria", verificarLojaObrigatoria, async (req, res) => {
   try {
-    const loja = req.headers["x-loja"] || req.query.loja;
-    const query = loja ? { loja: loja } : {};
-
-    const datas = await Planilha.distinct("dataAuditoria", query);
+    const datas = await Planilha.distinct("dataAuditoria", {
+      loja: req.loja._id,
+    });
     res.json(datas.sort((a, b) => new Date(b) - new Date(a)));
   } catch (error) {
     res.status(500).json({ erro: "Falha ao buscar datas" });
   }
 });
 
-router.get("/dados-planilha", async (req, res) => {
+router.get("/dados-planilha", verificarLojaObrigatoria, async (req, res) => {
   try {
-    const loja = req.headers["x-loja"] || req.query.loja;
-    const query = loja ? { loja: loja } : {};
-
-    const planilhaRecente = await Planilha.findOne(query).sort({
-      dataUpload: -1,
-    });
+    const { tipoAuditoria } = req.query;
+    const planilhaRecente = await Planilha.findOne({
+      loja: req.loja._id,
+      ...(tipoAuditoria && { tipoAuditoria }),
+    }).sort({ dataUpload: -1 });
 
     if (!planilhaRecente) {
-      return res.status(404).json({ erro: "Nenhuma planilha encontrada" });
+      return res.status(404).json({
+        erro: "Nenhuma planilha encontrada para esta loja",
+        loja: req.loja.codigo,
+      });
     }
 
-    const usuarios = await User.find({
-      "auditorias.data": planilhaRecente.dataAuditoria,
-      ...query,
-    });
+    let dadosPlanilha = [];
 
-    const dadosPlanilha = [];
+    // Buscar dados baseado no tipo de auditoria
+    switch (planilhaRecente.tipoAuditoria) {
+      case "etiqueta":
+        const usuarios = await User.find({
+          "auditorias.data": planilhaRecente.dataAuditoria,
+          loja: req.loja._id,
+        });
 
-    usuarios.forEach((usuario) => {
-      usuario.auditorias.forEach((auditoria) => {
-        if (
-          auditoria.data.toDateString() ===
-          planilhaRecente.dataAuditoria.toDateString()
-        ) {
-          auditoria.detalhes.forEach((detalhe) => {
-            dadosPlanilha.push({
-              Código: detalhe.codigo,
-              Produto: detalhe.produto,
-              Local: detalhe.local,
-              Usuario: `${usuario.id} (${usuario.nome})`,
-              Situacao: detalhe.situacao,
-              "Estoque atual": detalhe.estoque,
-              "Última compra": new Date().toLocaleDateString("pt-BR"),
-              Loja: detalhe.loja || "000",
-            });
+        usuarios.forEach((usuario) => {
+          usuario.auditorias.forEach((auditoria) => {
+            if (
+              auditoria.data.toDateString() ===
+              planilhaRecente.dataAuditoria.toDateString()
+            ) {
+              auditoria.detalhes.forEach((detalhe) => {
+                dadosPlanilha.push({
+                  Código: detalhe.codigo,
+                  Produto: detalhe.produto,
+                  Local: detalhe.local,
+                  Usuario: `${usuario.id} (${usuario.nome})`,
+                  Situacao: detalhe.situacao,
+                  "Estoque atual": detalhe.estoque,
+                  "Última compra": new Date().toLocaleDateString("pt-BR"),
+                  Loja: req.loja.codigo,
+                });
+              });
+            }
           });
-        }
-      });
-    });
+        });
+        break;
 
-    res.json(dadosPlanilha);
+      case "ruptura":
+        const rupturas = await Ruptura.find({
+          dataAuditoria: {
+            $gte: new Date(planilhaRecente.dataAuditoria).setHours(0, 0, 0, 0),
+            $lte: new Date(planilhaRecente.dataAuditoria).setHours(
+              23,
+              59,
+              59,
+              999
+            ),
+          },
+          loja: req.loja._id,
+        });
+
+        dadosPlanilha = rupturas.map((ruptura) => ({
+          Código: ruptura.codigo,
+          Produto: ruptura.produto,
+          Local: ruptura.local,
+          Usuario: ruptura.usuario,
+          Situacao: ruptura.situacao,
+          "Estoque Atual": ruptura.estoqueAtual,
+          "Presença Confirmada": ruptura.presencaConfirmada,
+          "Auditado Em": ruptura.auditadoEm?.toLocaleString("pt-BR") || "",
+          "Dias Sem Venda": ruptura.diasSemVenda,
+          "Custo Ruptura":
+            ruptura.custoRuptura?.toLocaleString("pt-BR", {
+              style: "currency",
+              currency: "BRL",
+            }) || "",
+          Fornecedor: ruptura.fornecedor,
+          Loja: req.loja.codigo,
+          "Data Auditoria": ruptura.dataAuditoria.toLocaleDateString("pt-BR"),
+        }));
+        break;
+
+      case "presenca":
+        const presencas = await Presenca.find({
+          dataAuditoria: {
+            $gte: new Date(planilhaRecente.dataAuditoria).setHours(0, 0, 0, 0),
+            $lte: new Date(planilhaRecente.dataAuditoria).setHours(
+              23,
+              59,
+              59,
+              999
+            ),
+          },
+          loja: req.loja._id,
+        });
+
+        dadosPlanilha = presencas.map((presenca) => ({
+          Código: presenca.codigo,
+          Produto: presenca.produto,
+          Local: presenca.local,
+          Usuario: presenca.usuario,
+          Situacao: presenca.situacao,
+          "Estoque Atual": presenca.estoque,
+          "Tem Presença": presenca.presenca ? "Sim" : "Não",
+          "Presença Confirmada": presenca.presencaConfirmada,
+          "Auditado Em": presenca.auditadoEm?.toLocaleString("pt-BR") || "",
+          "Classe Produto": presenca.classeProduto,
+          Setor: presenca.setor,
+          Fornecedor: presenca.fornecedor,
+          Loja: req.loja.codigo,
+          "Data Auditoria": presenca.dataAuditoria.toLocaleDateString("pt-BR"),
+        }));
+        break;
+    }
+
+    res.json({
+      dados: dadosPlanilha,
+      planilha: {
+        nome: planilhaRecente.nomeArquivo,
+        dataAuditoria: planilhaRecente.dataAuditoria,
+        tipoAuditoria: planilhaRecente.tipoAuditoria,
+        totalItens: planilhaRecente.totalItens,
+        totalItensLidos: planilhaRecente.totalItensLidos,
+        usuariosEnvolvidos: planilhaRecente.usuariosEnvolvidos?.length || 0,
+      },
+    });
   } catch (error) {
     console.error("Erro ao buscar dados da planilha:", error);
     res.status(500).json({
       erro: "Falha ao buscar dados",
+      detalhes: error.message,
+    });
+  }
+});
+
+// Rotas específicas para cada tipo de auditoria
+router.get("/dados-ruptura", verificarLojaObrigatoria, async (req, res) => {
+  try {
+    const { dataAuditoria, page = 1, limit = 1000 } = req.query;
+    let filtro = { loja: req.loja._id };
+
+    if (dataAuditoria) {
+      const dataEspecifica = new Date(dataAuditoria);
+      const inicioDia = new Date(dataEspecifica);
+      inicioDia.setHours(0, 0, 0, 0);
+      const fimDia = new Date(dataEspecifica);
+      fimDia.setHours(23, 59, 59, 999);
+      filtro.dataAuditoria = { $gte: inicioDia, $lte: fimDia };
+    }
+
+    const rupturas = await Ruptura.find(filtro)
+      .sort({ codigo: 1, produto: 1 })
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit));
+
+    const totalRupturas = await Ruptura.countDocuments(filtro);
+
+    const dadosFormatados = rupturas.map((ruptura) => ({
+      Código: ruptura.codigo,
+      Produto: ruptura.produto,
+      Local: ruptura.local,
+      Usuario: ruptura.usuario,
+      Situacao: ruptura.situacao,
+      "Estoque Atual": ruptura.estoqueAtual,
+      "Presença Confirmada": ruptura.presencaConfirmada,
+      "Auditado Em": ruptura.auditadoEm?.toLocaleString("pt-BR") || "",
+      "Dias Sem Venda": ruptura.diasSemVenda,
+      "Custo Ruptura":
+        ruptura.custoRuptura?.toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }) || "",
+      Fornecedor: ruptura.fornecedor,
+      Loja: req.loja.codigo,
+      "Data Auditoria": ruptura.dataAuditoria.toLocaleDateString("pt-BR"),
+    }));
+
+    res.json({
+      dados: dadosFormatados,
+      paginacao: {
+        paginaAtual: parseInt(page),
+        totalPaginas: Math.ceil(totalRupturas / parseInt(limit)),
+        totalItens: totalRupturas,
+        itensPorPagina: parseInt(limit),
+      },
+      tipo: "ruptura",
+      loja: {
+        codigo: req.loja.codigo,
+        nome: req.loja.nome,
+      },
+    });
+  } catch (error) {
+    console.error("Erro ao buscar dados de ruptura:", error);
+    res.status(500).json({
+      erro: "Falha ao buscar dados de ruptura",
+      detalhes: error.message,
+    });
+  }
+});
+
+router.get("/dados-presenca", verificarLojaObrigatoria, async (req, res) => {
+  try {
+    const { dataAuditoria, page = 1, limit = 1000 } = req.query;
+    let filtro = { loja: req.loja._id };
+
+    if (dataAuditoria) {
+      const dataEspecifica = new Date(dataAuditoria);
+      const inicioDia = new Date(dataEspecifica);
+      inicioDia.setHours(0, 0, 0, 0);
+      const fimDia = new Date(dataEspecifica);
+      fimDia.setHours(23, 59, 59, 999);
+      filtro.dataAuditoria = { $gte: inicioDia, $lte: fimDia };
+    }
+
+    const presencas = await Presenca.find(filtro)
+      .sort({ codigo: 1, produto: 1 })
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit));
+
+    const totalPresencas = await Presenca.countDocuments(filtro);
+
+    const dadosFormatados = presencas.map((presenca) => ({
+      Código: presenca.codigo,
+      Produto: presenca.produto,
+      Local: presenca.local,
+      Usuario: presenca.usuario,
+      Situacao: presenca.situacao,
+      "Estoque Atual": presenca.estoque,
+      "Tem Presença": presenca.presenca ? "Sim" : "Não",
+      "Presença Confirmada": presenca.presencaConfirmada,
+      "Auditado Em": presenca.auditadoEm?.toLocaleString("pt-BR") || "",
+      "Classe Produto": presenca.classeProduto,
+      Setor: presenca.setor,
+      Fornecedor: presenca.fornecedor,
+      Loja: req.loja.codigo,
+      "Data Auditoria": presenca.dataAuditoria.toLocaleDateString("pt-BR"),
+    }));
+
+    res.json({
+      dados: dadosFormatados,
+      paginacao: {
+        paginaAtual: parseInt(page),
+        totalPaginas: Math.ceil(totalPresencas / parseInt(limit)),
+        totalItens: totalPresencas,
+        itensPorPagina: parseInt(limit),
+      },
+      tipo: "presenca",
+      loja: {
+        codigo: req.loja.codigo,
+        nome: req.loja.nome,
+      },
+    });
+  } catch (error) {
+    console.error("Erro ao buscar dados de presença:", error);
+    res.status(500).json({
+      erro: "Falha ao buscar dados de presença",
+      detalhes: error.message,
+    });
+  }
+});
+
+// Rota para estatísticas gerais
+router.get("/estatisticas", verificarLojaObrigatoria, async (req, res) => {
+  try {
+    const { dataInicio, dataFim } = req.query;
+    let filtroData = {};
+
+    if (dataInicio || dataFim) {
+      filtroData.dataAuditoria = {};
+      if (dataInicio) filtroData.dataAuditoria.$gte = new Date(dataInicio);
+      if (dataFim) filtroData.dataAuditoria.$lte = new Date(dataFim);
+    }
+
+    const filtro = { loja: req.loja._id, ...filtroData };
+
+    const [
+      totalPlanilhas,
+      totalUsuarios,
+      totalSetores,
+      totalRupturas,
+      totalPresencas,
+      planilhaRecente,
+    ] = await Promise.all([
+      Planilha.countDocuments(filtro),
+      User.countDocuments({ loja: req.loja._id }),
+      Setor.countDocuments(filtro),
+      Ruptura.countDocuments(filtro),
+      Presenca.countDocuments(filtro),
+      Planilha.findOne({ loja: req.loja._id }).sort({ dataUpload: -1 }),
+    ]);
+
+    res.json({
+      estatisticas: {
+        totalPlanilhas,
+        totalUsuarios,
+        totalSetores,
+        totalRupturas,
+        totalPresencas,
+        ultimaAtualizacao: planilhaRecente?.dataUpload || null,
+      },
+      loja: {
+        codigo: req.loja.codigo,
+        nome: req.loja.nome,
+      },
+      periodo: {
+        dataInicio: dataInicio || null,
+        dataFim: dataFim || null,
+      },
+    });
+  } catch (error) {
+    console.error("Erro ao buscar estatísticas:", error);
+    res.status(500).json({
+      erro: "Falha ao buscar estatísticas",
+      detalhes: error.message,
+    });
+  }
+});
+
+// Rota para ranking de usuários
+router.get("/ranking-usuarios", verificarLojaObrigatoria, async (req, res) => {
+  try {
+    const { dataInicio, dataFim, limite = 10 } = req.query;
+    let filtroData = {};
+
+    if (dataInicio || dataFim) {
+      filtroData = {};
+      if (dataInicio) filtroData.$gte = new Date(dataInicio);
+      if (dataFim) filtroData.$lte = new Date(dataFim);
+    }
+
+    const usuarios = await User.find({ loja: req.loja._id })
+      .sort({ contadorTotal: -1 })
+      .limit(parseInt(limite));
+
+    const ranking = usuarios.map((usuario, index) => {
+      let contadorPeriodo = usuario.contadorTotal;
+      let auditoriasNoPeriodo = usuario.auditorias.length;
+
+      if (dataInicio || dataFim) {
+        const auditoriasFiltradas = usuario.auditorias.filter((aud) => {
+          if (dataInicio && aud.data < new Date(dataInicio)) return false;
+          if (dataFim && aud.data > new Date(dataFim)) return false;
+          return true;
+        });
+
+        contadorPeriodo = auditoriasFiltradas.reduce(
+          (sum, aud) => sum + aud.contador,
+          0
+        );
+        auditoriasNoPeriodo = auditoriasFiltradas.length;
+      }
+
+      return {
+        posicao: index + 1,
+        id: usuario.id,
+        nome: usuario.nome,
+        contadorPeriodo,
+        contadorTotal: usuario.contadorTotal,
+        auditoriasNoPeriodo,
+        totalAuditorias: usuario.auditorias.length,
+        iniciais: usuario.nome
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .substring(0, 2)
+          .toUpperCase(),
+        ultimaAuditoria:
+          usuario.auditorias.length > 0
+            ? usuario.auditorias[usuario.auditorias.length - 1].data
+            : null,
+      };
+    });
+
+    res.json({
+      ranking,
+      filtros: {
+        dataInicio: dataInicio || null,
+        dataFim: dataFim || null,
+        limite: parseInt(limite),
+      },
+      loja: {
+        codigo: req.loja.codigo,
+        nome: req.loja.nome,
+      },
+    });
+  } catch (error) {
+    console.error("Erro ao buscar ranking:", error);
+    res.status(500).json({
+      erro: "Falha ao buscar ranking",
       detalhes: error.message,
     });
   }
