@@ -1,22 +1,23 @@
 // routes/ranking.js ou similar
 import express from "express";
-import UserAudit from "../models/UserAudit.js";
+import User from "../models/User.js";
+import { verificarLojaObrigatoria } from "../middleware/loja.js";
 
 const router = express.Router();
 
-// Nova rota para buscar ranking da coleção UserAudit
-router.get("/ranking-useraudit", async (req, res) => {
+// Nova rota para buscar ranking da coleção User
+router.get("/ranking-useraudit", verificarLojaObrigatoria, async (req, res) => {
   try {
     const { tipo, periodo } = req.query;
-    
+
     // Construir query baseada nos filtros
-    let query = {};
-    
+    let query = { loja: req.loja._id };
+
     // Aqui você pode adicionar lógica de filtro por tipo e período
-    // se necessário, baseado na estrutura do UserAudit
-    
-    const usuarios = await UserAudit.find(query)
-      .select("userId nome contadorTotal auditorias")
+    // se necessário, baseado na estrutura do User
+
+    const usuarios = await User.find(query)
+      .select("id nome contadorTotal auditorias")
       .lean();
     
     res.json(usuarios);

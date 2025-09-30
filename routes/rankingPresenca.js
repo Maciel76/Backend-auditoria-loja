@@ -1,15 +1,16 @@
 // routes/rankingPresenca.js
 import express from "express";
-import UserAudit from "../models/UserAudit.js";
+import User from "../models/User.js";
+import { verificarLojaObrigatoria } from "../middleware/loja.js";
 
 const router = express.Router();
 
-router.get("/api/ranking-presenca", async (req, res) => {
+router.get("/api/ranking-presenca", verificarLojaObrigatoria, async (req, res) => {
   try {
     const { tipo, periodo } = req.query;
 
-    // Buscar todos os usuários do modelo UserAudit
-    const usuarios = await UserAudit.find({});
+    // Buscar todos os usuários da loja selecionada
+    const usuarios = await User.find({ loja: req.loja._id });
 
     // Calcular contador para cada usuário baseado no período e tipo
     const ranking = usuarios
@@ -72,6 +73,7 @@ router.get("/api/ranking-presenca", async (req, res) => {
           nome: usuario.nome,
           foto: usuario.foto,
           contador: contador,
+          loja: req.loja.codigo,
         };
       })
       .filter((user) => user.contador > 0)

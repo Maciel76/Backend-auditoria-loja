@@ -1,15 +1,16 @@
 // routes/rankingRuptura.js
 import express from "express";
-import UserRuptura from "../models/userRuptura.js";
+import User from "../models/User.js";
+import { verificarLojaObrigatoria } from "../middleware/loja.js";
 
 const router = express.Router();
 
-router.get("/api/ranking-ruptura", async (req, res) => {
+router.get("/api/ranking-ruptura", verificarLojaObrigatoria, async (req, res) => {
   try {
     const { tipo, periodo } = req.query;
 
-    // Buscar todos os usuários do modelo UserRuptura
-    const usuarios = await UserRuptura.find({});
+    // Buscar todos os usuários da loja selecionada
+    const usuarios = await User.find({ loja: req.loja._id });
 
     // Calcular contador para cada usuário baseado no período
     const ranking = usuarios
@@ -49,10 +50,11 @@ router.get("/api/ranking-ruptura", async (req, res) => {
         }
 
         return {
-          id: usuario.userId,
+          id: usuario.id,
           nome: usuario.nome,
           foto: usuario.foto,
           contador: contador,
+          loja: req.loja.codigo,
         };
       })
       .filter((user) => user.contador > 0)

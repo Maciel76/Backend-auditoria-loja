@@ -1,10 +1,10 @@
 import express from "express";
 import multer from "multer";
 import xlsx from "xlsx";
-import Ruptura from "../models/Ruptura.js";
+import Auditoria from "../models/Auditoria.js";
 import Planilha from "../models/Planilha.js";
 import User from "../models/User.js";
-import UserAudit from "../models/userRuptura.js";
+import { verificarLojaObrigatoria } from "../middleware/loja.js";
 import {
   mapearColunasRepetidas,
   extrairValorMapeado,
@@ -108,13 +108,26 @@ async function processarRuptura(file, dataAuditoriaParam, loja) {
     const fimDia = new Date(dataAuditoria);
     fimDia.setHours(23, 59, 59, 999);
 
-    await Ruptura.deleteMany({
+    await Auditoria.deleteMany({ tipo: "ruptura",
       dataAuditoria: { $gte: inicioDia, $lte: fimDia },
       loja: loja, // ← FILTRAR POR LOJA
     });
 
     if (dadosProcessados.length > 0) {
-      await Ruptura.insertMany(dadosProcessados);
+      const auditoriasBatch = dadosProcessados.map(item => ({
+        loja: loja._id,
+        usuarioId: item.usuario.match(/^(\d+)/)?.[1] || item.usuario,
+        usuarioNome: item.usuario.includes("(") ? item.usuario.match(/\((.*)\)/)?.[1] || item.usuario : item.usuario,
+        tipo: "ruptura",
+        data: dataAuditoria,
+        codigo: item.codigo,
+        produto: item.produto,
+        local: item.local,
+        situacao: item.situacao,
+        estoque: item.estoqueAtual,
+        ...item
+      }));
+      await Auditoria.insertMany(auditoriasBatch);
     }
 
     // Salvar registro da planilha - COM LOJA
@@ -143,7 +156,7 @@ async function processarRuptura(file, dataAuditoriaParam, loja) {
     );
 
     // Logs detalhados
-    console.log(`🔄 Processando dados para coleção Ruptura...`);
+    console.log(`🔄 Processando dados para coleção Auditoria (ruptura)...`);
     console.log(`📊 Total de linha na planilha: ${jsonData.length}`);
     console.log(`📁 Arquivo: ${file.originalname}`);
     console.log(`🏪 Loja: ${loja}`);
@@ -162,7 +175,7 @@ async function processarRuptura(file, dataAuditoriaParam, loja) {
       loja // ← PASSE A LOJA
     );
 
-    // Processar e salvar usuários no modelo UserAudit
+    // Processar e salvar usuários no modelo User
     const totalUsuariosAudit = await processarUsuariosAudit(
       dadosProcessados,
       dataAuditoria,
@@ -285,7 +298,7 @@ async function processarUsuarios(
   }
 }
 
-// Função para salvar usuários no modelo UserAudit - AGORA COM LOJA
+// Função para salvar usuários no modelo User - AGORA COM LOJA
 async function processarUsuariosAudit(
   dadosProcessados,
   dataAuditoria,
@@ -294,7 +307,7 @@ async function processarUsuariosAudit(
 ) {
   try {
     console.log(
-      `👥 Processando usuários para ${tipoAuditoria} no modelo UserAudit...`
+      `👥 Processando usuários para ${tipoAuditoria} no modelo User...`
     );
 
     const usuariosMap = new Map();
@@ -320,12 +333,12 @@ async function processarUsuariosAudit(
       const userId = match ? match[1].trim() : usuarioStr;
       const nome = match ? match[2].trim() : usuarioStr;
 
-      // Buscar no novo modelo UserAudit
-      let userAudit = await UserAudit.findOne({ userId: userId });
+      // Buscar no novo modelo User
+      let usuario = await User.findOne({ id: userId, loja: loja._id });
 
       if (!userAudit) {
         // Criar novo registro se não existir
-        userAudit = new UserAudit({
+        usuario = new User({
           userId: userId,
           nome: nome,
           contadorTotal: 0,
@@ -337,13 +350,13 @@ async function processarUsuariosAudit(
       }
 
       // Verificar se já existe auditoria nesta data
-      const auditoriaIndex = userAudit.auditorias.findIndex(
+      const auditoriaIndex = usuario.auditorias.findIndex(
         (a) => a.data.toDateString() === dataAuditoria.toDateString()
       );
 
       if (auditoriaIndex === -1) {
         // Criar nova auditoria
-        userAudit.auditorias.push({
+        usuario.auditorias.push({
           data: dataAuditoria,
           contador: 0,
           detalhes: [],
@@ -351,9 +364,9 @@ async function processarUsuariosAudit(
       }
 
       const auditoria =
-        userAudit.auditorias[
+        usuario.auditorias[
           auditoriaIndex === -1
-            ? userAudit.auditorias.length - 1
+            ? usuario.auditorias.length - 1
             : auditoriaIndex
         ];
 
@@ -379,38 +392,31 @@ async function processarUsuariosAudit(
       }
 
       // Atualizar contador total
-      userAudit.contadorTotal = userAudit.auditorias.reduce(
+      usuario.contadorTotal = usuario.auditorias.reduce(
         (total, aud) => total + aud.contador,
         0
       );
 
-      await userAudit.save();
+      await usuario.save();
     }
 
-    console.log(`✅ Usuários processados com sucesso no modelo UserAudit`);
+    console.log(`✅ Usuários processados com sucesso no modelo User`);
     return usuariosMap.size;
   } catch (error) {
-    console.error("❌ Erro ao processar usuários no UserAudit:", error);
+    console.error("❌ Erro ao processar usuários no User:", error);
     return 0;
   }
 }
 
 // Rota principal - AGORA COM VERIFICAÇÃO DE LOJA
-router.post("/upload-ruptura", upload.single("file"), async (req, res) => {
+router.post("/upload-ruptura", verificarLojaObrigatoria, upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ erro: "Nenhum arquivo enviado." });
     }
 
-    // Obter a loja da sessão, header ou body
-    const loja =
-      req.headers["x-loja"] || req.body.loja || req.session.loja || "000";
-
-    if (!loja) {
-      return res.status(400).json({
-        erro: "Loja não selecionada. Por favor, selecione uma loja primeiro.",
-      });
-    }
+    // Usar loja do middleware
+    const loja = req.loja;
 
     const resultado = await processarRuptura(req.file, new Date(), loja);
 

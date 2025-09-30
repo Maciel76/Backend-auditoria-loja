@@ -7,27 +7,42 @@ const lojaSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      index: true,
     },
     nome: {
       type: String,
       required: true,
     },
-    endereco: String,
-    regiao: String,
+    cidade: {
+      type: String,
+    },
+    endereco: {
+      type: String,
+    },
+    regiao: {
+      type: String,
+    },
+    imagem: {
+      type: String,
+      default: "/images/lojas/default.jpg",
+    },
     ativa: {
       type: Boolean,
       default: true,
     },
-    usuarios: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
+    metadata: {
+      telefone: String,
+      email: String,
+      gerente: String,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+// Índices para otimização
+lojaSchema.index({ codigo: 1 });
+lojaSchema.index({ ativa: 1 });
 
 export default mongoose.model("Loja", lojaSchema);

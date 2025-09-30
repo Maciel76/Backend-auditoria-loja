@@ -9,7 +9,6 @@ import setoresRouter from "./routes/setores.js";
 import relatoriosAvancadosRouter from "./routes/relatorios-avancados.js";
 import estatiscas from "./routes/estatisticas.js";
 import lojaRouter from "./routes/lojas.js";
-import { sincronizarSetoresParaAuditoria } from "./services/processador-auditoria.js";
 import uploadRupturaRouter from "./routes/upload-ruptura.js";
 import uploadPresencaRouter from "./routes/upload-presenca.js";
 import "./utils/planilhaHelpers.js";
@@ -121,26 +120,7 @@ try {
   console.log("❌ Erro nas rotas avançadas:", error.message);
 }
 
-// Rota de sincronização
-app.get("/api/sincronizar-auditoria", async (req, res) => {
-  try {
-    const resultado = await sincronizarSetoresParaAuditoria();
-    if (resultado.success) {
-      res.json({
-        mensagem: "Sincronização concluída",
-        totalSetores: resultado.totalSetores,
-      });
-    } else {
-      res
-        .status(500)
-        .json({ erro: "Falha na sincronização", detalhes: resultado.error });
-    }
-  } catch (error) {
-    res
-      .status(500)
-      .json({ erro: "Erro na sincronização", detalhes: error.message });
-  }
-});
+// Rota de sincronização removida - agora usa modelos unificados
 
 // Start
 const PORT = 3000;

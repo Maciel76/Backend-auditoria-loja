@@ -1,6 +1,6 @@
 import express from "express";
 import Auditoria from "../models/Auditoria.js"; // Usando a nova coleção
-import Setor from "../models/Setor.js";
+import { verificarLojaObrigatoria } from "../middleware/loja.js";
 
 const router = express.Router();
 
@@ -40,7 +40,7 @@ const calcularPeriodo = (periodo) => {
 };
 
 // 📊 DASHBOARD PRINCIPAL
-router.get("/dashboard", async (req, res) => {
+router.get("/dashboard", verificarLojaObrigatoria, async (req, res) => {
   try {
     const { periodo = "mes", tipo } = req.query;
     const { inicio, fim } = calcularPeriodo(periodo);
@@ -57,7 +57,7 @@ router.get("/dashboard", async (req, res) => {
     const [dashboardData, evolucaoSemanal, topColaboradores] =
       await Promise.all([
         // Dados principais do dashboard
-        Auditoria.aggregate([
+        Auditoria.aggregate([{ $match: { loja: req.loja._id } },
           { $match: matchStage },
           {
             $group: {
@@ -90,7 +90,7 @@ router.get("/dashboard", async (req, res) => {
         ]),
 
         // Evolução semanal (últimas 4 semanas)
-        Auditoria.aggregate([
+        Auditoria.aggregate([{ $match: { loja: req.loja._id } },
           {
             $match: {
               data: {
@@ -135,7 +135,7 @@ router.get("/dashboard", async (req, res) => {
         ]),
 
         // Top 5 colaboradores
-        Auditoria.aggregate([
+        Auditoria.aggregate([{ $match: { loja: req.loja._id } },
           { $match: matchStage },
           {
             $group: {
@@ -173,7 +173,7 @@ router.get("/dashboard", async (req, res) => {
     const topColabEnriquecido = await Promise.all(
       topColaboradores.map(async (colab) => {
         // Buscar o nome do usuário (usando a coleção User existente ou da própria auditoria)
-        const usuarioAuditoria = await Auditoria.findOne({
+        const usuarioAuditoria = await Auditoria.findOne({ loja: req.loja._id,
           usuarioId: colab.usuarioId,
         }).sort({ data: -1 });
 
@@ -211,14 +211,14 @@ router.get("/dashboard", async (req, res) => {
   }
 });
 // 📊 DISTRIBUIÇÃO POR SITUAÇÃO
-router.get("/distribuicao-situacao", async (req, res) => {
+router.get("/distribuicao-situacao", verificarLojaObrigatoria, async (req, res) => {
   try {
     const { periodo = "30dias", tipo } = req.query;
     const { inicio, fim } = calcularPeriodo(periodo);
 
     const filtroTipo = tipo && tipo !== "todos" ? { tipo } : {};
 
-    const distribuicao = await Auditoria.aggregate([
+    const distribuicao = await Auditoria.aggregate([{ $match: { loja: req.loja._id } },
       {
         $match: {
           data: { $gte: inicio, $lte: fim },
@@ -250,14 +250,14 @@ router.get("/distribuicao-situacao", async (req, res) => {
 });
 
 // 🏪 TOP LOCAIS
-router.get("/top-locais", async (req, res) => {
+router.get("/top-locais", verificarLojaObrigatoria, async (req, res) => {
   try {
     const { periodo = "30dias", tipo } = req.query;
     const { inicio, fim } = calcularPeriodo(periodo);
 
     const filtroTipo = tipo && tipo !== "todos" ? { tipo } : {};
 
-    const locais = await Auditoria.aggregate([
+    const locais = await Auditoria.aggregate([{ $match: { loja: req.loja._id } },
       {
         $match: {
           data: { $gte: inicio, $lte: fim },
@@ -289,14 +289,14 @@ router.get("/top-locais", async (req, res) => {
 });
 
 // 📈 EVOLUÇÃO DIÁRIA
-router.get("/evolucao-diaria", async (req, res) => {
+router.get("/evolucao-diaria", verificarLojaObrigatoria, async (req, res) => {
   try {
     const { periodo = "7dias", tipo } = req.query;
     const { inicio, fim } = calcularPeriodo(periodo);
 
     const filtroTipo = tipo && tipo !== "todos" ? { tipo } : {};
 
-    const evolucao = await Auditoria.aggregate([
+    const evolucao = await Auditoria.aggregate([{ $match: { loja: req.loja._id } },
       {
         $match: {
           data: { $gte: inicio, $lte: fim },
@@ -330,12 +330,12 @@ router.get("/evolucao-diaria", async (req, res) => {
 });
 
 // 📈 ESTATÍSTICAS POR TIPO DE AUDITORIA
-router.get("/estatisticas-tipo", async (req, res) => {
+router.get("/estatisticas-tipo", verificarLojaObrigatoria, async (req, res) => {
   try {
     const { periodo = "mes" } = req.query;
     const { inicio, fim } = calcularPeriodo(periodo);
 
-    const estatisticas = await Auditoria.aggregate([
+    const estatisticas = await Auditoria.aggregate([{ $match: { loja: req.loja._id } },
       {
         $match: {
           data: { $gte: inicio, $lte: fim },
@@ -390,16 +390,16 @@ router.get("/estatisticas-tipo", async (req, res) => {
 });
 
 // 🔍 DETALHES POR SETOR/LOCAL
-router.get("/por-setor", async (req, res) => {
+router.get("/por-setor", verificarLojaObrigatoria, async (req, res) => {
   try {
     const { periodo = "mes" } = req.query;
     const { inicio, fim } = calcularPeriodo(periodo);
 
-    // Usando a coleção Setor para dados por local
-    const dadosSetores = await Setor.aggregate([
+    // Usando a coleção Auditoria para dados por local
+    const dadosAuditoriaes = await Auditoria.aggregate([{ $match: { loja: req.loja._id } },
       {
         $match: {
-          dataAuditoria: { $gte: inicio, $lte: fim },
+          data: { $gte: inicio, $lte: fim },
         },
       },
       {
@@ -436,8 +436,8 @@ router.get("/por-setor", async (req, res) => {
 
     res.json({
       periodo: { inicio, fim },
-      setores: dadosSetores,
-      totalSetores: dadosSetores.length,
+      setores: dadosAuditoriaes,
+      totalAuditoriaes: dadosAuditoriaes.length,
     });
   } catch (error) {
     console.error("Erro nos dados por setor:", error);
@@ -449,7 +449,7 @@ router.get("/por-setor", async (req, res) => {
 });
 
 // ⚠️ SISTEMA DE ALERTAS INTELIGENTES
-router.get("/alertas", async (req, res) => {
+router.get("/alertas", verificarLojaObrigatoria, async (req, res) => {
   try {
     const alertas = [];
 
@@ -457,7 +457,7 @@ router.get("/alertas", async (req, res) => {
     const umaSemanaAtras = new Date();
     umaSemanaAtras.setDate(umaSemanaAtras.getDate() - 7);
 
-    const desempenhoRecente = await Auditoria.aggregate([
+    const desempenhoRecente = await Auditoria.aggregate([{ $match: { loja: req.loja._id } },
       {
         $match: {
           data: { $gte: umaSemanaAtras },
@@ -498,10 +498,10 @@ router.get("/alertas", async (req, res) => {
     }
 
     // Verificar setores com problemas
-    const setoresProblema = await Setor.aggregate([
+    const setoresProblema = await Auditoria.aggregate([{ $match: { loja: req.loja._id } },
       {
         $match: {
-          dataAuditoria: { $gte: umaSemanaAtras },
+          data: { $gte: umaSemanaAtras },
           situacao: { $ne: "Atualizado" },
         },
       },
@@ -544,13 +544,13 @@ router.get("/alertas", async (req, res) => {
 });
 
 // 📋 RELATÓRIO COMPARATIVO ENTRE PERÍODOS
-router.get("/comparativo", async (req, res) => {
+router.get("/comparativo", verificarLojaObrigatoria, async (req, res) => {
   try {
     const { periodoAtual = "semana", periodoAnterior = "semana" } = req.query;
 
     const [dadosAtual, dadosAnterior] = await Promise.all([
       // Período atual
-      Auditoria.aggregate([
+      Auditoria.aggregate([{ $match: { loja: req.loja._id } },
         {
           $match: {
             data: { $gte: calcularPeriodo(periodoAtual).inicio },
@@ -569,7 +569,7 @@ router.get("/comparativo", async (req, res) => {
       ]),
 
       // Período anterior
-      Auditoria.aggregate([
+      Auditoria.aggregate([{ $match: { loja: req.loja._id } },
         {
           $match: {
             data: {

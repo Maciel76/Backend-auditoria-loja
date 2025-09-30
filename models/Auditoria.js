@@ -1,49 +1,90 @@
+// models/Auditoria.js - UNIFICADO (substitui Setor, Presenca, Ruptura)
 import mongoose from "mongoose";
 
 const auditoriaSchema = new mongoose.Schema(
   {
+    // Referências obrigatórias
+    loja: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Loja",
+      required: true,
+      index: true,
+    },
     usuarioId: {
       type: String,
       required: true,
+      index: true,
     },
     usuarioNome: {
       type: String,
       required: true,
     },
+
+    // Tipo de auditoria
+    tipo: {
+      type: String,
+      required: true,
+      enum: ["etiqueta", "presenca", "ruptura"],
+      index: true,
+    },
+
+    // Data da auditoria
     data: {
       type: Date,
       required: true,
       default: Date.now,
+      index: true,
     },
-    tipo: {
-      type: String,
-      enum: ["etiqueta", "presenca", "ruptura"],
-      default: "etiqueta",
-    },
+
+    // Campos comuns a todos os tipos
+    codigo: String,
+    produto: String,
     local: {
       type: String,
       required: true,
+      index: true,
     },
-    codigo: String,
-    produto: String,
     situacao: {
       type: String,
       default: "Não lido",
-      // REMOVIDO: enum restritivo - agora aceita qualquer valor
     },
     estoque: String,
+
+    // Campos específicos por tipo (opcionais conforme o tipo)
+    // Para ETIQUETA
+    ultimaCompra: String,
+
+    // Para PRESENÇA
+    presenca: Boolean,
+    presencaConfirmada: String,
+    auditadoEm: Date,
+    presencaConfirmadaEm: Date,
+
+    // Para RUPTURA
+    classeProdutoRaiz: String,
+    classeProduto: String,
+    setor: String,
+    situacaoAuditoria: String,
+    estoqueAtual: String,
+    estoqueLeitura: String,
+    residuo: String,
+    fornecedor: String,
+    diasSemVenda: Number,
+    custoRuptura: Number,
+
+    // Contador para ranking
     contador: {
       type: Number,
       default: 0,
     },
-    loja: {
-      type: String,
-      required: true,
-      default: "000", // loja padrão
-    },
+
+    // Metadata
     metadata: {
       planilhaOrigem: String,
-      dataUpload: Date,
+      dataUpload: {
+        type: Date,
+        default: Date.now,
+      },
       linhaPlanilha: Number,
       sincronizado: {
         type: Boolean,
@@ -56,11 +97,64 @@ const auditoriaSchema = new mongoose.Schema(
   }
 );
 
-// Índices para melhor performance nas consultas
-auditoriaSchema.index({ data: 1 });
-auditoriaSchema.index({ usuarioId: 1, data: 1 });
-auditoriaSchema.index({ tipo: 1, data: 1 });
-auditoriaSchema.index({ local: 1, data: 1 });
-auditoriaSchema.index({ situacao: 1 });
+// Índices compostos para queries otimizadas
+auditoriaSchema.index({ loja: 1, data: -1 });
+auditoriaSchema.index({ loja: 1, tipo: 1, data: -1 });
+auditoriaSchema.index({ loja: 1, usuarioId: 1, data: -1 });
+auditoriaSchema.index({ loja: 1, local: 1, data: -1 });
+auditoriaSchema.index({ tipo: 1, situacao: 1 });
+
+// Métodos úteis
+auditoriaSchema.methods.isAtualizado = function () {
+  return this.situacao === "Atualizado";
+};
+
+auditoriaSchema.statics.buscarPorLoja = function (lojaId, filtros = {}) {
+  return this.find({ loja: lojaId, ...filtros });
+};
+
+auditoriaSchema.statics.estatisticasPorLoja = function (
+  lojaId,
+  tipo,
+  dataInicio,
+  dataFim
+) {
+  return this.aggregate([
+    {
+      $match: {
+        loja: lojaId,
+        tipo: tipo,
+        data: { $gte: dataInicio, $lte: dataFim },
+      },
+    },
+    {
+      $group: {
+        _id: "$local",
+        totalItens: { $sum: 1 },
+        itensAtualizados: {
+          $sum: { $cond: [{ $eq: ["$situacao", "Atualizado"] }, 1, 0] },
+        },
+      },
+    },
+    {
+      $project: {
+        local: "$_id",
+        totalItens: 1,
+        itensAtualizados: 1,
+        percentualConclusao: {
+          $round: [
+            {
+              $multiply: [
+                { $divide: ["$itensAtualizados", "$totalItens"] },
+                100,
+              ],
+            },
+            2,
+          ],
+        },
+      },
+    },
+  ]);
+};
 
 export default mongoose.model("Auditoria", auditoriaSchema);

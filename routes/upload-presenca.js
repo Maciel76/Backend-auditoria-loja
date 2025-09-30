@@ -1,9 +1,10 @@
 import express from "express";
 import multer from "multer";
 import xlsx from "xlsx";
-import Presenca from "../models/Presenca.js";
+import Auditoria from "../models/Auditoria.js";
 import Planilha from "../models/Planilha.js";
-import UserAudit from "../models/UserAudit.js";
+import User from "../models/User.js";
+import { verificarLojaObrigatoria } from "../middleware/loja.js";
 import {
   mapearColunasRepetidas,
   extrairValorMapeado,
@@ -20,7 +21,7 @@ const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
 // Função para processar presença - AGORA COM PARÂMETRO LOJA
-async function processarPresenca(file, dataAuditoriaParam, loja) {
+async function processarAuditoria(file, dataAuditoriaParam, loja) {
   try {
     const workbook = xlsx.readFile(file.path, { cellDates: true });
     const sheetName = workbook.SheetNames[0];
@@ -123,13 +124,13 @@ async function processarPresenca(file, dataAuditoriaParam, loja) {
     const fimDia = new Date(dataAuditoria);
     fimDia.setHours(23, 59, 59, 999);
 
-    await Presenca.deleteMany({
+    await Auditoria.deleteMany({
       dataAuditoria: { $gte: inicioDia, $lte: fimDia },
       loja: loja, // ← FILTRAR POR LOJA
     });
 
     if (dadosProcessados.length > 0) {
-      await Presenca.insertMany(dadosProcessados);
+      await Auditoria.insertMany(dadosProcessados);
     }
 
     // Salvar registro da planilha - COM LOJA
@@ -158,18 +159,18 @@ async function processarPresenca(file, dataAuditoriaParam, loja) {
     );
 
     // Logs detalhados
-    console.log(`🔄 Processando dados para coleção Presenca...`);
+    console.log(`🔄 Processando dados para coleção Auditoria...`);
     console.log(`📊 Total de linhas na planilha: ${jsonData.length}`);
     console.log(`📁 Arquivo: ${file.originalname}`);
     console.log(`🏪 Loja: ${loja}`);
     console.log(`📅 Data de auditoria detectada: ${dataAuditoria}`);
-    console.log(`🗑️ Dados antigos de Presenca removidos para a data e loja`);
+    console.log(`🗑️ Dados antigos de Auditoria removidos para a data e loja`);
     console.log(`💾 Presenças salvas: ${dadosProcessados.length}`);
     console.log(
-      `✅ Dados processados para Presenca: ${dadosProcessados.length} itens`
+      `✅ Dados processados para Auditoria: ${dadosProcessados.length} itens`
     );
 
-    // Processar e salvar usuários no mesmo formato que processarEtiqueta, mas na coleção UserAudit
+    // Processar e salvar usuários no mesmo formato que processarEtiqueta, mas na coleção User
     for (const [usuarioStr, itens] of usuariosMap.entries()) {
       try {
         // Extrair ID e nome do usuário (formato esperado: "123 (Nome Completo)")
@@ -177,13 +178,13 @@ async function processarPresenca(file, dataAuditoriaParam, loja) {
         const id = match ? match[1].trim() : usuarioStr;
         const nome = match ? match[2].trim() : usuarioStr;
 
-        // Buscar usuário existente ou criar novo NA COLEÇÃO UserAudit
+        // Buscar usuário existente ou criar novo NA COLEÇÃO User
         let usuario =
-          (await UserAudit.findOne({ id })) ||
-          (await UserAudit.findOne({ nome }));
+          (await User.findOne({ id })) ||
+          (await User.findOne({ nome }));
 
         if (!usuario) {
-          usuario = new UserAudit({
+          usuario = new User({
             id,
             nome,
             contadorTotal: 0,
@@ -239,7 +240,7 @@ async function processarPresenca(file, dataAuditoriaParam, loja) {
           0
         );
 
-        // SALVAR o usuário NA COLEÇÃO UserAudit
+        // SALVAR o usuário NA COLEÇÃO User
         await usuario.save();
       } catch (error) {
         console.error(`Erro ao processar usuário ${usuarioStr}:`, error);
@@ -259,7 +260,7 @@ async function processarPresenca(file, dataAuditoriaParam, loja) {
 }
 
 // Rota principal - AGORA COM VERIFICAÇÃO DE LOJA
-router.post("/upload-presenca", upload.single("file"), async (req, res) => {
+router.post("/upload-presenca", verificarLojaObrigatoria, upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ erro: "Nenhum arquivo enviado." });
@@ -275,7 +276,7 @@ router.post("/upload-presenca", upload.single("file"), async (req, res) => {
       });
     }
 
-    const resultado = await processarPresenca(req.file, new Date(), loja);
+    const resultado = await processarAuditoria(req.file, new Date(), loja);
 
     if (!resultado.success) {
       return res.status(500).json({

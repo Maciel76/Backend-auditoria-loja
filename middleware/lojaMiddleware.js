@@ -6,9 +6,7 @@ import fs from "fs";
 import path from "path";
 import User from "../models/User.js";
 import Planilha from "../models/Planilha.js";
-import Setor from "../models/Setor.js";
-import Ruptura from "../models/Ruptura.js";
-import Presenca from "../models/Presenca.js";
+import Auditoria from "../models/Auditoria.js";
 import { verificarLojaObrigatoria, getFiltroLoja } from "../middleware/loja.js";
 import { processarParaAuditoria } from "../services/processador-auditoria.js";
 

@@ -6,10 +6,7 @@ import fs from "fs";
 import path from "path";
 import User from "../models/User.js";
 import Planilha from "../models/Planilha.js";
-import Setor from "../models/Setor.js";
-import Ruptura from "../models/Ruptura.js";
-import Presenca from "../models/Presenca.js";
-import UserAudit from "../models/userRuptura.js";
+import Auditoria from "../models/Auditoria.js";
 import { verificarLojaObrigatoria, getFiltroLoja } from "../middleware/loja.js";
 import { processarParaAuditoria } from "../services/processador-auditoria.js";
 
@@ -102,14 +99,18 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
         ? String(item[usuarioKey] || "Produto não auditado")
         : "Produto não auditado";
 
-      // Adicionar ao batch de setores - COM LOJA OBRIGATÓRIA
+      // Adicionar ao batch de auditorias - COM LOJA OBRIGATÓRIA
       setoresBatch.push({
+        loja: loja._id,
+        usuarioId: usuarioStr.match(/^(\d+)/)?.[1] || usuarioStr,
+        usuarioNome: usuarioStr.includes("(") ? usuarioStr.match(/\((.*)\)/)?.[1] || usuarioStr : usuarioStr,
+        tipo: "etiqueta",
+        data: dataAuditoria,
         codigo: codigoKey ? String(item[codigoKey] || "") : "",
         produto: produtoKey ? String(item[produtoKey] || "") : "",
         local: localKey
           ? String(item[localKey] || "Não especificado")
           : "Não especificado",
-        usuario: usuarioStr,
         situacao: situacaoKey
           ? String(item[situacaoKey] || "Não lido")
           : "Não lido",
@@ -117,8 +118,6 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
         ultimaCompra: compraKey
           ? String(item[compraKey] || new Date().toLocaleDateString("pt-BR"))
           : new Date().toLocaleDateString("pt-BR"),
-        dataAuditoria,
-        loja: loja._id,
       });
 
       // Mapear usuários
@@ -137,9 +136,10 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
     const fimDia = new Date(dataAuditoria);
     fimDia.setHours(23, 59, 59, 999);
 
-    await Setor.deleteMany({
-      dataAuditoria: { $gte: inicioDia, $lte: fimDia },
+    await Auditoria.deleteMany({
+      data: { $gte: inicioDia, $lte: fimDia },
       loja: loja._id,
+      tipo: "etiqueta",
     });
 
     console.log(
@@ -148,11 +148,11 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
       } na data ${dataAuditoria.toLocaleDateString()}`
     );
 
-    // Salvar setores
+    // Salvar auditorias
     if (setoresBatch.length > 0) {
-      await Setor.insertMany(setoresBatch);
+      await Auditoria.insertMany(setoresBatch);
       console.log(
-        `💾 ${setoresBatch.length} setores salvos para loja ${loja.codigo}`
+        `💾 ${setoresBatch.length} auditorias salvos para loja ${loja.codigo}`
       );
     }
 
@@ -394,59 +394,88 @@ async function processarRuptura(file, dataAuditoria, loja) {
     const fimDia = new Date(dataAuditoriaFinal);
     fimDia.setHours(23, 59, 59, 999);
 
-    await Ruptura.deleteMany({
-      dataAuditoria: { $gte: inicioDia, $lte: fimDia },
+    await Auditoria.deleteMany({
+      data: { $gte: inicioDia, $lte: fimDia },
       loja: loja._id,
+      tipo: "ruptura",
     });
 
     console.log(`🗑️ Rupturas antigas removidas para loja ${loja.codigo}`);
 
-    // Salvar rupturas
+    // Salvar rupturas na coleção Auditoria
     if (dadosProcessados.length > 0) {
-      await Ruptura.insertMany(dadosProcessados);
+      const auditoriasBatch = dadosProcessados.map(item => ({
+        loja: loja._id,
+        usuarioId: item.usuario.match(/^(\d+)/)?.[1] || item.usuario,
+        usuarioNome: item.usuario.includes("(") ? item.usuario.match(/\((.*)\)/)?.[1] || item.usuario : item.usuario,
+        tipo: "ruptura",
+        data: dataAuditoriaFinal,
+        codigo: item.codigo,
+        produto: item.produto,
+        local: item.local,
+        situacao: item.situacao,
+        estoque: item.estoqueAtual,
+        classeProdutoRaiz: item.classeProdutoRaiz,
+        classeProduto: item.classeProduto,
+        setor: item.setor,
+        situacaoAuditoria: item.situacaoAuditoria,
+        estoqueAtual: item.estoqueAtual,
+        estoqueLeitura: item.estoqueLeitura,
+        residuo: item.residuo,
+        fornecedor: item.fornecedor,
+        diasSemVenda: item.diasSemVenda,
+        custoRuptura: item.custoRuptura,
+        metadata: item.metadata,
+      }));
+
+      await Auditoria.insertMany(auditoriasBatch);
       console.log(
         `💾 ${dadosProcessados.length} rupturas salvas para loja ${loja.codigo}`
       );
     }
 
-    // Processar usuários no UserAudit
+    // Processar usuários no modelo User unificado
     for (const [usuarioStr, itens] of usuariosMap.entries()) {
       try {
         const match = usuarioStr.match(/^(\d+)\s*\((.*)\)$/);
         const userId = match ? match[1].trim() : usuarioStr;
         const nome = match ? match[2].trim() : usuarioStr;
 
-        let userAudit = await UserAudit.findOne({
-          userId,
-          // Não usar loja aqui pois UserAudit pode não ter este campo
+        let usuario = await User.findOne({
+          id: userId,
+          loja: loja._id,
         });
 
-        if (!userAudit) {
-          // Se não encontrou por userId, buscar por nome
-          userAudit = await UserAudit.findOne({ nome });
+        if (!usuario) {
+          // Se não encontrou por ID, buscar por nome
+          usuario = await User.findOne({
+            nome,
+            loja: loja._id,
+          });
         }
 
-        if (!userAudit) {
+        if (!usuario) {
           // Criar novo usuário apenas se não existir
-          userAudit = new UserAudit({
-            userId,
+          usuario = new User({
+            id: userId,
             nome,
             contadorTotal: 0,
             auditorias: [],
+            loja: loja._id,
           });
-          console.log(`➕ Novo UserAudit criado: ${nome} (${userId})`);
+          console.log(`➕ Novo usuário criado: ${nome} (${userId})`);
         } else {
           console.log(
-            `👤 UserAudit encontrado: ${userAudit.nome} (${userAudit.userId})`
+            `👤 Usuário encontrado: ${usuario.nome} (${usuario.id})`
           );
         }
 
-        const auditoriaIndex = userAudit.auditorias.findIndex(
+        const auditoriaIndex = usuario.auditorias.findIndex(
           (a) => a.data.toDateString() === dataAuditoriaFinal.toDateString()
         );
 
         if (auditoriaIndex === -1) {
-          userAudit.auditorias.push({
+          usuario.auditorias.push({
             data: dataAuditoriaFinal,
             contador: 0,
             detalhes: [],
@@ -454,9 +483,9 @@ async function processarRuptura(file, dataAuditoria, loja) {
         }
 
         const auditoria =
-          userAudit.auditorias[
+          usuario.auditorias[
             auditoriaIndex === -1
-              ? userAudit.auditorias.length - 1
+              ? usuario.auditorias.length - 1
               : auditoriaIndex
           ];
 
@@ -481,12 +510,12 @@ async function processarRuptura(file, dataAuditoria, loja) {
           }
         }
 
-        userAudit.contadorTotal = userAudit.auditorias.reduce(
+        usuario.contadorTotal = usuario.auditorias.reduce(
           (total, aud) => total + aud.contador,
           0
         );
 
-        await userAudit.save();
+        await usuario.save();
       } catch (userError) {
         console.error(`❌ Erro ao processar usuário ${usuarioStr}:`, userError);
       }
@@ -645,60 +674,93 @@ async function processarPresenca(file, dataAuditoria, loja) {
     const fimDia = new Date(dataAuditoriaFinal);
     fimDia.setHours(23, 59, 59, 999);
 
-    await Presenca.deleteMany({
-      dataAuditoria: { $gte: inicioDia, $lte: fimDia },
+    await Auditoria.deleteMany({
+      data: { $gte: inicioDia, $lte: fimDia },
       loja: loja._id,
+      tipo: "presenca",
     });
 
     console.log(`🗑️ Presenças antigas removidas para loja ${loja.codigo}`);
 
-    // Salvar presenças
+    // Salvar presenças na coleção Auditoria
     if (dadosProcessados.length > 0) {
-      await Presenca.insertMany(dadosProcessados);
+      const auditoriasBatch = dadosProcessados.map(item => ({
+        loja: loja._id,
+        usuarioId: item.usuario.match(/^(\d+)/)?.[1] || item.usuario,
+        usuarioNome: item.usuario.includes("(") ? item.usuario.match(/\((.*)\)/)?.[1] || item.usuario : item.usuario,
+        tipo: "presenca",
+        data: dataAuditoriaFinal,
+        codigo: item.codigo,
+        produto: item.produto,
+        local: item.local,
+        situacao: item.situacao,
+        estoque: item.estoque,
+        presenca: item.presenca,
+        presencaConfirmada: item.presencaConfirmada,
+        auditadoEm: item.auditadoEm,
+        presencaConfirmadaEm: item.presencaConfirmadaEm,
+        classeProdutoRaiz: item.classeProdutoRaiz,
+        classeProduto: item.classeProduto,
+        setor: item.setor,
+        situacaoAuditoria: item.situacaoAuditoria,
+        estoqueLeitura: item.estoqueLeitura,
+        residuo: item.residuo,
+        fornecedor: item.fornecedor,
+        diasSemVenda: item.diasSemVenda,
+        custoRuptura: item.custoRuptura,
+        metadata: item.metadata,
+      }));
+
+      await Auditoria.insertMany(auditoriasBatch);
       console.log(
         `💾 ${dadosProcessados.length} presenças salvas para loja ${loja.codigo}`
       );
     }
 
-    // Processar usuários no UserAudit
+    // Processar usuários no modelo User unificado
     for (const [usuarioStr, itens] of usuariosMap.entries()) {
       try {
         const match = usuarioStr.match(/^(\d+)\s*\((.*)\)$/);
         const userId = match ? match[1].trim() : usuarioStr;
         const nome = match ? match[2].trim() : usuarioStr;
 
-        let userAudit = await UserAudit.findOne({
-          userId,
+        let usuario = await User.findOne({
+          id: userId,
+          loja: loja._id,
         });
 
-        if (!userAudit) {
-          // Se não encontrou por userId, buscar por nome
-          userAudit = await UserAudit.findOne({ nome });
+        if (!usuario) {
+          // Se não encontrou por ID, buscar por nome
+          usuario = await User.findOne({
+            nome,
+            loja: loja._id,
+          });
         }
 
-        if (!userAudit) {
+        if (!usuario) {
           // Criar novo usuário apenas se não existir
-          userAudit = new UserAudit({
-            userId,
+          usuario = new User({
+            id: userId,
             nome,
             contadorTotal: 0,
             auditorias: [],
+            loja: loja._id,
           });
           console.log(
-            `➕ Novo UserAudit criado para presença: ${nome} (${userId})`
+            `➕ Novo usuário criado para presença: ${nome} (${userId})`
           );
         } else {
           console.log(
-            `👤 UserAudit encontrado para presença: ${userAudit.nome} (${userAudit.userId})`
+            `👤 Usuário encontrado para presença: ${usuario.nome} (${usuario.id})`
           );
         }
 
-        const auditoriaIndex = userAudit.auditorias.findIndex(
+        const auditoriaIndex = usuario.auditorias.findIndex(
           (a) => a.data.toDateString() === dataAuditoriaFinal.toDateString()
         );
 
         if (auditoriaIndex === -1) {
-          userAudit.auditorias.push({
+          usuario.auditorias.push({
             data: dataAuditoriaFinal,
             contador: 0,
             detalhes: [],
@@ -706,9 +768,9 @@ async function processarPresenca(file, dataAuditoria, loja) {
         }
 
         const auditoria =
-          userAudit.auditorias[
+          usuario.auditorias[
             auditoriaIndex === -1
-              ? userAudit.auditorias.length - 1
+              ? usuario.auditorias.length - 1
               : auditoriaIndex
           ];
 
@@ -733,12 +795,12 @@ async function processarPresenca(file, dataAuditoria, loja) {
           }
         }
 
-        userAudit.contadorTotal = userAudit.auditorias.reduce(
+        usuario.contadorTotal = usuario.auditorias.reduce(
           (total, aud) => total + aud.contador,
           0
         );
 
-        await userAudit.save();
+        await usuario.save();
       } catch (userError) {
         console.error(`❌ Erro ao processar usuário ${usuarioStr}:`, userError);
       }
@@ -890,7 +952,15 @@ router.post(
 // Rotas para frontend - TODAS COM FILTRO DE LOJA
 router.get("/usuarios", verificarLojaObrigatoria, async (req, res) => {
   try {
-    const usuarios = await User.find({ loja: req.loja._id });
+    const { todos } = req.query;
+    let filtro = {};
+
+    // Se não solicitar todos os usuários, filtrar pela loja atual
+    if (todos !== 'true') {
+      filtro.loja = req.loja._id;
+    }
+
+    const usuarios = await User.find(filtro).populate('loja', 'codigo nome');
 
     res.json(
       usuarios.map((u) => ({
@@ -902,11 +972,15 @@ router.get("/usuarios", verificarLojaObrigatoria, async (req, res) => {
           .map((n) => n[0])
           .join("")
           .substring(0, 2),
-        loja: req.loja.codigo,
+        loja: u.loja?.codigo || req.loja.codigo,
+        lojaCompleta: u.loja?.nome || req.loja.nome,
+        totalAuditorias: u.auditorias?.length || 0,
+        ultimaAuditoria: u.auditorias?.length > 0 ? u.auditorias[u.auditorias.length - 1].data : null,
       }))
     );
   } catch (error) {
-    res.status(500).json({ erro: "Falha ao buscar usuários" });
+    console.error('Erro ao buscar usuários:', error);
+    res.status(500).json({ erro: "Falha ao buscar usuários", detalhes: error.message });
   }
 });
 
@@ -915,9 +989,18 @@ router.get("/datas-auditoria", verificarLojaObrigatoria, async (req, res) => {
     const datas = await Planilha.distinct("dataAuditoria", {
       loja: req.loja._id,
     });
-    res.json(datas.sort((a, b) => new Date(b) - new Date(a)));
+
+    // Formatar datas para o frontend
+    const datasFormatadas = datas.map(data => ({
+      data: data,
+      timestamp: new Date(data).getTime(),
+      dataFormatada: new Date(data).toLocaleDateString('pt-BR')
+    }));
+
+    res.json(datasFormatadas.sort((a, b) => new Date(b.data) - new Date(a.data)));
   } catch (error) {
-    res.status(500).json({ erro: "Falha ao buscar datas" });
+    console.error('Erro ao buscar datas:', error);
+    res.status(500).json({ erro: "Falha ao buscar datas", detalhes: error.message });
   }
 });
 
@@ -1005,8 +1088,8 @@ router.get("/dados-planilha", verificarLojaObrigatoria, async (req, res) => {
         break;
 
       case "presenca":
-        const presencas = await Presenca.find({
-          dataAuditoria: {
+        const presencas = await Auditoria.find({
+          data: {
             $gte: new Date(planilhaRecente.dataAuditoria).setHours(0, 0, 0, 0),
             $lte: new Date(planilhaRecente.dataAuditoria).setHours(
               23,
@@ -1016,13 +1099,14 @@ router.get("/dados-planilha", verificarLojaObrigatoria, async (req, res) => {
             ),
           },
           loja: req.loja._id,
+          tipo: "presenca",
         });
 
         dadosPlanilha = presencas.map((presenca) => ({
           Código: presenca.codigo,
           Produto: presenca.produto,
           Local: presenca.local,
-          Usuario: presenca.usuario,
+          Usuario: `${presenca.usuarioId} (${presenca.usuarioNome})`,
           Situacao: presenca.situacao,
           "Estoque Atual": presenca.estoque,
           "Tem Presença": presenca.presenca ? "Sim" : "Não",
@@ -1032,7 +1116,7 @@ router.get("/dados-planilha", verificarLojaObrigatoria, async (req, res) => {
           Setor: presenca.setor,
           Fornecedor: presenca.fornecedor,
           Loja: req.loja.codigo,
-          "Data Auditoria": presenca.dataAuditoria.toLocaleDateString("pt-BR"),
+          "Data Auditoria": presenca.data.toLocaleDateString("pt-BR"),
         }));
         break;
     }
@@ -1069,21 +1153,21 @@ router.get("/dados-ruptura", verificarLojaObrigatoria, async (req, res) => {
       inicioDia.setHours(0, 0, 0, 0);
       const fimDia = new Date(dataEspecifica);
       fimDia.setHours(23, 59, 59, 999);
-      filtro.dataAuditoria = { $gte: inicioDia, $lte: fimDia };
+      filtro.data = { $gte: inicioDia, $lte: fimDia };
     }
 
-    const rupturas = await Ruptura.find(filtro)
+    const rupturas = await Auditoria.find({ ...filtro, tipo: "ruptura" })
       .sort({ codigo: 1, produto: 1 })
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit));
 
-    const totalRupturas = await Ruptura.countDocuments(filtro);
+    const totalRupturas = await Auditoria.countDocuments({ ...filtro, tipo: "ruptura" });
 
     const dadosFormatados = rupturas.map((ruptura) => ({
       Código: ruptura.codigo,
       Produto: ruptura.produto,
       Local: ruptura.local,
-      Usuario: ruptura.usuario,
+      Usuario: `${ruptura.usuarioId} (${ruptura.usuarioNome})`,
       Situacao: ruptura.situacao,
       "Estoque Atual": ruptura.estoqueAtual,
       "Presença Confirmada": ruptura.presencaConfirmada,
@@ -1096,7 +1180,7 @@ router.get("/dados-ruptura", verificarLojaObrigatoria, async (req, res) => {
         }) || "",
       Fornecedor: ruptura.fornecedor,
       Loja: req.loja.codigo,
-      "Data Auditoria": ruptura.dataAuditoria.toLocaleDateString("pt-BR"),
+      "Data Auditoria": ruptura.data.toLocaleDateString("pt-BR"),
     }));
 
     res.json({
@@ -1133,21 +1217,21 @@ router.get("/dados-presenca", verificarLojaObrigatoria, async (req, res) => {
       inicioDia.setHours(0, 0, 0, 0);
       const fimDia = new Date(dataEspecifica);
       fimDia.setHours(23, 59, 59, 999);
-      filtro.dataAuditoria = { $gte: inicioDia, $lte: fimDia };
+      filtro.data = { $gte: inicioDia, $lte: fimDia };
     }
 
-    const presencas = await Presenca.find(filtro)
+    const presencas = await Auditoria.find({ ...filtro, tipo: "presenca" })
       .sort({ codigo: 1, produto: 1 })
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit));
 
-    const totalPresencas = await Presenca.countDocuments(filtro);
+    const totalPresencas = await Auditoria.countDocuments({ ...filtro, tipo: "presenca" });
 
     const dadosFormatados = presencas.map((presenca) => ({
       Código: presenca.codigo,
       Produto: presenca.produto,
       Local: presenca.local,
-      Usuario: presenca.usuario,
+      Usuario: `${presenca.usuarioId} (${presenca.usuarioNome})`,
       Situacao: presenca.situacao,
       "Estoque Atual": presenca.estoque,
       "Tem Presença": presenca.presenca ? "Sim" : "Não",
@@ -1157,7 +1241,7 @@ router.get("/dados-presenca", verificarLojaObrigatoria, async (req, res) => {
       Setor: presenca.setor,
       Fornecedor: presenca.fornecedor,
       Loja: req.loja.codigo,
-      "Data Auditoria": presenca.dataAuditoria.toLocaleDateString("pt-BR"),
+      "Data Auditoria": presenca.data.toLocaleDateString("pt-BR"),
     }));
 
     res.json({
@@ -1200,16 +1284,16 @@ router.get("/estatisticas", verificarLojaObrigatoria, async (req, res) => {
     const [
       totalPlanilhas,
       totalUsuarios,
-      totalSetores,
+      totalEtiquetas,
       totalRupturas,
       totalPresencas,
       planilhaRecente,
     ] = await Promise.all([
       Planilha.countDocuments(filtro),
       User.countDocuments({ loja: req.loja._id }),
-      Setor.countDocuments(filtro),
-      Ruptura.countDocuments(filtro),
-      Presenca.countDocuments(filtro),
+      Auditoria.countDocuments({ ...filtroData, loja: req.loja._id, tipo: "etiqueta" }),
+      Auditoria.countDocuments({ ...filtroData, loja: req.loja._id, tipo: "ruptura" }),
+      Auditoria.countDocuments({ ...filtroData, loja: req.loja._id, tipo: "presenca" }),
       Planilha.findOne({ loja: req.loja._id }).sort({ dataUpload: -1 }),
     ]);
 
@@ -1217,7 +1301,7 @@ router.get("/estatisticas", verificarLojaObrigatoria, async (req, res) => {
       estatisticas: {
         totalPlanilhas,
         totalUsuarios,
-        totalSetores,
+        totalEtiquetas,
         totalRupturas,
         totalPresencas,
         ultimaAtualizacao: planilhaRecente?.dataUpload || null,
@@ -1313,6 +1397,88 @@ router.get("/ranking-usuarios", verificarLojaObrigatoria, async (req, res) => {
       erro: "Falha ao buscar ranking",
       detalhes: error.message,
     });
+  }
+});
+
+// Rota para buscar dados específicos de um usuário
+router.get("/usuarios/:id", verificarLojaObrigatoria, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { todos } = req.query;
+
+    let filtro = { id };
+
+    // Se não solicitar todos os usuários, filtrar pela loja atual
+    if (todos !== 'true') {
+      filtro.loja = req.loja._id;
+    }
+
+    const usuario = await User.findOne(filtro).populate('loja', 'codigo nome');
+
+    if (!usuario) {
+      return res.status(404).json({
+        erro: "Usuário não encontrado",
+        id,
+        loja: req.loja.codigo
+      });
+    }
+
+    res.json({
+      id: usuario.id,
+      nome: usuario.nome,
+      contador: usuario.contadorTotal,
+      iniciais: usuario.nome
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .substring(0, 2),
+      loja: usuario.loja?.codigo || req.loja.codigo,
+      lojaCompleta: usuario.loja?.nome || req.loja.nome,
+      totalAuditorias: usuario.auditorias?.length || 0,
+      ultimaAuditoria: usuario.auditorias?.length > 0 ? usuario.auditorias[usuario.auditorias.length - 1].data : null,
+      auditorias: usuario.auditorias || [],
+      foto: usuario.foto,
+    });
+  } catch (error) {
+    console.error('Erro ao buscar usuário específico:', error);
+    res.status(500).json({ erro: "Falha ao buscar usuário", detalhes: error.message });
+  }
+});
+
+// Rota para buscar auditorias detalhadas de um usuário
+router.get("/usuarios/:id/auditorias", verificarLojaObrigatoria, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { todos } = req.query;
+
+    let filtro = { usuarioId: id };
+
+    // Se não solicitar todos os usuários, filtrar pela loja atual
+    if (todos !== 'true') {
+      filtro.loja = req.loja._id;
+    }
+
+    const auditorias = await Auditoria.find(filtro)
+      .populate('loja', 'codigo nome')
+      .sort({ data: -1 })
+      .limit(100); // Limitar para evitar sobrecarga
+
+    const dadosFormatados = auditorias.map((auditoria) => ({
+      Código: auditoria.codigo,
+      Produto: auditoria.produto,
+      Local: auditoria.local,
+      Usuario: `${auditoria.usuarioId} (${auditoria.usuarioNome})`,
+      Situacao: auditoria.situacao,
+      "Estoque atual": auditoria.estoque,
+      "Data Auditoria": auditoria.data,
+      Loja: auditoria.loja?.codigo || req.loja.codigo,
+      tipo: auditoria.tipo,
+    }));
+
+    res.json(dadosFormatados);
+  } catch (error) {
+    console.error('Erro ao buscar auditorias do usuário:', error);
+    res.status(500).json({ erro: "Falha ao buscar auditorias", detalhes: error.message });
   }
 });
 

@@ -2,14 +2,15 @@ import express from "express";
 import multer from "multer";
 import xlsx from "xlsx";
 import mongoose from "mongoose";
-import DadosPlanilha from "../models/DadosPlanilha.js";
-import Setor from "../models/Setor.js";
+import Planilha from "../models/Planilha.js";
+import Auditoria from "../models/Auditoria.js";
+import { verificarLojaObrigatoria } from "../middleware/loja.js";
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
 // Rota para upload de planilha específica para setores
-router.post("/upload-setores", upload.single("file"), async (req, res) => {
+router.post("/upload-setores", verificarLojaObrigatoria, upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ erro: "Nenhum arquivo enviado." });
@@ -24,7 +25,7 @@ router.post("/upload-setores", upload.single("file"), async (req, res) => {
     const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
 
     // Limpar dados antigos
-    await Setor.deleteMany({});
+    await Auditoria.deleteMany({});
 
     const dadosProcessados = [];
 
@@ -96,7 +97,7 @@ router.post("/upload-setores", upload.single("file"), async (req, res) => {
     }
 
     // Salvar todos os dados de uma vez
-    await Setor.insertMany(dadosProcessados);
+    await Auditoria.insertMany(dadosProcessados);
 
     res.json({
       mensagem: "Dados de setores processados com sucesso!",
@@ -114,7 +115,7 @@ router.post("/upload-setores", upload.single("file"), async (req, res) => {
 // Rota para obter dados de setores
 router.get("/dados-setores", async (req, res) => {
   try {
-    const dados = await Setor.find({}).lean();
+    const dados = await Auditoria.find({}).lean();
 
     // Converter para o formato que o frontend espera
     const dadosFormatados = dados.map((item) => ({
@@ -139,7 +140,7 @@ router.get("/dados-setores", async (req, res) => {
 // Rota para estatísticas dos setores
 router.get("/estatisticas-setores", async (req, res) => {
   try {
-    const estatisticas = await Setor.aggregate([
+    const estatisticas = await Auditoria.aggregate([
       {
         $group: {
           _id: "$local",
@@ -179,8 +180,8 @@ router.get("/estatisticas-setores", async (req, res) => {
 router.get("/dados-simples", async (req, res) => {
   try {
     console.log("Buscando dados simples da planilha...");
-    // Buscar diretamente da coleção DadosPlanilha
-    const dados = await DadosPlanilha.find({}).lean();
+    // Buscar diretamente da coleção Planilha
+    const dados = await Planilha.find({}).lean();
     console.log("Dados encontrados:", dados.length);
     if (!dados || dados.length === 0) {
       return res.status(404).json({ erro: "Nenhum dado encontrado" });

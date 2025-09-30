@@ -1,28 +1,29 @@
 // routes/estatisticas.js
 import express from "express";
-import Setor from "../models/Setor.js";
+import Auditoria from "../models/Auditoria.js";
+import { verificarLojaObrigatoria } from "../middleware/loja.js";
 
 const router = express.Router();
 
-// Rota para obter estatísticas dos setores
-router.get("/estatisticas-setores", async (req, res) => {
+// Rota para obter estatísticas das auditorias
+router.get("/estatisticas-setores", verificarLojaObrigatoria, async (req, res) => {
   try {
     const { data } = req.query;
 
-    let filter = {};
+    let filter = { loja: req.loja._id };
     if (data) {
       const dataInicio = new Date(data);
       dataInicio.setHours(0, 0, 0, 0);
       const dataFim = new Date(data);
       dataFim.setHours(23, 59, 59, 999);
 
-      filter.dataAuditoria = {
+      filter.data = {
         $gte: dataInicio,
         $lte: dataFim,
       };
     }
 
-    const estatisticas = await Setor.aggregate([
+    const estatisticas = await Auditoria.aggregate([
       { $match: filter },
       {
         $group: {
@@ -62,7 +63,7 @@ router.get("/estatisticas-setores", async (req, res) => {
 // Rota para obter datas de auditoria disponíveis
 router.get("/datas-auditoria", async (req, res) => {
   try {
-    const datas = await Setor.distinct("dataAuditoria");
+    const datas = await Auditoria.distinct("dataAuditoria");
     res.json(datas.sort((a, b) => new Date(b) - new Date(a)));
   } catch (error) {
     console.error("Erro ao buscar datas:", error);

@@ -1,5 +1,4 @@
 import Auditoria from "../models/Auditoria.js";
-import Setor from "../models/Setor.js";
 
 // Função para detectar tipo de auditoria baseado no nome do arquivo
 function detectarTipoAuditoria(nomeArquivo) {
@@ -208,19 +207,19 @@ export async function processarParaAuditoria(planilhaData) {
   }
 }
 
-// Serviço para sincronizar dados do Setor para Auditoria
-export async function sincronizarSetoresParaAuditoria() {
+// Serviço para sincronizar dados do Auditoria para Auditoria
+export async function sincronizarAuditoriaesParaAuditoria() {
   try {
-    console.log("🔄 Sincronizando dados de Setor para Auditoria...");
+    console.log("🔄 Sincronizando dados de Auditoria para Auditoria...");
 
     const seteDiasAtras = new Date();
     seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
 
-    const setores = await Setor.find({
+    const setores = await Auditoria.find({
       dataAuditoria: { $gte: seteDiasAtras },
     });
 
-    console.log("📋 Setores encontrados para sincronização:", setores.length);
+    console.log("📋 Auditoriaes encontrados para sincronização:", setores.length);
 
     for (const setor of setores) {
       try {
@@ -244,7 +243,7 @@ export async function sincronizarSetoresParaAuditoria() {
           local,
           codigo,
           produto,
-          "metadata.planilhaOrigem": "Sincronizado do Setor",
+          "metadata.planilhaOrigem": "Sincronizado do Auditoria",
         });
 
         if (!existe) {
@@ -260,7 +259,7 @@ export async function sincronizarSetoresParaAuditoria() {
             estoque,
             contador: situacaoNormalizada === "Atualizado" ? 1 : 0,
             metadata: {
-              planilhaOrigem: "Sincronizado do Setor",
+              planilhaOrigem: "Sincronizado do Auditoria",
               dataUpload: new Date(),
               sincronizado: true,
             },
@@ -272,7 +271,7 @@ export async function sincronizarSetoresParaAuditoria() {
     }
 
     console.log("✅ Sincronização concluída");
-    return { success: true, totalSetores: setores.length };
+    return { success: true, totalAuditoriaes: setores.length };
   } catch (error) {
     console.error("💥 ERRO na sincronização:", error);
     return { success: false, error: error.message };
