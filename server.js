@@ -11,6 +11,10 @@ import estatiscas from "./routes/estatisticas.js";
 import lojaRouter from "./routes/lojas.js";
 import uploadRupturaRouter from "./routes/upload-ruptura.js";
 import uploadPresencaRouter from "./routes/upload-presenca.js";
+import metricasRouter from "./routes/metricas.js";
+import debugMetricasRouter from "./routes/debug-metricas.js";
+import endpointsListRouter from "./routes/endpoints-list.js";
+import progressRouter from "./routes/progress.js";
 import "./utils/planilhaHelpers.js";
 
 const app = express();
@@ -120,11 +124,55 @@ try {
   console.log("❌ Erro nas rotas avançadas:", error.message);
 }
 
+try {
+  app.use("/api/metricas", metricasRouter);
+  console.log("✅ Rotas de métricas carregadas");
+} catch (error) {
+  console.log("❌ Erro nas rotas de métricas:", error.message);
+}
+
+try {
+  app.use("/api/debug", debugMetricasRouter);
+  console.log("✅ Rotas de debug carregadas");
+} catch (error) {
+  console.log("❌ Erro nas rotas de debug:", error.message);
+}
+
+try {
+  app.use("/api/endpoints", endpointsListRouter);
+  console.log("✅ Lista de endpoints carregada");
+} catch (error) {
+  console.log("❌ Erro na lista de endpoints:", error.message);
+}
+
+try {
+  app.use("/api/progress", progressRouter);
+  console.log("✅ Rotas de progresso carregadas");
+} catch (error) {
+  console.log("❌ Erro nas rotas de progresso:", error.message);
+}
+
 // Rota de sincronização removida - agora usa modelos unificados
 
 // Start
 const PORT = 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
-  console.log(`🧪 Teste: http://localhost:${PORT}/test`);
+  console.log(`\n🚀 SERVIDOR DE AUDITORIAS COM MÉTRICAS RODANDO`);
+  console.log(`📍 URL: http://localhost:${PORT}`);
+  console.log(`\n📋 ENDPOINTS PRINCIPAIS:`);
+  console.log(`   🧪 Teste básico: http://localhost:${PORT}/test`);
+  console.log(`   📊 Lista completa de endpoints: http://localhost:${PORT}/api/endpoints`);
+  console.log(`   🔍 Verificar métricas: http://localhost:${PORT}/api/debug/verificar-metricas (header x-loja necessário)`);
+  console.log(`   📈 Dashboard executivo: http://localhost:${PORT}/api/metricas/dashboard`);
+  console.log(`\n💡 COMO TESTAR O SISTEMA DE MÉTRICAS:`);
+  console.log(`   0. Testar serviço: http://localhost:${PORT}/api/debug/testar-servico`);
+  console.log(`   1. Faça upload: POST /upload com header 'x-loja: 001'`);
+  console.log(`   2. Verifique métricas: http://localhost:${PORT}/api/debug/verificar-metricas (header x-loja: 001)`);
+  console.log(`   3. Veja dashboard: http://localhost:${PORT}/api/metricas/dashboard`);
+  console.log(`\n🔧 ENDPOINTS DE DEBUG:`);
+  console.log(`   🧪 Testar serviço: http://localhost:${PORT}/api/debug/testar-servico`);
+  console.log(`   🔍 Verificar métricas: http://localhost:${PORT}/api/debug/verificar-metricas`);
+  console.log(`   🔄 Calcular agora: POST http://localhost:${PORT}/api/debug/calcular-agora`);
+  console.log(`   🔌 Testar conexões: http://localhost:${PORT}/api/debug/testar-conexoes`);
+  console.log(`\n📚 Documentação completa: http://localhost:${PORT}/api/endpoints\n`);
 });

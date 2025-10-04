@@ -7,7 +7,6 @@ const lojaSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      index: true,
     },
     nome: {
       type: String,
@@ -42,7 +41,6 @@ const lojaSchema = new mongoose.Schema(
 );
 
 // Índices para otimização
-lojaSchema.index({ codigo: 1 });
 lojaSchema.index({ ativa: 1 });
 
 export default mongoose.model("Loja", lojaSchema);

@@ -83,7 +83,7 @@ function normalizarSituacao(situacao) {
 // Serviço principal para processar dados para a coleção Auditoria
 export async function processarParaAuditoria(planilhaData) {
   try {
-    const { jsonData, nomeArquivo, dataAuditoria } = planilhaData;
+    const { jsonData, nomeArquivo, dataAuditoria, loja } = planilhaData;
 
     console.log("🔄 Processando dados para coleção Auditoria...");
     console.log("📊 Total de linhas:", jsonData.length);
@@ -153,6 +153,7 @@ export async function processarParaAuditoria(planilhaData) {
 
         // Adicionar ao batch
         auditoriasBatch.push({
+          loja,
           usuarioId,
           usuarioNome,
           data: dataAuditoria,
@@ -183,6 +184,7 @@ export async function processarParaAuditoria(planilhaData) {
       fimDia.setHours(23, 59, 59, 999);
 
       await Auditoria.deleteMany({
+        loja,
         data: { $gte: inicioDia, $lte: fimDia },
         "metadata.planilhaOrigem": nomeArquivo,
       });

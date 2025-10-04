@@ -9,6 +9,31 @@ import Planilha from "../models/Planilha.js";
 import Auditoria from "../models/Auditoria.js";
 import { verificarLojaObrigatoria, getFiltroLoja } from "../middleware/loja.js";
 import { processarParaAuditoria } from "../services/processador-auditoria.js";
+import metricsCalculationService from "../services/metricsCalculationService.js";
+import progressService from "../services/progressService.js";
+
+// Helper function to access obterPeriodo
+const obterPeriodo = (periodo, data) => {
+  const dataRef = new Date(data);
+  let dataInicio, dataFim;
+
+  switch (periodo) {
+    case "diario":
+      dataInicio = new Date(dataRef);
+      dataInicio.setHours(0, 0, 0, 0);
+      dataFim = new Date(dataRef);
+      dataFim.setHours(23, 59, 59, 999);
+      break;
+    case "mensal":
+      dataInicio = new Date(dataRef.getFullYear(), dataRef.getMonth(), 1);
+      dataFim = new Date(dataRef.getFullYear(), dataRef.getMonth() + 1, 0);
+      dataFim.setHours(23, 59, 59, 999);
+      break;
+    default:
+      throw new Error(`Período inválido: ${periodo}`);
+  }
+  return { dataInicio, dataFim };
+};
 
 // Importações condicionais dos helpers
 let processarValorEstoque,
@@ -45,17 +70,22 @@ function limparArquivoTemporario(filePath) {
   }
 }
 
-// Função para processar etiqueta - MANTIDA IGUAL
-async function processarEtiqueta(file, dataAuditoria, loja) {
+// Função para processar etiqueta - COM PROGRESSO
+async function processarEtiqueta(file, dataAuditoria, loja, sessionId = null) {
   try {
     console.log(
       `🏷️ Processando etiquetas para loja: ${loja.codigo} - ${loja.nome}`
     );
 
+    // Etapa 1: Lendo planilha
+    if (sessionId) progressService.updateStage(sessionId, 'reading', 50, 'Abrindo arquivo Excel...');
+
     const workbook = xlsx.readFile(file.path, { cellDates: true });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
+
+    if (sessionId) progressService.updateStage(sessionId, 'reading', 100, `Planilha lida: ${jsonData.length} linhas encontradas`);
 
     const setoresBatch = [];
     const usuariosMap = new Map();
@@ -93,8 +123,19 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
       key.toLowerCase().includes("compra")
     );
 
+    // Etapa 2: Processando dados
+    if (sessionId) progressService.updateStage(sessionId, 'processing', 0, 'Iniciando processamento de dados...');
+
     // Processar cada item da planilha
-    for (const item of jsonData) {
+    for (let index = 0; index < jsonData.length; index++) {
+      const item = jsonData[index];
+
+      // Atualizar progresso a cada 10% das linhas
+      if (sessionId && index % Math.max(1, Math.floor(jsonData.length / 10)) === 0) {
+        const progressPercentage = Math.round((index / jsonData.length) * 100);
+        progressService.updateProcessingProgress(sessionId, index + 1, jsonData.length,
+          `Processando linha ${index + 1} de ${jsonData.length}`);
+      }
       const usuarioStr = usuarioKey
         ? String(item[usuarioKey] || "Produto não auditado")
         : "Produto não auditado";
@@ -130,11 +171,19 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
       }
     }
 
+    // Finalizar etapa de processamento
+    if (sessionId) progressService.updateStage(sessionId, 'processing', 100, `${jsonData.length} linhas processadas`);
+
+    // Etapa 3: Salvando no banco
+    if (sessionId) progressService.updateStage(sessionId, 'saving', 0, 'Preparando para salvar dados...');
+
     // Limpar dados antigos APENAS DESTA LOJA para esta data
     const inicioDia = new Date(dataAuditoria);
     inicioDia.setHours(0, 0, 0, 0);
     const fimDia = new Date(dataAuditoria);
     fimDia.setHours(23, 59, 59, 999);
+
+    if (sessionId) progressService.updateStage(sessionId, 'saving', 30, 'Removendo dados antigos...');
 
     await Auditoria.deleteMany({
       data: { $gte: inicioDia, $lte: fimDia },
@@ -147,6 +196,8 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
         loja.codigo
       } na data ${dataAuditoria.toLocaleDateString()}`
     );
+
+    if (sessionId) progressService.updateStage(sessionId, 'saving', 60, 'Salvando auditorias...');
 
     // Salvar auditorias
     if (setoresBatch.length > 0) {
@@ -163,33 +214,32 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
         const id = match ? match[1].trim() : usuarioStr;
         const nome = match ? match[2].trim() : usuarioStr;
 
-        // Buscar usuário existente por ID e loja
-        let usuario = await User.findOne({
-          id,
-          loja: loja._id,
-        });
+        // Buscar ou criar usuário com upsert para evitar duplicatas
+        let usuario = await User.findOneAndUpdate(
+          {
+            $or: [
+              { id, loja: loja._id },
+              { nome, loja: loja._id }
+            ]
+          },
+          {
+            $setOnInsert: {
+              id,
+              nome,
+              contadorTotal: 0,
+              auditorias: [],
+              loja: loja._id,
+            }
+          },
+          {
+            upsert: true,
+            new: true,
+            setDefaultsOnInsert: true
+          }
+        );
 
-        if (!usuario) {
-          // Se não encontrou por ID, buscar por nome
-          usuario = await User.findOne({
-            nome,
-            loja: loja._id,
-          });
-        }
-
-        if (!usuario) {
-          // Criar novo usuário apenas se não existir
-          usuario = new User({
-            id,
-            nome,
-            contadorTotal: 0,
-            auditorias: [],
-            loja: loja._id,
-          });
-          console.log(`➕ Novo usuário criado: ${nome} (${id})`);
-        } else {
-          console.log(`👤 Usuário encontrado: ${usuario.nome} (${usuario.id})`);
-        }
+        console.log(`👤 Usuário processado: ${usuario.nome} (${usuario.id})`);
+        const wasCreated = !usuario.auditorias || usuario.auditorias.length === 0;
 
         // Encontrar ou criar auditoria para a data atual
         const auditoriaIndex = usuario.auditorias.findIndex(
@@ -279,16 +329,21 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
       { upsert: true, new: true }
     );
 
+    if (sessionId) progressService.updateStage(sessionId, 'saving', 100, 'Dados salvos com sucesso!');
+
     console.log(`✅ Planilha processada com sucesso para loja ${loja.codigo}`);
 
-    return {
+    const resultado = {
       success: true,
       totalItens: jsonData.length,
       totalProcessados: totalItensProcessados,
       totalUsuarios: usuariosMap.size,
       tipo: "etiqueta",
       loja: loja,
+      sessionId
     };
+
+    return resultado;
   } catch (error) {
     console.error("❌ Erro ao processar etiqueta:", error);
     return { success: false, error: error.message };
@@ -441,34 +496,31 @@ async function processarRuptura(file, dataAuditoria, loja) {
         const userId = match ? match[1].trim() : usuarioStr;
         const nome = match ? match[2].trim() : usuarioStr;
 
-        let usuario = await User.findOne({
-          id: userId,
-          loja: loja._id,
-        });
+        // Buscar ou criar usuário com upsert para evitar duplicatas
+        let usuario = await User.findOneAndUpdate(
+          {
+            $or: [
+              { id: userId, loja: loja._id },
+              { nome, loja: loja._id }
+            ]
+          },
+          {
+            $setOnInsert: {
+              id: userId,
+              nome,
+              contadorTotal: 0,
+              auditorias: [],
+              loja: loja._id,
+            }
+          },
+          {
+            upsert: true,
+            new: true,
+            setDefaultsOnInsert: true
+          }
+        );
 
-        if (!usuario) {
-          // Se não encontrou por ID, buscar por nome
-          usuario = await User.findOne({
-            nome,
-            loja: loja._id,
-          });
-        }
-
-        if (!usuario) {
-          // Criar novo usuário apenas se não existir
-          usuario = new User({
-            id: userId,
-            nome,
-            contadorTotal: 0,
-            auditorias: [],
-            loja: loja._id,
-          });
-          console.log(`➕ Novo usuário criado: ${nome} (${userId})`);
-        } else {
-          console.log(
-            `👤 Usuário encontrado: ${usuario.nome} (${usuario.id})`
-          );
-        }
+        console.log(`👤 Usuário processado: ${usuario.nome} (${usuario.id})`);
 
         const auditoriaIndex = usuario.auditorias.findIndex(
           (a) => a.data.toDateString() === dataAuditoriaFinal.toDateString()
@@ -724,36 +776,31 @@ async function processarPresenca(file, dataAuditoria, loja) {
         const userId = match ? match[1].trim() : usuarioStr;
         const nome = match ? match[2].trim() : usuarioStr;
 
-        let usuario = await User.findOne({
-          id: userId,
-          loja: loja._id,
-        });
+        // Buscar ou criar usuário com upsert para evitar duplicatas
+        let usuario = await User.findOneAndUpdate(
+          {
+            $or: [
+              { id: userId, loja: loja._id },
+              { nome, loja: loja._id }
+            ]
+          },
+          {
+            $setOnInsert: {
+              id: userId,
+              nome,
+              contadorTotal: 0,
+              auditorias: [],
+              loja: loja._id,
+            }
+          },
+          {
+            upsert: true,
+            new: true,
+            setDefaultsOnInsert: true
+          }
+        );
 
-        if (!usuario) {
-          // Se não encontrou por ID, buscar por nome
-          usuario = await User.findOne({
-            nome,
-            loja: loja._id,
-          });
-        }
-
-        if (!usuario) {
-          // Criar novo usuário apenas se não existir
-          usuario = new User({
-            id: userId,
-            nome,
-            contadorTotal: 0,
-            auditorias: [],
-            loja: loja._id,
-          });
-          console.log(
-            `➕ Novo usuário criado para presença: ${nome} (${userId})`
-          );
-        } else {
-          console.log(
-            `👤 Usuário encontrado para presença: ${usuario.nome} (${usuario.id})`
-          );
-        }
+        console.log(`👤 Usuário processado para presença: ${usuario.nome} (${usuario.id})`);
 
         const auditoriaIndex = usuario.auditorias.findIndex(
           (a) => a.data.toDateString() === dataAuditoriaFinal.toDateString()
@@ -860,6 +907,8 @@ router.post(
   verificarLojaObrigatoria,
   upload.single("file"),
   async (req, res) => {
+    const sessionId = progressService.generateSessionId();
+
     try {
       if (!req.file) {
         return res.status(400).json({ erro: "Nenhum arquivo enviado." });
@@ -870,20 +919,24 @@ router.post(
       const loja = req.loja;
 
       console.log(
-        `📤 Iniciando upload de ${tipoAuditoria} para loja ${loja.codigo}`
+        `📤 Iniciando upload de ${tipoAuditoria} para loja ${loja.codigo} - Sessão: ${sessionId}`
       );
+
+      // Inicializar tracking de progresso
+      progressService.startUpload(sessionId);
+      progressService.updateStage(sessionId, 'reading', 0, `Iniciando upload de ${tipoAuditoria}...`);
 
       let resultado;
 
       switch (tipoAuditoria) {
         case "etiqueta":
-          resultado = await processarEtiqueta(req.file, dataAuditoria, loja);
+          resultado = await processarEtiqueta(req.file, dataAuditoria, loja, sessionId);
           break;
         case "ruptura":
-          resultado = await processarRuptura(req.file, dataAuditoria, loja);
+          resultado = await processarRuptura(req.file, dataAuditoria, loja, sessionId);
           break;
         case "presenca":
-          resultado = await processarPresenca(req.file, dataAuditoria, loja);
+          resultado = await processarPresenca(req.file, dataAuditoria, loja, sessionId);
           break;
         default:
           return res.status(400).json({ erro: "Tipo de auditoria inválido" });
@@ -927,7 +980,68 @@ router.post(
         }
       }
 
-      res.json({
+      // Etapa 4: Calcular métricas automaticamente após o processamento bem-sucedido
+      progressService.updateStage(sessionId, 'metrics', 0, 'Iniciando cálculo de métricas...');
+
+      let metricsStarted = false;
+      let metricsStatus = {
+        initiated: false,
+        diario: { attempted: false, success: false, error: null },
+        mensal: { attempted: false, success: false, error: null }
+      };
+
+      try {
+        console.log(`📊 Iniciando cálculo automático de métricas para loja ${loja.codigo}...`);
+        console.log(`📊 Service disponível:`, typeof metricsCalculationService.calcularTodasMetricas);
+
+        // Verificar se o serviço está disponível
+        if (!metricsCalculationService || typeof metricsCalculationService.calcularTodasMetricas !== 'function') {
+          throw new Error('MetricsCalculationService não está disponível ou não possui o método calcularTodasMetricas');
+        }
+
+        const dataMetricas = resultado.dataAuditoria || dataAuditoria;
+        metricsStarted = true;
+        metricsStatus.initiated = true;
+
+        progressService.updateStage(sessionId, 'metrics', 25, 'Calculando métricas diárias...');
+        console.log(`📊 Calculando métricas para data: ${dataMetricas.toISOString()}`);
+
+        // Calcular métricas diárias
+        metricsStatus.diario.attempted = true;
+        const resultadoDiario = await metricsCalculationService.calcularTodasMetricas("diario", dataMetricas);
+        metricsStatus.diario.success = resultadoDiario.success;
+        console.log(`📅 Métricas diárias calculadas:`, resultadoDiario.success ? '✅ Sucesso' : '❌ Falha');
+
+        progressService.updateStage(sessionId, 'metrics', 70, 'Calculando métricas mensais...');
+
+        // Calcular métricas mensais
+        metricsStatus.mensal.attempted = true;
+        const resultadoMensal = await metricsCalculationService.calcularTodasMetricas("mensal", dataMetricas);
+        metricsStatus.mensal.success = resultadoMensal.success;
+        console.log(`📊 Métricas mensais calculadas:`, resultadoMensal.success ? '✅ Sucesso' : '❌ Falha');
+
+        progressService.updateStage(sessionId, 'metrics', 100, 'Métricas calculadas com sucesso!');
+        console.log(`✅ Processamento de métricas concluído para loja ${loja.codigo}`);
+        console.log(`🔍 Verificar resultados: GET /api/debug/verificar-metricas com header x-loja: ${loja.codigo}`);
+
+      } catch (errorMetricas) {
+        console.error(`❌ ERRO DETALHADO ao calcular métricas:`, {
+          erro: errorMetricas.message,
+          stack: errorMetricas.stack,
+          loja: loja.codigo,
+          serviceType: typeof metricsCalculationService,
+          serviceMethod: typeof metricsCalculationService?.calcularTodasMetricas
+        });
+
+        metricsStatus.diario.error = errorMetricas.message;
+        metricsStatus.mensal.error = errorMetricas.message;
+
+        console.log(`🔍 Para debug detalhado: GET /api/debug/verificar-metricas com header x-loja: ${loja.codigo}`);
+        console.log(`🔄 Para tentar novamente: POST /api/debug/calcular-agora com header x-loja: ${loja.codigo}`);
+      }
+
+      // Finalizar progresso
+      const finalResult = {
         mensagem: `Planilha de ${tipoAuditoria} processada com sucesso!`,
         totalItens: resultado.totalItens,
         totalProcessados: resultado.totalProcessados || resultado.totalItens,
@@ -938,12 +1052,40 @@ router.post(
           nome: loja.nome,
         },
         dataAuditoria: resultado.dataAuditoria || dataAuditoria,
-      });
+        metricas: {
+          processamentoIniciado: metricsStarted,
+          status: metricsStatus,
+          message: metricsStarted
+            ? "Métricas processadas - verificar resultados"
+            : "Erro ao iniciar processamento de métricas",
+          debugUrl: `/api/debug/verificar-metricas (header x-loja: ${loja.codigo})`,
+        },
+        progress: {
+          sessionId,
+          completed: true,
+          streamUrl: `/api/progress/stream/${sessionId}`,
+          statusUrl: `/api/progress/status/${sessionId}`
+        }
+      };
+
+      progressService.completeUpload(sessionId, finalResult);
+
+      res.json(finalResult);
     } catch (error) {
       console.error("❌ Erro no upload:", error);
+
+      // Marcar progresso como erro
+      progressService.errorUpload(sessionId, error);
+
       res.status(500).json({
         erro: "Falha no processamento",
         detalhes: error.message,
+        progress: {
+          sessionId,
+          error: true,
+          streamUrl: `/api/progress/stream/${sessionId}`,
+          statusUrl: `/api/progress/status/${sessionId}`
+        }
       });
     }
   }
