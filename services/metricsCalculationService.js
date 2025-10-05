@@ -1304,6 +1304,34 @@ class MetricsCalculationService {
     });
   }
 
+  async obterPeriodoAnteriorUsuario(lojaId, usuarioId, periodo, dataInicio) {
+    let dataInicioAnterior;
+
+    switch (periodo) {
+      case "diario":
+        dataInicioAnterior = new Date(dataInicio);
+        dataInicioAnterior.setDate(dataInicio.getDate() - 1);
+        break;
+      case "semanal":
+        dataInicioAnterior = new Date(dataInicio);
+        dataInicioAnterior.setDate(dataInicio.getDate() - 7);
+        break;
+      case "mensal":
+        dataInicioAnterior = new Date(dataInicio);
+        dataInicioAnterior.setMonth(dataInicio.getMonth() - 1);
+        break;
+      default:
+        return null;
+    }
+
+    return await MetricasUsuario.findOne({
+      loja: lojaId,
+      usuarioId: usuarioId,
+      periodo,
+      dataInicio: dataInicioAnterior,
+    });
+  }
+
   // Métodos auxiliares para cálculos específicos
   async calcularLocaisMaisMovimentados(auditorias) {
     const locais = new Map();
