@@ -9,12 +9,9 @@ import setoresRouter from "./routes/setores.js";
 import relatoriosAvancadosRouter from "./routes/relatorios-avancados.js";
 import estatiscas from "./routes/estatisticas.js";
 import lojaRouter from "./routes/lojas.js";
-import uploadRupturaRouter from "./routes/upload-ruptura.js";
-import uploadPresencaRouter from "./routes/upload-presenca.js";
 import metricasRouter from "./routes/metricas.js";
 import debugMetricasRouter from "./routes/debug-metricas.js";
 import endpointsListRouter from "./routes/endpoints-list.js";
-import progressRouter from "./routes/progress.js";
 import "./utils/planilhaHelpers.js";
 
 const app = express();
@@ -26,6 +23,9 @@ conectarBanco();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("uploads"));
+
+// Servir arquivos estáticos do frontend (incluindo imagens das lojas)
+app.use(express.static("../frontend/public"));
 
 // CORS
 app.use((req, res, next) => {
@@ -82,19 +82,6 @@ try {
   console.log("❌ Erro nas rotas de estatísticas:", error.message);
 }
 
-try {
-  app.use("/", uploadRupturaRouter);
-  console.log("✅ Rotas de upload ruptura carregadas");
-} catch (error) {
-  console.log("❌ Erro nas rotas de upload ruptura:", error.message);
-}
-
-try {
-  app.use("/", uploadPresencaRouter);
-  console.log("✅ Rotas de upload presença carregadas");
-} catch (error) {
-  console.log("❌ Erro nas rotas de upload presença:", error.message);
-}
 
 try {
   app.use("/", rankingRouter);
@@ -145,12 +132,6 @@ try {
   console.log("❌ Erro na lista de endpoints:", error.message);
 }
 
-try {
-  app.use("/api/progress", progressRouter);
-  console.log("✅ Rotas de progresso carregadas");
-} catch (error) {
-  console.log("❌ Erro nas rotas de progresso:", error.message);
-}
 
 // Rota de sincronização removida - agora usa modelos unificados
 

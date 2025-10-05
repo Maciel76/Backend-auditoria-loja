@@ -10,7 +10,6 @@ import Auditoria from "../models/Auditoria.js";
 import { verificarLojaObrigatoria, getFiltroLoja } from "../middleware/loja.js";
 import { processarParaAuditoria } from "../services/processador-auditoria.js";
 import metricsCalculationService from "../services/metricsCalculationService.js";
-import progressService from "../services/progressService.js";
 
 // Helper function to access obterPeriodo
 const obterPeriodo = (periodo, data) => {
@@ -70,22 +69,20 @@ function limparArquivoTemporario(filePath) {
   }
 }
 
-// Função para processar etiqueta - COM PROGRESSO
-async function processarEtiqueta(file, dataAuditoria, loja, sessionId = null) {
+// Função para processar etiqueta
+async function processarEtiqueta(file, dataAuditoria, loja) {
   try {
     console.log(
       `🏷️ Processando etiquetas para loja: ${loja.codigo} - ${loja.nome}`
     );
 
-    // Etapa 1: Lendo planilha
-    if (sessionId) progressService.updateStage(sessionId, 'reading', 50, 'Abrindo arquivo Excel...');
+    // Lendo planilha
 
     const workbook = xlsx.readFile(file.path, { cellDates: true });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
 
-    if (sessionId) progressService.updateStage(sessionId, 'reading', 100, `Planilha lida: ${jsonData.length} linhas encontradas`);
 
     const setoresBatch = [];
     const usuariosMap = new Map();
@@ -123,19 +120,12 @@ async function processarEtiqueta(file, dataAuditoria, loja, sessionId = null) {
       key.toLowerCase().includes("compra")
     );
 
-    // Etapa 2: Processando dados
-    if (sessionId) progressService.updateStage(sessionId, 'processing', 0, 'Iniciando processamento de dados...');
+    // Processando dados
 
     // Processar cada item da planilha
     for (let index = 0; index < jsonData.length; index++) {
       const item = jsonData[index];
 
-      // Atualizar progresso a cada 10% das linhas
-      if (sessionId && index % Math.max(1, Math.floor(jsonData.length / 10)) === 0) {
-        const progressPercentage = Math.round((index / jsonData.length) * 100);
-        progressService.updateProcessingProgress(sessionId, index + 1, jsonData.length,
-          `Processando linha ${index + 1} de ${jsonData.length}`);
-      }
       const usuarioStr = usuarioKey
         ? String(item[usuarioKey] || "Produto não auditado")
         : "Produto não auditado";
@@ -171,11 +161,8 @@ async function processarEtiqueta(file, dataAuditoria, loja, sessionId = null) {
       }
     }
 
-    // Finalizar etapa de processamento
-    if (sessionId) progressService.updateStage(sessionId, 'processing', 100, `${jsonData.length} linhas processadas`);
 
-    // Etapa 3: Salvando no banco
-    if (sessionId) progressService.updateStage(sessionId, 'saving', 0, 'Preparando para salvar dados...');
+    // Salvando no banco
 
     // Limpar dados antigos APENAS DESTA LOJA para esta data
     const inicioDia = new Date(dataAuditoria);
@@ -183,7 +170,6 @@ async function processarEtiqueta(file, dataAuditoria, loja, sessionId = null) {
     const fimDia = new Date(dataAuditoria);
     fimDia.setHours(23, 59, 59, 999);
 
-    if (sessionId) progressService.updateStage(sessionId, 'saving', 30, 'Removendo dados antigos...');
 
     await Auditoria.deleteMany({
       data: { $gte: inicioDia, $lte: fimDia },
@@ -197,7 +183,6 @@ async function processarEtiqueta(file, dataAuditoria, loja, sessionId = null) {
       } na data ${dataAuditoria.toLocaleDateString()}`
     );
 
-    if (sessionId) progressService.updateStage(sessionId, 'saving', 60, 'Salvando auditorias...');
 
     // Salvar auditorias
     if (setoresBatch.length > 0) {
@@ -329,7 +314,6 @@ async function processarEtiqueta(file, dataAuditoria, loja, sessionId = null) {
       { upsert: true, new: true }
     );
 
-    if (sessionId) progressService.updateStage(sessionId, 'saving', 100, 'Dados salvos com sucesso!');
 
     console.log(`✅ Planilha processada com sucesso para loja ${loja.codigo}`);
 
@@ -339,8 +323,7 @@ async function processarEtiqueta(file, dataAuditoria, loja, sessionId = null) {
       totalProcessados: totalItensProcessados,
       totalUsuarios: usuariosMap.size,
       tipo: "etiqueta",
-      loja: loja,
-      sessionId
+      loja: loja
     };
 
     return resultado;
@@ -357,10 +340,12 @@ async function processarRuptura(file, dataAuditoria, loja) {
       `💔 Processando rupturas para loja: ${loja.codigo} - ${loja.nome}`
     );
 
+
     const workbook = xlsx.readFile(file.path, { cellDates: true });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
+
 
     // Extrair data real da planilha
     let dataAuditoriaFinal = extrairDataDaPlanilha(jsonData, file.originalname);
@@ -628,10 +613,12 @@ async function processarPresenca(file, dataAuditoria, loja) {
       `👥 Processando presenças para loja: ${loja.codigo} - ${loja.nome}`
     );
 
+
     const workbook = xlsx.readFile(file.path, { cellDates: true });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
+
 
     // Extrair data real da planilha
     let dataAuditoriaFinal = extrairDataDaPlanilha(jsonData, file.originalname);
@@ -907,8 +894,6 @@ router.post(
   verificarLojaObrigatoria,
   upload.single("file"),
   async (req, res) => {
-    const sessionId = progressService.generateSessionId();
-
     try {
       if (!req.file) {
         return res.status(400).json({ erro: "Nenhum arquivo enviado." });
@@ -919,24 +904,22 @@ router.post(
       const loja = req.loja;
 
       console.log(
-        `📤 Iniciando upload de ${tipoAuditoria} para loja ${loja.codigo} - Sessão: ${sessionId}`
+        `📤 Iniciando upload de ${tipoAuditoria} para loja ${loja.codigo}`
       );
 
-      // Inicializar tracking de progresso
-      progressService.startUpload(sessionId);
-      progressService.updateStage(sessionId, 'reading', 0, `Iniciando upload de ${tipoAuditoria}...`);
+      // Iniciando upload
 
       let resultado;
 
       switch (tipoAuditoria) {
         case "etiqueta":
-          resultado = await processarEtiqueta(req.file, dataAuditoria, loja, sessionId);
+          resultado = await processarEtiqueta(req.file, dataAuditoria, loja);
           break;
         case "ruptura":
-          resultado = await processarRuptura(req.file, dataAuditoria, loja, sessionId);
+          resultado = await processarRuptura(req.file, dataAuditoria, loja);
           break;
         case "presenca":
-          resultado = await processarPresenca(req.file, dataAuditoria, loja, sessionId);
+          resultado = await processarPresenca(req.file, dataAuditoria, loja);
           break;
         default:
           return res.status(400).json({ erro: "Tipo de auditoria inválido" });
@@ -981,7 +964,6 @@ router.post(
       }
 
       // Etapa 4: Calcular métricas automaticamente após o processamento bem-sucedido
-      progressService.updateStage(sessionId, 'metrics', 0, 'Iniciando cálculo de métricas...');
 
       let metricsStarted = false;
       let metricsStatus = {
@@ -1003,7 +985,6 @@ router.post(
         metricsStarted = true;
         metricsStatus.initiated = true;
 
-        progressService.updateStage(sessionId, 'metrics', 25, 'Calculando métricas diárias...');
         console.log(`📊 Calculando métricas para data: ${dataMetricas.toISOString()}`);
 
         // Calcular métricas diárias
@@ -1012,7 +993,6 @@ router.post(
         metricsStatus.diario.success = resultadoDiario.success;
         console.log(`📅 Métricas diárias calculadas:`, resultadoDiario.success ? '✅ Sucesso' : '❌ Falha');
 
-        progressService.updateStage(sessionId, 'metrics', 70, 'Calculando métricas mensais...');
 
         // Calcular métricas mensais
         metricsStatus.mensal.attempted = true;
@@ -1020,7 +1000,6 @@ router.post(
         metricsStatus.mensal.success = resultadoMensal.success;
         console.log(`📊 Métricas mensais calculadas:`, resultadoMensal.success ? '✅ Sucesso' : '❌ Falha');
 
-        progressService.updateStage(sessionId, 'metrics', 100, 'Métricas calculadas com sucesso!');
         console.log(`✅ Processamento de métricas concluído para loja ${loja.codigo}`);
         console.log(`🔍 Verificar resultados: GET /api/debug/verificar-metricas com header x-loja: ${loja.codigo}`);
 
@@ -1060,32 +1039,17 @@ router.post(
             : "Erro ao iniciar processamento de métricas",
           debugUrl: `/api/debug/verificar-metricas (header x-loja: ${loja.codigo})`,
         },
-        progress: {
-          sessionId,
-          completed: true,
-          streamUrl: `/api/progress/stream/${sessionId}`,
-          statusUrl: `/api/progress/status/${sessionId}`
-        }
       };
 
-      progressService.completeUpload(sessionId, finalResult);
 
       res.json(finalResult);
     } catch (error) {
       console.error("❌ Erro no upload:", error);
 
-      // Marcar progresso como erro
-      progressService.errorUpload(sessionId, error);
 
       res.status(500).json({
         erro: "Falha no processamento",
         detalhes: error.message,
-        progress: {
-          sessionId,
-          error: true,
-          streamUrl: `/api/progress/stream/${sessionId}`,
-          statusUrl: `/api/progress/status/${sessionId}`
-        }
       });
     }
   }

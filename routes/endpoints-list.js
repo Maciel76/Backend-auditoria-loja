@@ -14,15 +14,10 @@ router.get("/", (req, res) => {
       descricao: "Endpoints para upload e processamento de planilhas",
       rotas: {
         "POST /upload": {
-          descricao: "🆕 Upload de planilhas com progresso em tempo real",
+          descricao: "Upload de planilhas unificado (etiquetas, presença, ruptura)",
           parametros: "file (multipart), tipoAuditoria (etiqueta|ruptura|presenca)",
           headers_obrigatorios: "x-loja: CODIGO_LOJA",
-          resposta: "Dados processados + sessionId para tracking de progresso + URLs para acompanhar",
-          progress_tracking: {
-            sessionId: "ID único para acompanhar o progresso",
-            streamUrl: "/api/progress/stream/{sessionId} - Server-Sent Events",
-            statusUrl: "/api/progress/status/{sessionId} - HTTP polling"
-          },
+          resposta: "Dados processados + métricas automáticas calculadas",
           exemplo: "curl -X POST -H 'x-loja: 001' -F 'file=@planilha.xlsx' -F 'tipoAuditoria=etiqueta' http://localhost:3000/upload"
         },
         "GET /usuarios": {
@@ -42,29 +37,6 @@ router.get("/", (req, res) => {
       }
     },
 
-    // ===== SISTEMA DE PROGRESSO =====
-    progress_tracking: {
-      descricao: "🆕 Sistema de acompanhamento de progresso em tempo real para uploads",
-      rotas: {
-        "POST /api/progress/session": {
-          descricao: "Criar nova sessão de upload",
-          resposta: "sessionId + URLs para acompanhar progresso"
-        },
-        "GET /api/progress/stream/:sessionId": {
-          descricao: "🔴 LIVE - Server-Sent Events para progresso em tempo real",
-          resposta: "Stream contínuo de eventos de progresso (0-100%)",
-          como_usar: "EventSource('/api/progress/stream/SESSION_ID') no JavaScript"
-        },
-        "GET /api/progress/status/:sessionId": {
-          descricao: "📊 Status atual do upload via HTTP",
-          resposta: "Snapshot do progresso atual (para polling)"
-        },
-        "GET /api/progress/active": {
-          descricao: "Lista todos os uploads ativos no momento",
-          resposta: "Todos os uploads em andamento"
-        }
-      }
-    },
 
     // ===== SISTEMA DE MÉTRICAS =====
     metricas_consolidadas: {
@@ -184,8 +156,6 @@ router.get("/", (req, res) => {
         "GET /ranking*": "Rankings do sistema antigo",
         "GET /setores*": "Gestão de setores",
         "GET /estatisticas*": "Estatísticas básicas",
-        "POST /upload-ruptura": "Upload específico de rupturas",
-        "POST /upload-presenca": "Upload específico de presenças",
         "GET /api/avancado/*": "Relatórios avançados",
       }
     },
@@ -193,19 +163,14 @@ router.get("/", (req, res) => {
     // ===== GUIA DE USO =====
     guia_de_uso: {
       "1_primeiro_upload": {
-        descricao: "🆕 Como fazer upload com progresso em tempo real",
+        descricao: "Como fazer upload de planilhas",
         passos: [
           "0. GET /api/debug/testar-servico - Verificar se serviço está OK",
           "1. POST /upload com header 'x-loja: 001' e arquivo Excel",
-          "2. Na resposta, pegar 'progress.sessionId' e 'progress.streamUrl'",
-          "3. Conectar no stream: new EventSource(streamUrl) para ver progresso",
-          "4. Aguardar progresso: reading → processing → saving → metrics → completed",
-          "5. GET /api/debug/verificar-metricas com header 'x-loja: 001'",
-          "6. GET /api/metricas/dashboard para ver dashboard executivo"
-        ],
-        exemplo_frontend: {
-          javascript: "const eventSource = new EventSource('/api/progress/stream/SESSION_ID'); eventSource.onmessage = (event) => { const progress = JSON.parse(event.data); updateProgressBar(progress.percentage); };"
-        }
+          "2. Aguardar processamento (etiquetas, presença ou ruptura)",
+          "3. GET /api/debug/verificar-metricas com header 'x-loja: 001'",
+          "4. GET /api/metricas/dashboard para ver dashboard executivo"
+        ]
       },
       "0_debug_problemas": {
         descricao: "Se as métricas não estão sendo salvas",

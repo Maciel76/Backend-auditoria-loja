@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+// anotaçoes para implementar validações e regras de negócio para o schema de métricas da loja
+// cada loja tera apenas um id unicos e todas as metricas serao da loja serao enviadas para esse id da loja o nome da loja atulmente ta como id mas eu quero o nome da loja ou id da loja por exemplo loja 056 ou a loja selecionada
 
 const metricasLojaSchema = new mongoose.Schema(
   {
@@ -103,7 +105,7 @@ const metricasLojaSchema = new mongoose.Schema(
         percentualConclusao: { type: Number, default: 0 },
         usuariosAtivos: { type: Number, default: 0 },
         problemasFrecuentes: { type: Number, default: 0 },
-      }
+      },
     ],
 
     // Tendências e comparações
@@ -119,7 +121,12 @@ const metricasLojaSchema = new mongoose.Schema(
       {
         tipo: {
           type: String,
-          enum: ["baixa_produtividade", "alta_ruptura", "poucos_usuarios", "qualidade_baixa"],
+          enum: [
+            "baixa_produtividade",
+            "alta_ruptura",
+            "poucos_usuarios",
+            "qualidade_baixa",
+          ],
         },
         severidade: {
           type: String,
@@ -132,7 +139,7 @@ const metricasLojaSchema = new mongoose.Schema(
           type: Date,
           default: Date.now,
         },
-      }
+      },
     ],
 
     // Metadata
@@ -152,7 +159,11 @@ const metricasLojaSchema = new mongoose.Schema(
 
 // Índices compostos para queries otimizadas
 metricasLojaSchema.index({ loja: 1, periodo: 1, dataInicio: -1 });
-metricasLojaSchema.index({ periodo: 1, dataInicio: -1, "ranking.pontuacaoTotal": -1 });
+metricasLojaSchema.index({
+  periodo: 1,
+  dataInicio: -1,
+  "ranking.pontuacaoTotal": -1,
+});
 metricasLojaSchema.index({ "ranking.posicaoGeral": 1, periodo: 1 });
 
 // Índice único para evitar duplicatas
@@ -162,55 +173,73 @@ metricasLojaSchema.index(
 );
 
 // Métodos estáticos úteis
-metricasLojaSchema.statics.obterRankingGeral = function(periodo, dataInicio, dataFim, limite = 50) {
+metricasLojaSchema.statics.obterRankingGeral = function (
+  periodo,
+  dataInicio,
+  dataFim,
+  limite = 50
+) {
   return this.find({
     periodo: periodo,
     dataInicio: { $gte: dataInicio },
     dataFim: { $lte: dataFim },
   })
-  .populate('loja', 'codigo nome cidade regiao')
-  .sort({ "ranking.pontuacaoTotal": -1 })
-  .limit(limite);
+    .populate("loja", "codigo nome cidade regiao")
+    .sort({ "ranking.pontuacaoTotal": -1 })
+    .limit(limite);
 };
 
-metricasLojaSchema.statics.obterComparacaoLojas = function(lojasIds, periodo, dataInicio, dataFim) {
+metricasLojaSchema.statics.obterComparacaoLojas = function (
+  lojasIds,
+  periodo,
+  dataInicio,
+  dataFim
+) {
   return this.find({
     loja: { $in: lojasIds },
     periodo: periodo,
     dataInicio: { $gte: dataInicio },
     dataFim: { $lte: dataFim },
   })
-  .populate('loja', 'codigo nome cidade regiao')
-  .sort({ "ranking.pontuacaoTotal": -1 });
+    .populate("loja", "codigo nome cidade regiao")
+    .sort({ "ranking.pontuacaoTotal": -1 });
 };
 
-metricasLojaSchema.statics.obterTendenciaLoja = function(lojaId, periodo, limite = 12) {
+metricasLojaSchema.statics.obterTendenciaLoja = function (
+  lojaId,
+  periodo,
+  limite = 12
+) {
   return this.find({
     loja: lojaId,
     periodo: periodo,
   })
-  .sort({ dataInicio: -1 })
-  .limit(limite);
+    .sort({ dataInicio: -1 })
+    .limit(limite);
 };
 
-metricasLojaSchema.statics.obterLojasComProblemas = function(periodo, dataInicio, dataFim) {
+metricasLojaSchema.statics.obterLojasComProblemas = function (
+  periodo,
+  dataInicio,
+  dataFim
+) {
   return this.find({
     periodo: periodo,
     dataInicio: { $gte: dataInicio },
     dataFim: { $lte: dataFim },
     "alertas.severidade": { $in: ["alta", "critica"] },
   })
-  .populate('loja', 'codigo nome cidade regiao')
-  .sort({ "alertas.severidade": -1 });
+    .populate("loja", "codigo nome cidade regiao")
+    .sort({ "alertas.severidade": -1 });
 };
 
 // Métodos de instância
-metricasLojaSchema.methods.calcularPontuacaoTotal = function() {
+metricasLojaSchema.methods.calcularPontuacaoTotal = function () {
   const pesos = {
-    conclusao: 0.4,    // 40% - Taxa de conclusão
-    qualidade: 0.3,    // 30% - Qualidade do trabalho
+    conclusao: 0.4, // 40% - Taxa de conclusão
+    qualidade: 0.3, // 30% - Qualidade do trabalho
     produtividade: 0.2, // 20% - Produtividade
-    consistencia: 0.1,  // 10% - Consistência
+    consistencia: 0.1, // 10% - Consistência
   };
 
   // Taxa de conclusão (0-100)
@@ -226,18 +255,22 @@ metricasLojaSchema.methods.calcularPontuacaoTotal = function() {
   const qualidade = (diversidade / 3) * 100;
 
   // Produtividade baseada em itens por usuário ativo
-  const produtividade = this.totais.usuariosAtivos > 0
-    ? Math.min((this.totais.itensAtualizados / this.totais.usuariosAtivos) * 2, 100)
-    : 0;
+  const produtividade =
+    this.totais.usuariosAtivos > 0
+      ? Math.min(
+          (this.totais.itensAtualizados / this.totais.usuariosAtivos) * 2,
+          100
+        )
+      : 0;
 
   // Consistência baseada na regularidade de uso
   const consistencia = Math.min(this.totais.usuariosAtivos * 10, 100);
 
   const pontuacao =
-    (taxaConclusao * pesos.conclusao) +
-    (qualidade * pesos.qualidade) +
-    (produtividade * pesos.produtividade) +
-    (consistencia * pesos.consistencia);
+    taxaConclusao * pesos.conclusao +
+    qualidade * pesos.qualidade +
+    produtividade * pesos.produtividade +
+    consistencia * pesos.consistencia;
 
   this.ranking.pontuacaoTotal = Math.round(pontuacao);
   this.ranking.notaQualidade = Math.round(pontuacao / 10); // Nota de 0-10
@@ -246,13 +279,24 @@ metricasLojaSchema.methods.calcularPontuacaoTotal = function() {
   return this.ranking.pontuacaoTotal;
 };
 
-metricasLojaSchema.methods.atualizarTotais = function() {
-  this.totais.totalItens = this.etiquetas.totalItens + this.rupturas.totalItens + this.presencas.totalItens;
-  this.totais.itensLidos = this.etiquetas.itensLidos + this.rupturas.itensLidos + this.presencas.itensLidos;
-  this.totais.itensAtualizados = this.etiquetas.itensAtualizados + this.rupturas.itensAtualizados + this.presencas.itensAtualizados;
+metricasLojaSchema.methods.atualizarTotais = function () {
+  this.totais.totalItens =
+    this.etiquetas.totalItens +
+    this.rupturas.totalItens +
+    this.presencas.totalItens;
+  this.totais.itensLidos =
+    this.etiquetas.itensLidos +
+    this.rupturas.itensLidos +
+    this.presencas.itensLidos;
+  this.totais.itensAtualizados =
+    this.etiquetas.itensAtualizados +
+    this.rupturas.itensAtualizados +
+    this.presencas.itensAtualizados;
 
   if (this.totais.totalItens > 0) {
-    this.totais.percentualConclusaoGeral = Math.round((this.totais.itensAtualizados / this.totais.totalItens) * 100);
+    this.totais.percentualConclusaoGeral = Math.round(
+      (this.totais.itensAtualizados / this.totais.totalItens) * 100
+    );
   }
 
   // Calcular usuários ativos únicos
@@ -266,14 +310,15 @@ metricasLojaSchema.methods.atualizarTotais = function() {
   this.ultimaAtualizacao = new Date();
 };
 
-metricasLojaSchema.methods.detectarAlertas = function() {
+metricasLojaSchema.methods.detectarAlertas = function () {
   this.alertas = []; // Limpar alertas anteriores
 
   // Alerta de baixa produtividade
   if (this.totais.percentualConclusaoGeral < 50) {
     this.alertas.push({
       tipo: "baixa_produtividade",
-      severidade: this.totais.percentualConclusaoGeral < 25 ? "critica" : "alta",
+      severidade:
+        this.totais.percentualConclusaoGeral < 25 ? "critica" : "alta",
       descricao: `Taxa de conclusão baixa: ${this.totais.percentualConclusaoGeral}%`,
       valor: this.totais.percentualConclusaoGeral,
     });
