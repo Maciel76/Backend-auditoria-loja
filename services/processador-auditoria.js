@@ -135,6 +135,12 @@ export async function processarParaAuditoria(planilhaData) {
             (key.toLowerCase().includes("situação") ||
               key.toLowerCase().includes("situacao"))
         );
+        const situacaoAtualKey = Object.keys(item).find(
+          (key) =>
+            key && key.toLowerCase().includes("situação") &&
+            key.toLowerCase().includes("atual") &&
+            key.toLowerCase().includes("auditoria")
+        );
         const localKey = Object.keys(item).find(
           (key) => key && key.toLowerCase().includes("local")
         );
@@ -150,6 +156,14 @@ export async function processarParaAuditoria(planilhaData) {
         const estoqueKey = Object.keys(item).find(
           (key) => key && key.toLowerCase().includes("estoque")
         );
+        const classeProdutoKey = Object.keys(item).find(
+          (key) => key && key.toLowerCase().includes("classe") &&
+          key.toLowerCase().includes("produto")
+        );
+        const auditadoEmKey = Object.keys(item).find(
+          (key) => key && key.toLowerCase().includes("auditado") &&
+          key.toLowerCase().includes("em")
+        );
 
         // Valores com fallback e normalização
         const local =
@@ -161,14 +175,41 @@ export async function processarParaAuditoria(planilhaData) {
             ? String(item[situacaoKey])
             : "Não lido";
         const situacao = normalizarSituacao(situacaoRaw);
+        const situacaoAtual =
+          situacaoAtualKey && item[situacaoAtualKey]
+            ? String(item[situacaoAtualKey])
+            : "";
         const codigo =
           codigoKey && item[codigoKey] ? String(item[codigoKey]) : "";
         const produto =
           produtoKey && item[produtoKey] ? String(item[produtoKey]) : "";
+        const ClasseProduto =
+          classeProdutoKey && item[classeProdutoKey]
+            ? String(item[classeProdutoKey]).trim()
+            : "";
         const estoque =
           estoqueKey && item[estoqueKey]
             ? processarValorEstoque(item[estoqueKey])
             : "0";
+
+        // Processar campo "Auditado em" para extrair data e hora separadamente
+        let auditadoDia = "";
+        let auditadoHora = "";
+        if (auditadoEmKey && item[auditadoEmKey]) {
+          const auditadoEm = String(item[auditadoEmKey]);
+          // Se contém espaço, assumir formato "DD/MM/AAAA HH:MM"
+          if (auditadoEm.includes(" ")) {
+            const partes = auditadoEm.split(" ");
+            auditadoDia = partes[0] || "";
+            auditadoHora = partes[1] || "";
+          } else if (auditadoEm.includes("/")) {
+            // Se só contém data "DD/MM/AAAA"
+            auditadoDia = auditadoEm;
+          } else if (auditadoEm.includes(":")) {
+            // Se só contém hora "HH:MM"
+            auditadoHora = auditadoEm;
+          }
+        }
 
         // Adicionar ao batch
         auditoriasBatch.push({
@@ -180,8 +221,12 @@ export async function processarParaAuditoria(planilhaData) {
           local,
           codigo,
           produto,
+          ClasseProduto,
           situacao,
+          situacaoAtual,
           estoque,
+          AuditadoDia: auditadoDia,
+          AuditadoHora: auditadoHora,
           contador: situacao === "Atualizado" ? 1 : 0,
           metadata: {
             planilhaOrigem: nomeArquivo,

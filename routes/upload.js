@@ -118,6 +118,22 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
     const compraKey = todasChaves.find((key) =>
       key.toLowerCase().includes("compra")
     );
+    const classeProdutoKey = todasChaves.find((key) =>
+      key.toLowerCase().includes("classe") && key.toLowerCase().includes("produto")
+    );
+    // Buscar colunas "Auditado em" - Excel/XLSX cria "_1", "_2" etc para colunas duplicadas
+    const auditadoEmDataKey = todasChaves.find((key) => {
+      const keyLower = key.toLowerCase().trim();
+      return (keyLower === "auditado em" ||
+              (keyLower.includes("auditado") && keyLower.includes("em") && !keyLower.includes("_")));
+    });
+
+    const auditadoEmHoraKey = todasChaves.find((key) => {
+      const keyLower = key.toLowerCase().trim();
+      return (keyLower === "auditado em_1" ||
+              keyLower.includes("auditado em_") ||
+              (keyLower.includes("auditado") && keyLower.includes("em") && keyLower.includes("_")));
+    });
 
     // Processando dados
 
@@ -129,9 +145,47 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
         ? String(item[usuarioKey] || "Produto não auditado")
         : "Produto não auditado";
 
+      // Processar campos "Auditado em" separadamente (data e hora)
+      let auditadoDia = "";
+      let auditadoHora = "";
+
+      if (index === 0) {
+        console.log("🔍 Debug - Coluna data encontrada:", auditadoEmDataKey);
+        console.log("🔍 Debug - Coluna hora encontrada:", auditadoEmHoraKey);
+        console.log("🔍 Debug - Todas as chaves disponíveis:", todasChaves);
+      }
+
+      // Processar coluna de data
+      if (auditadoEmDataKey && item[auditadoEmDataKey]) {
+        auditadoDia = String(item[auditadoEmDataKey]).trim();
+        if (index === 0) {
+          console.log(`📅 Data encontrada (${auditadoEmDataKey}):`, auditadoDia);
+        }
+      }
+
+      // Processar coluna de hora
+      if (auditadoEmHoraKey && item[auditadoEmHoraKey]) {
+        const horaCompleta = String(item[auditadoEmHoraKey]).trim();
+        // Se tem formato HH:MM:SS, converter para HH:MM
+        if (horaCompleta.includes(":")) {
+          const partesHora = horaCompleta.split(":");
+          auditadoHora = `${partesHora[0]}:${partesHora[1]}`;
+        } else {
+          auditadoHora = horaCompleta;
+        }
+        if (index === 0) {
+          console.log(`⏰ Hora encontrada (${auditadoEmHoraKey}):`, horaCompleta, "→", auditadoHora);
+        }
+      }
+
+      if (index === 0) {
+        console.log(`✅ Resultado final - Dia: "${auditadoDia}", Hora: "${auditadoHora}"`);
+      }
+
       // Adicionar ao batch de auditorias - COM LOJA OBRIGATÓRIA
       setoresBatch.push({
         loja: loja._id,
+        nomeLoja: loja.nome,
         usuarioId: usuarioStr.match(/^(\d+)/)?.[1] || usuarioStr,
         usuarioNome: usuarioStr.includes("(")
           ? usuarioStr.match(/\((.*)\)/)?.[1] || usuarioStr
@@ -140,6 +194,7 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
         data: dataAuditoria,
         codigo: codigoKey ? String(item[codigoKey] || "") : "",
         produto: produtoKey ? String(item[produtoKey] || "") : "",
+        ClasseProduto: classeProdutoKey ? String(item[classeProdutoKey] || "").trim() : "",
         local: localKey
           ? String(item[localKey] || "Não especificado")
           : "Não especificado",
@@ -150,6 +205,8 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
         ultimaCompra: compraKey
           ? String(item[compraKey] || new Date().toLocaleDateString("pt-BR"))
           : new Date().toLocaleDateString("pt-BR"),
+        AuditadoDia: auditadoDia,
+        AuditadoHora: auditadoHora,
       });
 
       // Mapear usuários
@@ -442,6 +499,7 @@ async function processarRuptura(file, dataAuditoria, loja) {
     if (dadosProcessados.length > 0) {
       const auditoriasBatch = dadosProcessados.map((item) => ({
         loja: loja._id,
+        nomeLoja: loja.nome,
         usuarioId: item.usuario.match(/^(\d+)/)?.[1] || item.usuario,
         usuarioNome: item.usuario.includes("(")
           ? item.usuario.match(/\((.*)\)/)?.[1] || item.usuario
@@ -450,8 +508,10 @@ async function processarRuptura(file, dataAuditoria, loja) {
         data: dataAuditoriaFinal,
         codigo: item.codigo,
         produto: item.produto,
+        ClasseProduto: item.classeProdutoRaiz ? String(item.classeProdutoRaiz).trim() : "",
         local: item.local,
         situacao: item.situacao,
+        situacaoAtual: item.situacaoAuditoria || "",
         estoque: item.estoqueAtual,
         classeProdutoRaiz: item.classeProdutoRaiz,
         classeProduto: item.classeProduto,
@@ -463,6 +523,8 @@ async function processarRuptura(file, dataAuditoria, loja) {
         fornecedor: item.fornecedor,
         diasSemVenda: item.diasSemVenda,
         custoRuptura: item.custoRuptura,
+        AuditadoDia: item.auditadoEm ? item.auditadoEm.toLocaleDateString("pt-BR") : "",
+        AuditadoHora: item.auditadoEm ? item.auditadoEm.toLocaleTimeString("pt-BR", {hour: '2-digit', minute: '2-digit'}) : "",
         metadata: item.metadata,
       }));
 
@@ -721,6 +783,7 @@ async function processarPresenca(file, dataAuditoria, loja) {
     if (dadosProcessados.length > 0) {
       const auditoriasBatch = dadosProcessados.map((item) => ({
         loja: loja._id,
+        nomeLoja: loja.nome,
         usuarioId: item.usuario.match(/^(\d+)/)?.[1] || item.usuario,
         usuarioNome: item.usuario.includes("(")
           ? item.usuario.match(/\((.*)\)/)?.[1] || item.usuario
@@ -729,8 +792,10 @@ async function processarPresenca(file, dataAuditoria, loja) {
         data: dataAuditoriaFinal,
         codigo: item.codigo,
         produto: item.produto,
+        ClasseProduto: item.classeProdutoRaiz ? String(item.classeProdutoRaiz).trim() : "",
         local: item.local,
         situacao: item.situacao,
+        situacaoAtual: item.situacaoAuditoria || "",
         estoque: item.estoque,
         presenca: item.presenca,
         presencaConfirmada: item.presencaConfirmada,
@@ -745,6 +810,8 @@ async function processarPresenca(file, dataAuditoria, loja) {
         fornecedor: item.fornecedor,
         diasSemVenda: item.diasSemVenda,
         custoRuptura: item.custoRuptura,
+        AuditadoDia: item.auditadoEm ? item.auditadoEm.toLocaleDateString("pt-BR") : "",
+        AuditadoHora: item.auditadoEm ? item.auditadoEm.toLocaleTimeString("pt-BR", {hour: '2-digit', minute: '2-digit'}) : "",
         metadata: item.metadata,
       }));
 

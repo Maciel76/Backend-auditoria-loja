@@ -10,6 +10,10 @@ const auditoriaSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    nomeLoja: {
+      type: String,
+      required: false,
+    },
     usuarioId: {
       type: String,
       required: true,
@@ -39,6 +43,7 @@ const auditoriaSchema = new mongoose.Schema(
     // Campos comuns a todos os tipos
     codigo: String,
     produto: String,
+    ClasseProduto: String,
     local: {
       type: String,
       required: true,
@@ -48,11 +53,17 @@ const auditoriaSchema = new mongoose.Schema(
       type: String,
       default: "Não lido",
     },
+    situacaoAtual: {
+      type: String,
+      enum: ["Ativo", "Encerrada", "Pendente", "Cancelada"],
+    },
     estoque: String,
 
     // Campos específicos por tipo (opcionais conforme o tipo)
     // Para ETIQUETA
     ultimaCompra: String,
+    AuditadoDia: String,
+    AuditadoHora: String,
 
     // Para PRESENÇA
     presenca: Boolean,
