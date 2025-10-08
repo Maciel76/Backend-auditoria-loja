@@ -42,14 +42,20 @@ const metricasUsuarioSchema = new mongoose.Schema(
       totalItens: { type: Number, default: 0 },
       itensLidos: { type: Number, default: 0 },
       itensAtualizados: { type: Number, default: 0 },
+      itensDesatualizado: { type: Number, default: 0 },
+      itensSemEstoque: { type: Number, default: 0 },
+      itensNaopertence: { type: Number, default: 0 },
       percentualConclusao: { type: Number, default: 0 },
-      tempoMedioItem: { type: Number, default: 0 }, // em minutos
+      tempoMedioItem: { type: Number, default: 0 },
     },
 
     rupturas: {
       totalItens: { type: Number, default: 0 },
       itensLidos: { type: Number, default: 0 },
       itensAtualizados: { type: Number, default: 0 },
+      itensDesatualizado: { type: Number, default: 0 },
+      itensSemEstoque: { type: Number, default: 0 },
+      itensNaopertence: { type: Number, default: 0 },
       percentualConclusao: { type: Number, default: 0 },
       custoTotalRuptura: { type: Number, default: 0 },
       custoMedioRuptura: { type: Number, default: 0 },
@@ -59,6 +65,9 @@ const metricasUsuarioSchema = new mongoose.Schema(
       totalItens: { type: Number, default: 0 },
       itensLidos: { type: Number, default: 0 },
       itensAtualizados: { type: Number, default: 0 },
+      itensDesatualizado: { type: Number, default: 0 },
+      itensSemEstoque: { type: Number, default: 0 },
+      itensNaopertence: { type: Number, default: 0 },
       percentualConclusao: { type: Number, default: 0 },
       presencasConfirmadas: { type: Number, default: 0 },
       percentualPresenca: { type: Number, default: 0 },
@@ -92,9 +101,9 @@ const metricasUsuarioSchema = new mongoose.Schema(
     // Contadores de auditorias por tipo
     contadoresAuditorias: {
       totalEtiquetas: { type: Number, default: 0 }, // Quantas auditorias de etiqueta fez
-      totalRupturas: { type: Number, default: 0 },  // Quantas auditorias de ruptura fez
+      totalRupturas: { type: Number, default: 0 }, // Quantas auditorias de ruptura fez
       totalPresencas: { type: Number, default: 0 }, // Quantas auditorias de presença fez
-      totalGeral: { type: Number, default: 0 },     // Total de auditorias realizadas
+      totalGeral: { type: Number, default: 0 }, // Total de auditorias realizadas
     },
 
     // Totais acumulados de itens lidos (dados históricos)
@@ -139,7 +148,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
 // Índices compostos para queries otimizadas
 metricasUsuarioSchema.index({ loja: 1, periodo: 1, dataInicio: -1 });
 metricasUsuarioSchema.index({ loja: 1, usuarioId: 1, periodo: 1 });
-metricasUsuarioSchema.index({ periodo: 1, dataInicio: -1, "totais.pontuacaoTotal": -1 });
+metricasUsuarioSchema.index({
+  periodo: 1,
+  dataInicio: -1,
+  "totais.pontuacaoTotal": -1,
+});
 metricasUsuarioSchema.index({ loja: 1, "ranking.posicaoLoja": 1 });
 
 // Índice único para evitar duplicatas
@@ -149,18 +162,29 @@ metricasUsuarioSchema.index(
 );
 
 // Métodos estáticos úteis
-metricasUsuarioSchema.statics.obterRankingLoja = function(lojaId, periodo, dataInicio, dataFim) {
+metricasUsuarioSchema.statics.obterRankingLoja = function (
+  lojaId,
+  periodo,
+  dataInicio,
+  dataFim
+) {
   return this.find({
     loja: lojaId,
     periodo: periodo,
     dataInicio: { $gte: dataInicio },
     dataFim: { $lte: dataFim },
   })
-  .sort({ "totais.pontuacaoTotal": -1 })
-  .limit(50);
+    .sort({ "totais.pontuacaoTotal": -1 })
+    .limit(50);
 };
 
-metricasUsuarioSchema.statics.obterMetricasPeriodo = function(usuarioId, lojaId, periodo, dataInicio, dataFim) {
+metricasUsuarioSchema.statics.obterMetricasPeriodo = function (
+  usuarioId,
+  lojaId,
+  periodo,
+  dataInicio,
+  dataFim
+) {
   return this.findOne({
     usuarioId: usuarioId,
     loja: lojaId,
@@ -170,18 +194,23 @@ metricasUsuarioSchema.statics.obterMetricasPeriodo = function(usuarioId, lojaId,
   });
 };
 
-metricasUsuarioSchema.statics.obterTendenciaUsuario = function(usuarioId, lojaId, periodo, limite = 12) {
+metricasUsuarioSchema.statics.obterTendenciaUsuario = function (
+  usuarioId,
+  lojaId,
+  periodo,
+  limite = 12
+) {
   return this.find({
     usuarioId: usuarioId,
     loja: lojaId,
     periodo: periodo,
   })
-  .sort({ dataInicio: -1 })
-  .limit(limite);
+    .sort({ dataInicio: -1 })
+    .limit(limite);
 };
 
 // Métodos de instância
-metricasUsuarioSchema.methods.calcularPontuacaoTotal = function() {
+metricasUsuarioSchema.methods.calcularPontuacaoTotal = function () {
   const pesos = {
     etiquetas: 1.0,
     rupturas: 1.5, // Rupturas têm peso maior
@@ -211,13 +240,24 @@ metricasUsuarioSchema.methods.calcularPontuacaoTotal = function() {
   return this.totais.pontuacaoTotal;
 };
 
-metricasUsuarioSchema.methods.atualizarTotais = function() {
-  this.totais.totalItens = this.etiquetas.totalItens + this.rupturas.totalItens + this.presencas.totalItens;
-  this.totais.itensLidos = this.etiquetas.itensLidos + this.rupturas.itensLidos + this.presencas.itensLidos;
-  this.totais.itensAtualizados = this.etiquetas.itensAtualizados + this.rupturas.itensAtualizados + this.presencas.itensAtualizados;
+metricasUsuarioSchema.methods.atualizarTotais = function () {
+  this.totais.totalItens =
+    this.etiquetas.totalItens +
+    this.rupturas.totalItens +
+    this.presencas.totalItens;
+  this.totais.itensLidos =
+    this.etiquetas.itensLidos +
+    this.rupturas.itensLidos +
+    this.presencas.itensLidos;
+  this.totais.itensAtualizados =
+    this.etiquetas.itensAtualizados +
+    this.rupturas.itensAtualizados +
+    this.presencas.itensAtualizados;
 
   if (this.totais.totalItens > 0) {
-    this.totais.percentualConclusaoGeral = Math.round((this.totais.itensAtualizados / this.totais.totalItens) * 100);
+    this.totais.percentualConclusaoGeral = Math.round(
+      (this.totais.itensAtualizados / this.totais.totalItens) * 100
+    );
   }
 
   this.calcularPontuacaoTotal();

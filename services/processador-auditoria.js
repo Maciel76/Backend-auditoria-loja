@@ -55,21 +55,40 @@ function normalizarSituacao(situacao) {
   const situacaoLower = situacao.toLowerCase().trim();
 
   const mapeamento = {
+    // Atualizado
     atualizado: "Atualizado",
     atualizada: "Atualizado",
     ok: "Atualizado",
     concluído: "Atualizado",
     concluida: "Atualizado",
-    concluído: "Atualizado",
+    concluido: "Atualizado",
+    completo: "Atualizado",
 
+    // Não lido
     "não lido": "Não lido",
     "nao lido": "Não lido",
     pendente: "Não lido",
+    "não processado": "Não lido",
 
-    "lido sem estoque": "Lido sem estoque",
-    "sem estoque": "Lido sem estoque",
-    "estoque zero": "Lido sem estoque",
+    // Desatualizado
+    desatualizado: "Desatualizado",
+    desatualizada: "Desatualizado",
+    "precisa atualizar": "Desatualizado",
+    "atualização necessária": "Desatualizado",
 
+    // Sem estoque
+    "sem estoque": "Sem estoque",
+    "estoque zerado": "Sem estoque",
+    "zero estoque": "Sem estoque",
+    "lido sem estoque": "Sem estoque",
+
+    // Não pertence
+    "não pertence": "Não pertence",
+    "nao pertence": "Não pertence",
+    "local errado": "Não pertence",
+    "setor incorreto": "Não pertence",
+
+    // Com problema
     "com problema": "Com problema",
     problema: "Com problema",
     erro: "Com problema",
@@ -221,7 +240,10 @@ export async function sincronizarAuditoriaesParaAuditoria() {
       dataAuditoria: { $gte: seteDiasAtras },
     });
 
-    console.log("📋 Auditoriaes encontrados para sincronização:", setores.length);
+    console.log(
+      "📋 Auditoriaes encontrados para sincronização:",
+      setores.length
+    );
 
     for (const setor of setores) {
       try {

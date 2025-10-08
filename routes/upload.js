@@ -83,7 +83,6 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
     const sheet = workbook.Sheets[sheetName];
     const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
 
-
     const setoresBatch = [];
     const usuariosMap = new Map();
     let totalItensProcessados = 0;
@@ -134,7 +133,9 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
       setoresBatch.push({
         loja: loja._id,
         usuarioId: usuarioStr.match(/^(\d+)/)?.[1] || usuarioStr,
-        usuarioNome: usuarioStr.includes("(") ? usuarioStr.match(/\((.*)\)/)?.[1] || usuarioStr : usuarioStr,
+        usuarioNome: usuarioStr.includes("(")
+          ? usuarioStr.match(/\((.*)\)/)?.[1] || usuarioStr
+          : usuarioStr,
         tipo: "etiqueta",
         data: dataAuditoria,
         codigo: codigoKey ? String(item[codigoKey] || "") : "",
@@ -161,7 +162,6 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
       }
     }
 
-
     // Salvando no banco
 
     // Limpar dados antigos APENAS DESTA LOJA para esta data
@@ -169,7 +169,6 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
     inicioDia.setHours(0, 0, 0, 0);
     const fimDia = new Date(dataAuditoria);
     fimDia.setHours(23, 59, 59, 999);
-
 
     await Auditoria.deleteMany({
       data: { $gte: inicioDia, $lte: fimDia },
@@ -182,7 +181,6 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
         loja.codigo
       } na data ${dataAuditoria.toLocaleDateString()}`
     );
-
 
     // Salvar auditorias
     if (setoresBatch.length > 0) {
@@ -204,8 +202,8 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
           {
             $or: [
               { id, loja: loja._id },
-              { nome, loja: loja._id }
-            ]
+              { nome, loja: loja._id },
+            ],
           },
           {
             $setOnInsert: {
@@ -214,17 +212,18 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
               contadorTotal: 0,
               auditorias: [],
               loja: loja._id,
-            }
+            },
           },
           {
             upsert: true,
             new: true,
-            setDefaultsOnInsert: true
+            setDefaultsOnInsert: true,
           }
         );
 
         console.log(`👤 Usuário processado: ${usuario.nome} (${usuario.id})`);
-        const wasCreated = !usuario.auditorias || usuario.auditorias.length === 0;
+        const wasCreated =
+          !usuario.auditorias || usuario.auditorias.length === 0;
 
         // Encontrar ou criar auditoria para a data atual
         const auditoriaIndex = usuario.auditorias.findIndex(
@@ -314,7 +313,6 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
       { upsert: true, new: true }
     );
 
-
     console.log(`✅ Planilha processada com sucesso para loja ${loja.codigo}`);
 
     const resultado = {
@@ -323,7 +321,7 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
       totalProcessados: totalItensProcessados,
       totalUsuarios: usuariosMap.size,
       tipo: "etiqueta",
-      loja: loja
+      loja: loja,
     };
 
     return resultado;
@@ -340,12 +338,10 @@ async function processarRuptura(file, dataAuditoria, loja) {
       `💔 Processando rupturas para loja: ${loja.codigo} - ${loja.nome}`
     );
 
-
     const workbook = xlsx.readFile(file.path, { cellDates: true });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
-
 
     // Extrair data real da planilha
     let dataAuditoriaFinal = extrairDataDaPlanilha(jsonData, file.originalname);
@@ -444,10 +440,12 @@ async function processarRuptura(file, dataAuditoria, loja) {
 
     // Salvar rupturas na coleção Auditoria
     if (dadosProcessados.length > 0) {
-      const auditoriasBatch = dadosProcessados.map(item => ({
+      const auditoriasBatch = dadosProcessados.map((item) => ({
         loja: loja._id,
         usuarioId: item.usuario.match(/^(\d+)/)?.[1] || item.usuario,
-        usuarioNome: item.usuario.includes("(") ? item.usuario.match(/\((.*)\)/)?.[1] || item.usuario : item.usuario,
+        usuarioNome: item.usuario.includes("(")
+          ? item.usuario.match(/\((.*)\)/)?.[1] || item.usuario
+          : item.usuario,
         tipo: "ruptura",
         data: dataAuditoriaFinal,
         codigo: item.codigo,
@@ -486,8 +484,8 @@ async function processarRuptura(file, dataAuditoria, loja) {
           {
             $or: [
               { id: userId, loja: loja._id },
-              { nome, loja: loja._id }
-            ]
+              { nome, loja: loja._id },
+            ],
           },
           {
             $setOnInsert: {
@@ -496,12 +494,12 @@ async function processarRuptura(file, dataAuditoria, loja) {
               contadorTotal: 0,
               auditorias: [],
               loja: loja._id,
-            }
+            },
           },
           {
             upsert: true,
             new: true,
-            setDefaultsOnInsert: true
+            setDefaultsOnInsert: true,
           }
         );
 
@@ -613,12 +611,10 @@ async function processarPresenca(file, dataAuditoria, loja) {
       `👥 Processando presenças para loja: ${loja.codigo} - ${loja.nome}`
     );
 
-
     const workbook = xlsx.readFile(file.path, { cellDates: true });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
-
 
     // Extrair data real da planilha
     let dataAuditoriaFinal = extrairDataDaPlanilha(jsonData, file.originalname);
@@ -723,10 +719,12 @@ async function processarPresenca(file, dataAuditoria, loja) {
 
     // Salvar presenças na coleção Auditoria
     if (dadosProcessados.length > 0) {
-      const auditoriasBatch = dadosProcessados.map(item => ({
+      const auditoriasBatch = dadosProcessados.map((item) => ({
         loja: loja._id,
         usuarioId: item.usuario.match(/^(\d+)/)?.[1] || item.usuario,
-        usuarioNome: item.usuario.includes("(") ? item.usuario.match(/\((.*)\)/)?.[1] || item.usuario : item.usuario,
+        usuarioNome: item.usuario.includes("(")
+          ? item.usuario.match(/\((.*)\)/)?.[1] || item.usuario
+          : item.usuario,
         tipo: "presenca",
         data: dataAuditoriaFinal,
         codigo: item.codigo,
@@ -768,8 +766,8 @@ async function processarPresenca(file, dataAuditoria, loja) {
           {
             $or: [
               { id: userId, loja: loja._id },
-              { nome, loja: loja._id }
-            ]
+              { nome, loja: loja._id },
+            ],
           },
           {
             $setOnInsert: {
@@ -778,16 +776,18 @@ async function processarPresenca(file, dataAuditoria, loja) {
               contadorTotal: 0,
               auditorias: [],
               loja: loja._id,
-            }
+            },
           },
           {
             upsert: true,
             new: true,
-            setDefaultsOnInsert: true
+            setDefaultsOnInsert: true,
           }
         );
 
-        console.log(`👤 Usuário processado para presença: ${usuario.nome} (${usuario.id})`);
+        console.log(
+          `👤 Usuário processado para presença: ${usuario.nome} (${usuario.id})`
+        );
 
         const auditoriaIndex = usuario.auditorias.findIndex(
           (a) => a.data.toDateString() === dataAuditoriaFinal.toDateString()
@@ -933,35 +933,35 @@ router.post(
       }
 
       // Processamento secundário para auditoria (apenas para etiqueta)
-      if (tipoAuditoria === "etiqueta") {
-        try {
-          const workbook = xlsx.readFile(req.file.path, { cellDates: true });
-          const sheetName = workbook.SheetNames[0];
-          const sheet = workbook.Sheets[sheetName];
-          const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
+      // if (tipoAuditoria === "etiqueta") {
+      //   try {
+      //     const workbook = xlsx.readFile(req.file.path, { cellDates: true });
+      //     const sheetName = workbook.SheetNames[0];
+      //     const sheet = workbook.Sheets[sheetName];
+      //     const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
 
-          processarParaAuditoria({
-            jsonData,
-            nomeArquivo: req.file.originalname,
-            dataAuditoria,
-            loja: loja._id,
-          }).then((resultadoSecundario) => {
-            if (resultadoSecundario.success) {
-              console.log(
-                "✅ Dados processados para Auditoria:",
-                resultadoSecundario.totalProcessados
-              );
-            } else {
-              console.log(
-                "⚠️ Processamento secundário falhou:",
-                resultadoSecundario.error
-              );
-            }
-          });
-        } catch (secondaryError) {
-          console.error("⚠️ Erro no processamento secundário:", secondaryError);
-        }
-      }
+      //     processarParaAuditoria({
+      //       jsonData,
+      //       nomeArquivo: req.file.originalname,
+      //       dataAuditoria,
+      //       loja: loja._id,
+      //     }).then((resultadoSecundario) => {
+      //       if (resultadoSecundario.success) {
+      //         console.log(
+      //           "✅ Dados processados para Auditoria:",
+      //           resultadoSecundario.totalProcessados
+      //         );
+      //       } else {
+      //         console.log(
+      //           "⚠️ Processamento secundário falhou:",
+      //           resultadoSecundario.error
+      //         );
+      //       }
+      //     });
+      //   } catch (secondaryError) {
+      //     console.error("⚠️ Erro no processamento secundário:", secondaryError);
+      //   }
+      // }
 
       // Etapa 4: Calcular métricas automaticamente após o processamento bem-sucedido
 
@@ -969,54 +969,87 @@ router.post(
       let metricsStatus = {
         initiated: false,
         diario: { attempted: false, success: false, error: null },
-        mensal: { attempted: false, success: false, error: null }
+        mensal: { attempted: false, success: false, error: null },
       };
 
       try {
-        console.log(`📊 Iniciando cálculo automático de métricas para loja ${loja.codigo}...`);
-        console.log(`📊 Service disponível:`, typeof metricsCalculationService.calcularTodasMetricas);
+        console.log(
+          `📊 Iniciando cálculo automático de métricas para loja ${loja.codigo}...`
+        );
+        console.log(
+          `📊 Service disponível:`,
+          typeof metricsCalculationService.calcularTodasMetricas
+        );
 
         // Verificar se o serviço está disponível
-        if (!metricsCalculationService || typeof metricsCalculationService.calcularTodasMetricas !== 'function') {
-          throw new Error('MetricsCalculationService não está disponível ou não possui o método calcularTodasMetricas');
+        if (
+          !metricsCalculationService ||
+          typeof metricsCalculationService.calcularTodasMetricas !== "function"
+        ) {
+          throw new Error(
+            "MetricsCalculationService não está disponível ou não possui o método calcularTodasMetricas"
+          );
         }
 
         const dataMetricas = resultado.dataAuditoria || dataAuditoria;
         metricsStarted = true;
         metricsStatus.initiated = true;
 
-        console.log(`📊 Calculando métricas para data: ${dataMetricas.toISOString()}`);
+        console.log(
+          `📊 Calculando métricas para data: ${dataMetricas.toISOString()}`
+        );
 
         // Calcular métricas diárias
         metricsStatus.diario.attempted = true;
-        const resultadoDiario = await metricsCalculationService.calcularTodasMetricas("diario", dataMetricas);
+        const resultadoDiario =
+          await metricsCalculationService.calcularTodasMetricas(
+            "diario",
+            dataMetricas
+          );
         metricsStatus.diario.success = resultadoDiario.success;
-        console.log(`📅 Métricas diárias calculadas:`, resultadoDiario.success ? '✅ Sucesso' : '❌ Falha');
-
+        console.log(
+          `📅 Métricas diárias calculadas:`,
+          resultadoDiario.success ? "✅ Sucesso" : "❌ Falha"
+        );
 
         // Calcular métricas mensais
         metricsStatus.mensal.attempted = true;
-        const resultadoMensal = await metricsCalculationService.calcularTodasMetricas("mensal", dataMetricas);
+        const resultadoMensal =
+          await metricsCalculationService.calcularTodasMetricas(
+            "mensal",
+            dataMetricas
+          );
         metricsStatus.mensal.success = resultadoMensal.success;
-        console.log(`📊 Métricas mensais calculadas:`, resultadoMensal.success ? '✅ Sucesso' : '❌ Falha');
+        console.log(
+          `📊 Métricas mensais calculadas:`,
+          resultadoMensal.success ? "✅ Sucesso" : "❌ Falha"
+        );
 
-        console.log(`✅ Processamento de métricas concluído para loja ${loja.codigo}`);
-        console.log(`🔍 Verificar resultados: GET /api/debug/verificar-metricas com header x-loja: ${loja.codigo}`);
-
+        console.log(
+          `✅ Processamento de métricas concluído para loja ${loja.codigo}`
+        );
+        console.log(
+          `🔍 Verificar resultados: GET /api/debug/verificar-metricas com header x-loja: ${loja.codigo}`
+        );
       } catch (errorMetricas) {
         console.error(`❌ ERRO DETALHADO ao calcular métricas:`, {
           erro: errorMetricas.message,
           stack: errorMetricas.stack,
           loja: loja.codigo,
           serviceType: typeof metricsCalculationService,
-          serviceMethod: typeof metricsCalculationService?.calcularTodasMetricas
+          serviceMethod:
+            typeof metricsCalculationService?.calcularTodasMetricas,
         });
 
         metricsStatus.diario.error = errorMetricas.message;
         metricsStatus.mensal.error = errorMetricas.message;
 
-        console.log(`🔍 Para debug detalhado: GET /api/debug/verificar-metricas com header x-loja: ${loja.codigo}`);
-        console.log(`🔄 Para tentar novamente: POST /api/debug/calcular-agora com header x-loja: ${loja.codigo}`);
+        console.log(
+          `🔍 Para debug detalhado: GET /api/debug/verificar-metricas com header x-loja: ${loja.codigo}`
+        );
+        console.log(
+          `🔄 Para tentar novamente: POST /api/debug/calcular-agora com header x-loja: ${loja.codigo}`
+        );
       }
 
       // Finalizar progresso
@@ -1041,11 +1074,9 @@ router.post(
         },
       };
 
-
       res.json(finalResult);
     } catch (error) {
       console.error("❌ Erro no upload:", error);
-
 
       res.status(500).json({
         erro: "Falha no processamento",
@@ -1062,11 +1093,11 @@ router.get("/usuarios", verificarLojaObrigatoria, async (req, res) => {
     let filtro = {};
 
     // Se não solicitar todos os usuários, filtrar pela loja atual
-    if (todos !== 'true') {
+    if (todos !== "true") {
       filtro.loja = req.loja._id;
     }
 
-    const usuarios = await User.find(filtro).populate('loja', 'codigo nome');
+    const usuarios = await User.find(filtro).populate("loja", "codigo nome");
 
     res.json(
       usuarios.map((u) => ({
@@ -1081,12 +1112,17 @@ router.get("/usuarios", verificarLojaObrigatoria, async (req, res) => {
         loja: u.loja?.codigo || req.loja.codigo,
         lojaCompleta: u.loja?.nome || req.loja.nome,
         totalAuditorias: u.auditorias?.length || 0,
-        ultimaAuditoria: u.auditorias?.length > 0 ? u.auditorias[u.auditorias.length - 1].data : null,
+        ultimaAuditoria:
+          u.auditorias?.length > 0
+            ? u.auditorias[u.auditorias.length - 1].data
+            : null,
       }))
     );
   } catch (error) {
-    console.error('Erro ao buscar usuários:', error);
-    res.status(500).json({ erro: "Falha ao buscar usuários", detalhes: error.message });
+    console.error("Erro ao buscar usuários:", error);
+    res
+      .status(500)
+      .json({ erro: "Falha ao buscar usuários", detalhes: error.message });
   }
 });
 
@@ -1097,16 +1133,20 @@ router.get("/datas-auditoria", verificarLojaObrigatoria, async (req, res) => {
     });
 
     // Formatar datas para o frontend
-    const datasFormatadas = datas.map(data => ({
+    const datasFormatadas = datas.map((data) => ({
       data: data,
       timestamp: new Date(data).getTime(),
-      dataFormatada: new Date(data).toLocaleDateString('pt-BR')
+      dataFormatada: new Date(data).toLocaleDateString("pt-BR"),
     }));
 
-    res.json(datasFormatadas.sort((a, b) => new Date(b.data) - new Date(a.data)));
+    res.json(
+      datasFormatadas.sort((a, b) => new Date(b.data) - new Date(a.data))
+    );
   } catch (error) {
-    console.error('Erro ao buscar datas:', error);
-    res.status(500).json({ erro: "Falha ao buscar datas", detalhes: error.message });
+    console.error("Erro ao buscar datas:", error);
+    res
+      .status(500)
+      .json({ erro: "Falha ao buscar datas", detalhes: error.message });
   }
 });
 
@@ -1267,7 +1307,10 @@ router.get("/dados-ruptura", verificarLojaObrigatoria, async (req, res) => {
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit));
 
-    const totalRupturas = await Auditoria.countDocuments({ ...filtro, tipo: "ruptura" });
+    const totalRupturas = await Auditoria.countDocuments({
+      ...filtro,
+      tipo: "ruptura",
+    });
 
     const dadosFormatados = rupturas.map((ruptura) => ({
       Código: ruptura.codigo,
@@ -1331,7 +1374,10 @@ router.get("/dados-presenca", verificarLojaObrigatoria, async (req, res) => {
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit));
 
-    const totalPresencas = await Auditoria.countDocuments({ ...filtro, tipo: "presenca" });
+    const totalPresencas = await Auditoria.countDocuments({
+      ...filtro,
+      tipo: "presenca",
+    });
 
     const dadosFormatados = presencas.map((presenca) => ({
       Código: presenca.codigo,
@@ -1397,9 +1443,21 @@ router.get("/estatisticas", verificarLojaObrigatoria, async (req, res) => {
     ] = await Promise.all([
       Planilha.countDocuments(filtro),
       User.countDocuments({ loja: req.loja._id }),
-      Auditoria.countDocuments({ ...filtroData, loja: req.loja._id, tipo: "etiqueta" }),
-      Auditoria.countDocuments({ ...filtroData, loja: req.loja._id, tipo: "ruptura" }),
-      Auditoria.countDocuments({ ...filtroData, loja: req.loja._id, tipo: "presenca" }),
+      Auditoria.countDocuments({
+        ...filtroData,
+        loja: req.loja._id,
+        tipo: "etiqueta",
+      }),
+      Auditoria.countDocuments({
+        ...filtroData,
+        loja: req.loja._id,
+        tipo: "ruptura",
+      }),
+      Auditoria.countDocuments({
+        ...filtroData,
+        loja: req.loja._id,
+        tipo: "presenca",
+      }),
       Planilha.findOne({ loja: req.loja._id }).sort({ dataUpload: -1 }),
     ]);
 
@@ -1515,17 +1573,17 @@ router.get("/usuarios/:id", verificarLojaObrigatoria, async (req, res) => {
     let filtro = { id };
 
     // Se não solicitar todos os usuários, filtrar pela loja atual
-    if (todos !== 'true') {
+    if (todos !== "true") {
       filtro.loja = req.loja._id;
     }
 
-    const usuario = await User.findOne(filtro).populate('loja', 'codigo nome');
+    const usuario = await User.findOne(filtro).populate("loja", "codigo nome");
 
     if (!usuario) {
       return res.status(404).json({
         erro: "Usuário não encontrado",
         id,
-        loja: req.loja.codigo
+        loja: req.loja.codigo,
       });
     }
 
@@ -1541,51 +1599,117 @@ router.get("/usuarios/:id", verificarLojaObrigatoria, async (req, res) => {
       loja: usuario.loja?.codigo || req.loja.codigo,
       lojaCompleta: usuario.loja?.nome || req.loja.nome,
       totalAuditorias: usuario.auditorias?.length || 0,
-      ultimaAuditoria: usuario.auditorias?.length > 0 ? usuario.auditorias[usuario.auditorias.length - 1].data : null,
+      ultimaAuditoria:
+        usuario.auditorias?.length > 0
+          ? usuario.auditorias[usuario.auditorias.length - 1].data
+          : null,
       auditorias: usuario.auditorias || [],
       foto: usuario.foto,
     });
   } catch (error) {
-    console.error('Erro ao buscar usuário específico:', error);
-    res.status(500).json({ erro: "Falha ao buscar usuário", detalhes: error.message });
+    console.error("Erro ao buscar usuário específico:", error);
+    res
+      .status(500)
+      .json({ erro: "Falha ao buscar usuário", detalhes: error.message });
   }
 });
 
 // Rota para buscar auditorias detalhadas de um usuário
-router.get("/usuarios/:id/auditorias", verificarLojaObrigatoria, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { todos } = req.query;
+router.get(
+  "/usuarios/:id/auditorias",
+  verificarLojaObrigatoria,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { todos } = req.query;
 
-    let filtro = { usuarioId: id };
+      let filtro = { usuarioId: id };
 
-    // Se não solicitar todos os usuários, filtrar pela loja atual
-    if (todos !== 'true') {
-      filtro.loja = req.loja._id;
+      // Se não solicitar todos os usuários, filtrar pela loja atual
+      if (todos !== "true") {
+        filtro.loja = req.loja._id;
+      }
+
+      const auditorias = await Auditoria.find(filtro)
+        .populate("loja", "codigo nome")
+        .sort({ data: -1 })
+        .limit(100); // Limitar para evitar sobrecarga
+
+      const dadosFormatados = auditorias.map((auditoria) => ({
+        Código: auditoria.codigo,
+        Produto: auditoria.produto,
+        Local: auditoria.local,
+        Usuario: `${auditoria.usuarioId} (${auditoria.usuarioNome})`,
+        Situacao: auditoria.situacao,
+        "Estoque atual": auditoria.estoque,
+        "Data Auditoria": auditoria.data,
+        Loja: auditoria.loja?.codigo || req.loja.codigo,
+        tipo: auditoria.tipo,
+      }));
+
+      res.json(dadosFormatados);
+    } catch (error) {
+      console.error("Erro ao buscar auditorias do usuário:", error);
+      res
+        .status(500)
+        .json({ erro: "Falha ao buscar auditorias", detalhes: error.message });
     }
-
-    const auditorias = await Auditoria.find(filtro)
-      .populate('loja', 'codigo nome')
-      .sort({ data: -1 })
-      .limit(100); // Limitar para evitar sobrecarga
-
-    const dadosFormatados = auditorias.map((auditoria) => ({
-      Código: auditoria.codigo,
-      Produto: auditoria.produto,
-      Local: auditoria.local,
-      Usuario: `${auditoria.usuarioId} (${auditoria.usuarioNome})`,
-      Situacao: auditoria.situacao,
-      "Estoque atual": auditoria.estoque,
-      "Data Auditoria": auditoria.data,
-      Loja: auditoria.loja?.codigo || req.loja.codigo,
-      tipo: auditoria.tipo,
-    }));
-
-    res.json(dadosFormatados);
-  } catch (error) {
-    console.error('Erro ao buscar auditorias do usuário:', error);
-    res.status(500).json({ erro: "Falha ao buscar auditorias", detalhes: error.message });
   }
-});
+);
+// upload.js - NOVA ROTA PARA DEBUG
+router.get(
+  "/debug-metricas-usuario/:usuarioId",
+  verificarLojaObrigatoria,
+  async (req, res) => {
+    try {
+      const { usuarioId } = req.params;
+      const { periodo = "diario", data } = req.query;
+
+      const dataRef = data ? new Date(data) : new Date();
+      const { dataInicio, dataFim } = obterPeriodo(periodo, dataRef);
+
+      const metricas = await MetricasUsuario.findOne({
+        loja: req.loja._id,
+        usuarioId: usuarioId,
+        periodo: periodo,
+        dataInicio: dataInicio,
+      });
+
+      if (!metricas) {
+        return res.status(404).json({
+          erro: "Métricas não encontradas",
+          usuarioId,
+          periodo,
+          dataInicio: dataInicio.toISOString(),
+        });
+      }
+
+      res.json({
+        usuario: {
+          id: metricas.usuarioId,
+          nome: metricas.usuarioNome,
+        },
+        periodo: {
+          tipo: metricas.periodo,
+          inicio: metricas.dataInicio,
+          fim: metricas.dataFim,
+        },
+        metricas: {
+          etiquetas: metricas.etiquetas,
+          rupturas: metricas.rupturas,
+          presencas: metricas.presencas,
+        },
+        totais: metricas.totais,
+        contadoresAuditorias: metricas.contadoresAuditorias,
+        totaisAcumulados: metricas.totaisAcumulados,
+      });
+    } catch (error) {
+      console.error("Erro ao buscar métricas debug:", error);
+      res
+        .status(500)
+        .json({ erro: "Falha ao buscar métricas", detalhes: error.message });
+    }
+  }
+);
 
 export default router;

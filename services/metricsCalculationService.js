@@ -14,7 +14,9 @@ class MetricsCalculationService {
   // Método principal para calcular todas as métricas
   async calcularTodasMetricas(periodo = "diario", data = new Date()) {
     try {
-      console.log(`🔄 Iniciando cálculo de métricas ${periodo} para ${data.toLocaleDateString()}`);
+      console.log(
+        `🔄 Iniciando cálculo de métricas ${periodo} para ${data.toLocaleDateString()}`
+      );
 
       const { dataInicio, dataFim } = this.obterPeriodo(periodo, data);
 
@@ -43,10 +45,10 @@ class MetricsCalculationService {
   async calcularMetricasUsuarios(periodo, dataInicio, dataFim) {
     console.log(`📊 Calculando métricas de usuários...`);
 
-    // Buscar todas as auditorias do período
+    // Buscar auditorias do período
     const auditorias = await Auditoria.find({
       data: { $gte: dataInicio, $lte: dataFim },
-    }).populate('loja', 'codigo nome regiao');
+    }).populate("loja", "codigo nome regiao");
 
     // Agrupar por usuário e loja
     const usuariosMap = new Map();
@@ -59,42 +61,107 @@ class MetricsCalculationService {
           usuarioId: auditoria.usuarioId,
           usuarioNome: auditoria.usuarioNome,
           loja: auditoria.loja,
-          etiquetas: { totalItens: 0, itensLidos: 0, itensAtualizados: 0 },
-          rupturas: { totalItens: 0, itensLidos: 0, itensAtualizados: 0, custoTotal: 0 },
-          presencas: { totalItens: 0, itensLidos: 0, itensAtualizados: 0, presencasConfirmadas: 0 },
+          etiquetas: {
+            totalItens: 0,
+            itensLidos: 0,
+            itensAtualizados: 0,
+            itensDesatualizado: 0,
+            itensSemEstoque: 0,
+            itensNaopertence: 0,
+          },
+          rupturas: {
+            totalItens: 0,
+            itensLidos: 0,
+            itensAtualizados: 0,
+            custoTotal: 0,
+            itensDesatualizado: 0,
+            itensSemEstoque: 0,
+            itensNaopertence: 0,
+          },
+          presencas: {
+            totalItens: 0,
+            itensLidos: 0,
+            itensAtualizados: 0,
+            presencasConfirmadas: 0,
+            itensDesatualizado: 0,
+            itensSemEstoque: 0,
+            itensNaopertence: 0,
+          },
         });
       }
 
       const dadosUsuario = usuariosMap.get(chaveUsuario);
 
-      // Contar itens por tipo
+      // CONTAGEM CORRIGIDA - Baseada na situação real
       if (auditoria.tipo === "etiqueta") {
         dadosUsuario.etiquetas.totalItens++;
+
         if (auditoria.situacao && auditoria.situacao !== "Não lido") {
           dadosUsuario.etiquetas.itensLidos++;
         }
-        if (auditoria.situacao === "Atualizado") {
-          dadosUsuario.etiquetas.itensAtualizados++;
+
+        // CONTAGEM ESPECÍFICA POR SITUAÇÃO
+        switch (auditoria.situacao) {
+          case "Atualizado":
+            dadosUsuario.etiquetas.itensAtualizados++;
+            break;
+          case "Desatualizado":
+            dadosUsuario.etiquetas.itensDesatualizado++;
+            break;
+          case "Sem estoque":
+            dadosUsuario.etiquetas.itensSemEstoque++;
+            break;
+          case "Não pertence":
+            dadosUsuario.etiquetas.itensNaopertence++;
+            break;
         }
       } else if (auditoria.tipo === "ruptura") {
         dadosUsuario.rupturas.totalItens++;
+
         if (auditoria.situacao && auditoria.situacao !== "Não lido") {
           dadosUsuario.rupturas.itensLidos++;
         }
-        if (auditoria.situacao === "Atualizado") {
-          dadosUsuario.rupturas.itensAtualizados++;
+
+        switch (auditoria.situacao) {
+          case "Atualizado":
+            dadosUsuario.rupturas.itensAtualizados++;
+            break;
+          case "Desatualizado":
+            dadosUsuario.rupturas.itensDesatualizado++;
+            break;
+          case "Sem estoque":
+            dadosUsuario.rupturas.itensSemEstoque++;
+            break;
+          case "Não pertence":
+            dadosUsuario.rupturas.itensNaopertence++;
+            break;
         }
+
         if (auditoria.custoRuptura) {
           dadosUsuario.rupturas.custoTotal += auditoria.custoRuptura;
         }
       } else if (auditoria.tipo === "presenca") {
         dadosUsuario.presencas.totalItens++;
+
         if (auditoria.situacao && auditoria.situacao !== "Não lido") {
           dadosUsuario.presencas.itensLidos++;
         }
-        if (auditoria.situacao === "Atualizado") {
-          dadosUsuario.presencas.itensAtualizados++;
+
+        switch (auditoria.situacao) {
+          case "Atualizado":
+            dadosUsuario.presencas.itensAtualizados++;
+            break;
+          case "Desatualizado":
+            dadosUsuario.presencas.itensDesatualizado++;
+            break;
+          case "Sem estoque":
+            dadosUsuario.presencas.itensSemEstoque++;
+            break;
+          case "Não pertence":
+            dadosUsuario.presencas.itensNaopertence++;
+            break;
         }
+
         if (auditoria.presenca) {
           dadosUsuario.presencas.presencasConfirmadas++;
         }
@@ -104,34 +171,59 @@ class MetricsCalculationService {
     // Salvar métricas de cada usuário
     for (const [chave, dados] of usuariosMap) {
       try {
-        // Calcular percentuais
+        // Calcular percentuais para etiquetas
         const etiquetas = {
           ...dados.etiquetas,
-          percentualConclusao: dados.etiquetas.totalItens > 0
-            ? Math.round((dados.etiquetas.itensAtualizados / dados.etiquetas.totalItens) * 100)
-            : 0,
+          percentualConclusao:
+            dados.etiquetas.totalItens > 0
+              ? Math.round(
+                  (dados.etiquetas.itensAtualizados /
+                    dados.etiquetas.totalItens) *
+                    100
+                )
+              : 0,
           tempoMedioItem: 5, // Estimativa base
         };
 
+        // Calcular percentuais para rupturas
         const rupturas = {
           ...dados.rupturas,
-          percentualConclusao: dados.rupturas.totalItens > 0
-            ? Math.round((dados.rupturas.itensAtualizados / dados.rupturas.totalItens) * 100)
-            : 0,
+          percentualConclusao:
+            dados.rupturas.totalItens > 0
+              ? Math.round(
+                  (dados.rupturas.itensAtualizados /
+                    dados.rupturas.totalItens) *
+                    100
+                )
+              : 0,
           custoTotalRuptura: dados.rupturas.custoTotal,
-          custoMedioRuptura: dados.rupturas.totalItens > 0
-            ? Math.round(dados.rupturas.custoTotal / dados.rupturas.totalItens)
-            : 0,
+          custoMedioRuptura:
+            dados.rupturas.totalItens > 0
+              ? Math.round(
+                  dados.rupturas.custoTotal / dados.rupturas.totalItens
+                )
+              : 0,
         };
 
+        // Calcular percentuais para presenças
         const presencas = {
           ...dados.presencas,
-          percentualConclusao: dados.presencas.totalItens > 0
-            ? Math.round((dados.presencas.itensAtualizados / dados.presencas.totalItens) * 100)
-            : 0,
-          percentualPresenca: dados.presencas.totalItens > 0
-            ? Math.round((dados.presencas.presencasConfirmadas / dados.presencas.totalItens) * 100)
-            : 0,
+          percentualConclusao:
+            dados.presencas.totalItens > 0
+              ? Math.round(
+                  (dados.presencas.itensAtualizados /
+                    dados.presencas.totalItens) *
+                    100
+                )
+              : 0,
+          percentualPresenca:
+            dados.presencas.totalItens > 0
+              ? Math.round(
+                  (dados.presencas.presencasConfirmadas /
+                    dados.presencas.totalItens) *
+                    100
+                )
+              : 0,
         };
 
         // Buscar métricas existentes ou criar nova
@@ -154,7 +246,7 @@ class MetricsCalculationService {
           });
         }
 
-        // Atualizar dados
+        // Atualizar dados principais
         metricasUsuario.etiquetas = etiquetas;
         metricasUsuario.rupturas = rupturas;
         metricasUsuario.presencas = presencas;
@@ -165,24 +257,24 @@ class MetricsCalculationService {
             $match: {
               loja: dados.loja._id,
               usuarioId: dados.usuarioId,
-              data: { $gte: dataInicio, $lte: dataFim }
-            }
+              data: { $gte: dataInicio, $lte: dataFim },
+            },
           },
           {
             $group: {
               _id: {
                 tipo: "$tipo",
-                data: { $dateToString: { format: "%Y-%m-%d", date: "$data" } }
+                data: { $dateToString: { format: "%Y-%m-%d", date: "$data" } },
               },
-              count: { $sum: 1 }
-            }
+              count: { $sum: 1 },
+            },
           },
           {
             $group: {
               _id: "$_id.tipo",
-              auditorias: { $sum: 1 } // Conta dias únicos que fez cada tipo
-            }
-          }
+              auditorias: { $sum: 1 }, // Conta dias únicos que fez cada tipo
+            },
+          },
         ]);
 
         // Mapear contadores
@@ -190,39 +282,52 @@ class MetricsCalculationService {
           totalEtiquetas: 0,
           totalRupturas: 0,
           totalPresencas: 0,
-          totalGeral: 0
+          totalGeral: 0,
         };
 
-        auditoriasPorTipo.forEach(item => {
-          if (item._id === 'etiqueta') contadores.totalEtiquetas = item.auditorias;
-          if (item._id === 'ruptura') contadores.totalRupturas = item.auditorias;
-          if (item._id === 'presenca') contadores.totalPresencas = item.auditorias;
+        auditoriasPorTipo.forEach((item) => {
+          if (item._id === "etiqueta")
+            contadores.totalEtiquetas = item.auditorias;
+          if (item._id === "ruptura")
+            contadores.totalRupturas = item.auditorias;
+          if (item._id === "presenca")
+            contadores.totalPresencas = item.auditorias;
         });
 
-        contadores.totalGeral = contadores.totalEtiquetas + contadores.totalRupturas + contadores.totalPresencas;
+        contadores.totalGeral =
+          contadores.totalEtiquetas +
+          contadores.totalRupturas +
+          contadores.totalPresencas;
 
-        // Calcular totais acumulados históricos (buscar todas as métricas anteriores)
+        // Calcular totais acumulados históricos
         const metricasAnteriores = await MetricasUsuario.find({
           loja: dados.loja._id,
           usuarioId: dados.usuarioId,
-          dataInicio: { $lt: dataInicio }
+          dataInicio: { $lt: dataInicio },
         }).sort({ dataInicio: -1 });
 
         let totaisAcumulados = {
           itensLidosEtiquetas: dados.etiquetas.itensLidos,
           itensLidosRupturas: dados.rupturas.itensLidos,
           itensLidosPresencas: dados.presencas.itensLidos,
-          itensLidosTotal: dados.etiquetas.itensLidos + dados.rupturas.itensLidos + dados.presencas.itensLidos
+          itensLidosTotal:
+            dados.etiquetas.itensLidos +
+            dados.rupturas.itensLidos +
+            dados.presencas.itensLidos,
         };
 
-        // Somar com histórico anterior (pegar da métrica mais recente)
+        // Somar com histórico anterior
         if (metricasAnteriores.length > 0) {
           const ultima = metricasAnteriores[0];
           if (ultima.totaisAcumulados) {
-            totaisAcumulados.itensLidosEtiquetas += ultima.totaisAcumulados.itensLidosEtiquetas || 0;
-            totaisAcumulados.itensLidosRupturas += ultima.totaisAcumulados.itensLidosRupturas || 0;
-            totaisAcumulados.itensLidosPresencas += ultima.totaisAcumulados.itensLidosPresencas || 0;
-            totaisAcumulados.itensLidosTotal += ultima.totaisAcumulados.itensLidosTotal || 0;
+            totaisAcumulados.itensLidosEtiquetas +=
+              ultima.totaisAcumulados.itensLidosEtiquetas || 0;
+            totaisAcumulados.itensLidosRupturas +=
+              ultima.totaisAcumulados.itensLidosRupturas || 0;
+            totaisAcumulados.itensLidosPresencas +=
+              ultima.totaisAcumulados.itensLidosPresencas || 0;
+            totaisAcumulados.itensLidosTotal +=
+              ultima.totaisAcumulados.itensLidosTotal || 0;
           }
         }
 
@@ -234,9 +339,14 @@ class MetricsCalculationService {
         metricasUsuario.atualizarTotais();
 
         await metricasUsuario.save();
-
+        console.log(
+          `✅ Métricas salvas para usuário ${dados.usuarioNome} (${dados.usuarioId})`
+        );
       } catch (error) {
-        console.error(`❌ Erro ao salvar métricas do usuário ${dados.usuarioId}:`, error);
+        console.error(
+          `❌ Erro ao salvar métricas do usuário ${dados.usuarioId}:`,
+          error
+        );
       }
     }
 
@@ -264,9 +374,26 @@ class MetricsCalculationService {
         // Contar usuários únicos ativos na loja
         const usuariosUnicos = new Set();
         const tiposAuditoria = {
-          etiqueta: { totalItens: 0, itensLidos: 0, itensAtualizados: 0, usuarios: new Set() },
-          ruptura: { totalItens: 0, itensLidos: 0, itensAtualizados: 0, usuarios: new Set(), custoTotal: 0 },
-          presenca: { totalItens: 0, itensLidos: 0, itensAtualizados: 0, usuarios: new Set(), presencasConfirmadas: 0 },
+          etiqueta: {
+            totalItens: 0,
+            itensLidos: 0,
+            itensAtualizados: 0,
+            usuarios: new Set(),
+          },
+          ruptura: {
+            totalItens: 0,
+            itensLidos: 0,
+            itensAtualizados: 0,
+            usuarios: new Set(),
+            custoTotal: 0,
+          },
+          presenca: {
+            totalItens: 0,
+            itensLidos: 0,
+            itensAtualizados: 0,
+            usuarios: new Set(),
+            presencasConfirmadas: 0,
+          },
         };
 
         // Analisar cada auditoria
@@ -298,35 +425,61 @@ class MetricsCalculationService {
         // Calcular métricas consolidadas
         const etiquetas = {
           ...tiposAuditoria.etiqueta,
-          percentualConclusao: tiposAuditoria.etiqueta.totalItens > 0
-            ? Math.round((tiposAuditoria.etiqueta.itensAtualizados / tiposAuditoria.etiqueta.totalItens) * 100)
-            : 0,
+          percentualConclusao:
+            tiposAuditoria.etiqueta.totalItens > 0
+              ? Math.round(
+                  (tiposAuditoria.etiqueta.itensAtualizados /
+                    tiposAuditoria.etiqueta.totalItens) *
+                    100
+                )
+              : 0,
           usuariosAtivos: tiposAuditoria.etiqueta.usuarios.size,
           tempoMedioProcessamento: 2, // Estimativa base em horas
         };
 
         const rupturas = {
           ...tiposAuditoria.ruptura,
-          percentualConclusao: tiposAuditoria.ruptura.totalItens > 0
-            ? Math.round((tiposAuditoria.ruptura.itensAtualizados / tiposAuditoria.ruptura.totalItens) * 100)
-            : 0,
+          percentualConclusao:
+            tiposAuditoria.ruptura.totalItens > 0
+              ? Math.round(
+                  (tiposAuditoria.ruptura.itensAtualizados /
+                    tiposAuditoria.ruptura.totalItens) *
+                    100
+                )
+              : 0,
           custoTotalRuptura: tiposAuditoria.ruptura.custoTotal,
-          custoMedioRuptura: tiposAuditoria.ruptura.totalItens > 0
-            ? Math.round(tiposAuditoria.ruptura.custoTotal / tiposAuditoria.ruptura.totalItens)
-            : 0,
-          rupturasCriticas: auditorias.filter(a => a.tipo === "ruptura" && a.custoRuptura > 100).length,
+          custoMedioRuptura:
+            tiposAuditoria.ruptura.totalItens > 0
+              ? Math.round(
+                  tiposAuditoria.ruptura.custoTotal /
+                    tiposAuditoria.ruptura.totalItens
+                )
+              : 0,
+          rupturasCriticas: auditorias.filter(
+            (a) => a.tipo === "ruptura" && a.custoRuptura > 100
+          ).length,
           usuariosAtivos: tiposAuditoria.ruptura.usuarios.size,
         };
 
         const presencas = {
           ...tiposAuditoria.presenca,
-          percentualConclusao: tiposAuditoria.presenca.totalItens > 0
-            ? Math.round((tiposAuditoria.presenca.itensAtualizados / tiposAuditoria.presenca.totalItens) * 100)
-            : 0,
+          percentualConclusao:
+            tiposAuditoria.presenca.totalItens > 0
+              ? Math.round(
+                  (tiposAuditoria.presenca.itensAtualizados /
+                    tiposAuditoria.presenca.totalItens) *
+                    100
+                )
+              : 0,
           presencasConfirmadas: tiposAuditoria.presenca.presencasConfirmadas,
-          percentualPresenca: tiposAuditoria.presenca.totalItens > 0
-            ? Math.round((tiposAuditoria.presenca.presencasConfirmadas / tiposAuditoria.presenca.totalItens) * 100)
-            : 0,
+          percentualPresenca:
+            tiposAuditoria.presenca.totalItens > 0
+              ? Math.round(
+                  (tiposAuditoria.presenca.presencasConfirmadas /
+                    tiposAuditoria.presenca.totalItens) *
+                    100
+                )
+              : 0,
           usuariosAtivos: tiposAuditoria.presenca.usuarios.size,
         };
 
@@ -357,7 +510,9 @@ class MetricsCalculationService {
           loja: loja._id,
           periodo,
           dataInicio,
-        }).sort({ "totais.pontuacaoTotal": -1 }).limit(1);
+        })
+          .sort({ "totais.pontuacaoTotal": -1 })
+          .limit(1);
 
         if (metricasUsuarios.length > 0) {
           const melhorUsuario = metricasUsuarios[0];
@@ -388,9 +543,11 @@ class MetricsCalculationService {
         metricasLoja.detectarAlertas();
 
         await metricasLoja.save();
-
       } catch (error) {
-        console.error(`❌ Erro ao calcular métricas da loja ${loja.codigo}:`, error);
+        console.error(
+          `❌ Erro ao calcular métricas da loja ${loja.codigo}:`,
+          error
+        );
       }
     }
 
@@ -412,22 +569,37 @@ class MetricsCalculationService {
         const auditorias = await Auditoria.find({
           tipo,
           data: { $gte: dataInicio, $lte: dataFim },
-        }).populate('loja', 'codigo nome regiao');
+        }).populate("loja", "codigo nome regiao");
 
         // Calcular métricas gerais
         const totais = {
           totalItens: auditorias.length,
-          itensLidos: auditorias.filter(a => a.situacao && a.situacao !== "Não lido").length,
-          itensAtualizados: auditorias.filter(a => a.situacao === "Atualizado").length,
+          itensLidos: auditorias.filter(
+            (a) => a.situacao && a.situacao !== "Não lido"
+          ).length,
+          itensAtualizados: auditorias.filter(
+            (a) => a.situacao === "Atualizado"
+          ).length,
           percentualConclusao: 0,
-          lojasTotais: new Set(auditorias.map(a => a.loja._id.toString())).size,
-          lojasAtivas: new Set(auditorias.filter(a => a.situacao === "Atualizado").map(a => a.loja._id.toString())).size,
-          usuariosTotais: new Set(auditorias.map(a => a.usuarioId)).size,
-          usuariosAtivos: new Set(auditorias.filter(a => a.situacao === "Atualizado").map(a => a.usuarioId)).size,
+          lojasTotais: new Set(auditorias.map((a) => a.loja._id.toString()))
+            .size,
+          lojasAtivas: new Set(
+            auditorias
+              .filter((a) => a.situacao === "Atualizado")
+              .map((a) => a.loja._id.toString())
+          ).size,
+          usuariosTotais: new Set(auditorias.map((a) => a.usuarioId)).size,
+          usuariosAtivos: new Set(
+            auditorias
+              .filter((a) => a.situacao === "Atualizado")
+              .map((a) => a.usuarioId)
+          ).size,
         };
 
         if (totais.totalItens > 0) {
-          totais.percentualConclusao = Math.round((totais.itensAtualizados / totais.totalItens) * 100);
+          totais.percentualConclusao = Math.round(
+            (totais.itensAtualizados / totais.totalItens) * 100
+          );
         }
 
         // Métricas específicas por tipo
@@ -436,33 +608,70 @@ class MetricsCalculationService {
         if (tipo === "etiqueta") {
           metricas.etiquetas = {
             tempoMedioProcessamento: 5, // Estimativa
-            itensPerUsuario: totais.usuariosAtivos > 0 ? Math.round(totais.totalItens / totais.usuariosAtivos) : 0,
-            produtividadeMedia: totais.usuariosAtivos > 0 ? Math.round(totais.itensAtualizados / totais.usuariosAtivos) : 0,
-            locaisMaisMovimentados: await this.calcularLocaisMaisMovimentados(auditorias),
+            itensPerUsuario:
+              totais.usuariosAtivos > 0
+                ? Math.round(totais.totalItens / totais.usuariosAtivos)
+                : 0,
+            produtividadeMedia:
+              totais.usuariosAtivos > 0
+                ? Math.round(totais.itensAtualizados / totais.usuariosAtivos)
+                : 0,
+            locaisMaisMovimentados: await this.calcularLocaisMaisMovimentados(
+              auditorias
+            ),
           };
         } else if (tipo === "ruptura") {
-          const custosRuptura = auditorias.map(a => a.custoRuptura || 0);
-          const custoTotal = custosRuptura.reduce((sum, custo) => sum + custo, 0);
+          const custosRuptura = auditorias.map((a) => a.custoRuptura || 0);
+          const custoTotal = custosRuptura.reduce(
+            (sum, custo) => sum + custo,
+            0
+          );
 
           metricas.rupturas = {
             custoTotalRuptura: custoTotal,
-            custoMedioRuptura: auditorias.length > 0 ? Math.round(custoTotal / auditorias.length) : 0,
-            custoMedioPerLoja: totais.lojasAtivas > 0 ? Math.round(custoTotal / totais.lojasAtivas) : 0,
-            rupturasCriticas: auditorias.filter(a => (a.custoRuptura || 0) > 100).length,
-            diasMediosSemVenda: auditorias.length > 0 ? Math.round(auditorias.reduce((sum, a) => sum + (a.diasSemVenda || 0), 0) / auditorias.length) : 0,
-            setoresMaisAfetados: await this.calcularSetoresMaisAfetados(auditorias),
-            fornecedoresMaisAfetados: await this.calcularFornecedoresMaisAfetados(auditorias),
+            custoMedioRuptura:
+              auditorias.length > 0
+                ? Math.round(custoTotal / auditorias.length)
+                : 0,
+            custoMedioPerLoja:
+              totais.lojasAtivas > 0
+                ? Math.round(custoTotal / totais.lojasAtivas)
+                : 0,
+            rupturasCriticas: auditorias.filter(
+              (a) => (a.custoRuptura || 0) > 100
+            ).length,
+            diasMediosSemVenda:
+              auditorias.length > 0
+                ? Math.round(
+                    auditorias.reduce(
+                      (sum, a) => sum + (a.diasSemVenda || 0),
+                      0
+                    ) / auditorias.length
+                  )
+                : 0,
+            setoresMaisAfetados: await this.calcularSetoresMaisAfetados(
+              auditorias
+            ),
+            fornecedoresMaisAfetados:
+              await this.calcularFornecedoresMaisAfetados(auditorias),
           };
         } else if (tipo === "presenca") {
-          const presencasConfirmadas = auditorias.filter(a => a.presenca).length;
+          const presencasConfirmadas = auditorias.filter(
+            (a) => a.presenca
+          ).length;
 
           metricas.presencas = {
             presencasConfirmadas,
-            percentualPresenca: auditorias.length > 0 ? Math.round((presencasConfirmadas / auditorias.length) * 100) : 0,
+            percentualPresenca:
+              auditorias.length > 0
+                ? Math.round((presencasConfirmadas / auditorias.length) * 100)
+                : 0,
             tempoMedioConfirmacao: 10, // Estimativa
             produtosComPresenca: presencasConfirmadas,
             produtosSemPresenca: auditorias.length - presencasConfirmadas,
-            setoresComMelhorPresenca: await this.calcularSetoresMelhorPresenca(auditorias),
+            setoresComMelhorPresenca: await this.calcularSetoresMelhorPresenca(
+              auditorias
+            ),
           };
         }
 
@@ -496,13 +705,17 @@ class MetricsCalculationService {
         metricasAuditoria.gerarInsights();
 
         await metricasAuditoria.save();
-
       } catch (error) {
-        console.error(`❌ Erro ao calcular métricas de auditoria ${tipo}:`, error);
+        console.error(
+          `❌ Erro ao calcular métricas de auditoria ${tipo}:`,
+          error
+        );
       }
     }
 
-    console.log(`✅ Métricas de auditorias calculadas para ${tipos.length} tipos`);
+    console.log(
+      `✅ Métricas de auditorias calculadas para ${tipos.length} tipos`
+    );
   }
 
   // Calcular métricas globais
@@ -511,45 +724,78 @@ class MetricsCalculationService {
 
     try {
       // Buscar todas as métricas calculadas
-      const [metricasLojas, metricasUsuarios, metricasAuditorias] = await Promise.all([
-        MetricasLoja.find({ periodo, dataInicio }).populate('loja', 'codigo nome regiao'),
-        MetricasUsuario.find({ periodo, dataInicio }).populate('loja', 'codigo nome regiao'),
-        MetricasAuditoria.find({ periodo, dataInicio }),
-      ]);
+      const [metricasLojas, metricasUsuarios, metricasAuditorias] =
+        await Promise.all([
+          MetricasLoja.find({ periodo, dataInicio }).populate(
+            "loja",
+            "codigo nome regiao"
+          ),
+          MetricasUsuario.find({ periodo, dataInicio }).populate(
+            "loja",
+            "codigo nome regiao"
+          ),
+          MetricasAuditoria.find({ periodo, dataInicio }),
+        ]);
 
       // Calcular resumo executivo
       const resumoExecutivo = {
-        totalLojas: new Set(metricasLojas.map(m => m.loja._id.toString())).size,
-        lojasAtivas: metricasLojas.filter(m => m.totais.totalItens > 0).length,
-        totalUsuarios: new Set(metricasUsuarios.map(m => m.usuarioId)).size,
-        usuariosAtivos: metricasUsuarios.filter(m => m.totais.totalItens > 0).length,
-        totalItensProcessados: metricasUsuarios.reduce((sum, m) => sum + m.totais.totalItens, 0),
-        totalItensAtualizados: metricasUsuarios.reduce((sum, m) => sum + m.totais.itensAtualizados, 0),
+        totalLojas: new Set(metricasLojas.map((m) => m.loja._id.toString()))
+          .size,
+        lojasAtivas: metricasLojas.filter((m) => m.totais.totalItens > 0)
+          .length,
+        totalUsuarios: new Set(metricasUsuarios.map((m) => m.usuarioId)).size,
+        usuariosAtivos: metricasUsuarios.filter((m) => m.totais.totalItens > 0)
+          .length,
+        totalItensProcessados: metricasUsuarios.reduce(
+          (sum, m) => sum + m.totais.totalItens,
+          0
+        ),
+        totalItensAtualizados: metricasUsuarios.reduce(
+          (sum, m) => sum + m.totais.itensAtualizados,
+          0
+        ),
         percentualConclusaoGeral: 0,
-        planilhasProcessadas: metricasLojas.reduce((sum, m) => sum + m.totais.planilhasProcessadas, 0),
+        planilhasProcessadas: metricasLojas.reduce(
+          (sum, m) => sum + m.totais.planilhasProcessadas,
+          0
+        ),
       };
 
       if (resumoExecutivo.totalItensProcessados > 0) {
         resumoExecutivo.percentualConclusaoGeral = Math.round(
-          (resumoExecutivo.totalItensAtualizados / resumoExecutivo.totalItensProcessados) * 100
+          (resumoExecutivo.totalItensAtualizados /
+            resumoExecutivo.totalItensProcessados) *
+            100
         );
       }
 
       // Métricas por tipo de auditoria
       const porTipoAuditoria = {
-        etiquetas: this.consolidarMetricasTipo(metricasAuditorias.find(m => m.tipo === "etiqueta")),
-        rupturas: this.consolidarMetricasTipo(metricasAuditorias.find(m => m.tipo === "ruptura")),
-        presencas: this.consolidarMetricasTipo(metricasAuditorias.find(m => m.tipo === "presenca")),
+        etiquetas: this.consolidarMetricasTipo(
+          metricasAuditorias.find((m) => m.tipo === "etiqueta")
+        ),
+        rupturas: this.consolidarMetricasTipo(
+          metricasAuditorias.find((m) => m.tipo === "ruptura")
+        ),
+        presencas: this.consolidarMetricasTipo(
+          metricasAuditorias.find((m) => m.tipo === "presenca")
+        ),
       };
 
       // Rankings
-      const rankings = await this.calcularRankingsGlobais(metricasLojas, metricasUsuarios);
+      const rankings = await this.calcularRankingsGlobais(
+        metricasLojas,
+        metricasUsuarios
+      );
 
       // Análise regional
       const porRegiao = await this.calcularAnaliseRegional(metricasLojas);
 
       // Buscar ou criar métricas globais
-      let metricasGlobais = await MetricasGlobais.findOne({ periodo, dataInicio });
+      let metricasGlobais = await MetricasGlobais.findOne({
+        periodo,
+        dataInicio,
+      });
 
       if (!metricasGlobais) {
         metricasGlobais = new MetricasGlobais({
@@ -576,12 +822,17 @@ class MetricsCalculationService {
       metricasGlobais.avaliarMetas();
 
       // Calcular tendências com período anterior
-      const periodoAnterior = await this.obterPeriodoAnterior(periodo, dataInicio);
+      const periodoAnterior = await this.obterPeriodoAnterior(
+        periodo,
+        dataInicio
+      );
       if (periodoAnterior) {
         metricasGlobais.comparacoes.periodoAnterior = {
           totalItens: periodoAnterior.resumoExecutivo.totalItensProcessados,
-          itensAtualizados: periodoAnterior.resumoExecutivo.totalItensAtualizados,
-          percentualConclusao: periodoAnterior.resumoExecutivo.percentualConclusaoGeral,
+          itensAtualizados:
+            periodoAnterior.resumoExecutivo.totalItensAtualizados,
+          percentualConclusao:
+            periodoAnterior.resumoExecutivo.percentualConclusaoGeral,
           usuariosAtivos: periodoAnterior.resumoExecutivo.usuariosAtivos,
           lojasAtivas: periodoAnterior.resumoExecutivo.lojasAtivas,
         };
@@ -591,7 +842,6 @@ class MetricsCalculationService {
       await metricasGlobais.save();
 
       console.log(`✅ Métricas globais calculadas com sucesso`);
-
     } catch (error) {
       console.error(`❌ Erro ao calcular métricas globais:`, error);
       throw error;
@@ -658,9 +908,18 @@ class MetricsCalculationService {
         if (posicao <= 10) {
           if (!usuario.historicoRanking) {
             usuario.historicoRanking = {
-              posicao1: 0, posicao2: 0, posicao3: 0, posicao4: 0, posicao5: 0,
-              posicao6: 0, posicao7: 0, posicao8: 0, posicao9: 0, posicao10: 0,
-              totalTop10: 0, melhorPosicao: null
+              posicao1: 0,
+              posicao2: 0,
+              posicao3: 0,
+              posicao4: 0,
+              posicao5: 0,
+              posicao6: 0,
+              posicao7: 0,
+              posicao8: 0,
+              posicao9: 0,
+              posicao10: 0,
+              totalTop10: 0,
+              melhorPosicao: null,
             };
           }
 
@@ -674,7 +933,10 @@ class MetricsCalculationService {
           usuario.historicoRanking.totalTop10++;
 
           // Atualizar melhor posição (menor número = melhor)
-          if (usuario.historicoRanking.melhorPosicao === null || posicao < usuario.historicoRanking.melhorPosicao) {
+          if (
+            usuario.historicoRanking.melhorPosicao === null ||
+            posicao < usuario.historicoRanking.melhorPosicao
+          ) {
             usuario.historicoRanking.melhorPosicao = posicao;
           }
         }
@@ -724,26 +986,39 @@ class MetricsCalculationService {
       percentualConclusao: metricasAuditoria.totais.percentualConclusao,
       lojasParticipantes: metricasAuditoria.totais.lojasAtivas,
       usuariosAtivos: metricasAuditoria.totais.usuariosAtivos,
-      custoTotalRuptura: metricasAuditoria.metricas.rupturas?.custoTotalRuptura || 0,
-      custoMedioRuptura: metricasAuditoria.metricas.rupturas?.custoMedioRuptura || 0,
-      rupturasCriticas: metricasAuditoria.metricas.rupturas?.rupturasCriticas || 0,
-      economiaEstimada: (metricasAuditoria.metricas.rupturas?.custoTotalRuptura || 0) * 0.7,
-      presencasConfirmadas: metricasAuditoria.metricas.presencas?.presencasConfirmadas || 0,
-      percentualPresencaGeral: metricasAuditoria.metricas.presencas?.percentualPresenca || 0,
-      produtividadeMedia: metricasAuditoria.metricas.etiquetas?.produtividadeMedia || 0,
-      tempoMedioProcessamento: metricasAuditoria.metricas.etiquetas?.tempoMedioProcessamento || 0,
+      custoTotalRuptura:
+        metricasAuditoria.metricas.rupturas?.custoTotalRuptura || 0,
+      custoMedioRuptura:
+        metricasAuditoria.metricas.rupturas?.custoMedioRuptura || 0,
+      rupturasCriticas:
+        metricasAuditoria.metricas.rupturas?.rupturasCriticas || 0,
+      economiaEstimada:
+        (metricasAuditoria.metricas.rupturas?.custoTotalRuptura || 0) * 0.7,
+      presencasConfirmadas:
+        metricasAuditoria.metricas.presencas?.presencasConfirmadas || 0,
+      percentualPresencaGeral:
+        metricasAuditoria.metricas.presencas?.percentualPresenca || 0,
+      produtividadeMedia:
+        metricasAuditoria.metricas.etiquetas?.produtividadeMedia || 0,
+      tempoMedioProcessamento:
+        metricasAuditoria.metricas.etiquetas?.tempoMedioProcessamento || 0,
     };
   }
 
   async calcularRankingsGlobais(metricasLojas, metricasUsuarios) {
     // Melhor loja
     const melhorLoja = metricasLojas.reduce((melhor, atual) => {
-      return atual.ranking.pontuacaoTotal > (melhor?.ranking.pontuacaoTotal || 0) ? atual : melhor;
+      return atual.ranking.pontuacaoTotal >
+        (melhor?.ranking.pontuacaoTotal || 0)
+        ? atual
+        : melhor;
     }, null);
 
     // Melhor usuário
     const melhorUsuario = metricasUsuarios.reduce((melhor, atual) => {
-      return atual.totais.pontuacaoTotal > (melhor?.totais.pontuacaoTotal || 0) ? atual : melhor;
+      return atual.totais.pontuacaoTotal > (melhor?.totais.pontuacaoTotal || 0)
+        ? atual
+        : melhor;
     }, null);
 
     // Top lojas (10 primeiras)
@@ -780,29 +1055,33 @@ class MetricsCalculationService {
       }));
 
     return {
-      melhorLoja: melhorLoja ? {
-        loja: melhorLoja.loja._id,
-        lojaInfo: {
-          codigo: melhorLoja.loja.codigo,
-          nome: melhorLoja.loja.nome,
-          regiao: melhorLoja.loja.regiao,
-        },
-        pontuacao: melhorLoja.ranking.pontuacaoTotal,
-        percentualConclusao: melhorLoja.totais.percentualConclusaoGeral,
-        especialidade: "geral",
-      } : null,
-      melhorUsuario: melhorUsuario ? {
-        usuarioId: melhorUsuario.usuarioId,
-        usuarioNome: melhorUsuario.usuarioNome,
-        loja: melhorUsuario.loja._id,
-        lojaInfo: {
-          codigo: melhorUsuario.loja.codigo,
-          nome: melhorUsuario.loja.nome,
-        },
-        pontuacao: melhorUsuario.totais.pontuacaoTotal,
-        itensProcessados: melhorUsuario.totais.totalItens,
-        especialidade: "geral",
-      } : null,
+      melhorLoja: melhorLoja
+        ? {
+            loja: melhorLoja.loja._id,
+            lojaInfo: {
+              codigo: melhorLoja.loja.codigo,
+              nome: melhorLoja.loja.nome,
+              regiao: melhorLoja.loja.regiao,
+            },
+            pontuacao: melhorLoja.ranking.pontuacaoTotal,
+            percentualConclusao: melhorLoja.totais.percentualConclusaoGeral,
+            especialidade: "geral",
+          }
+        : null,
+      melhorUsuario: melhorUsuario
+        ? {
+            usuarioId: melhorUsuario.usuarioId,
+            usuarioNome: melhorUsuario.usuarioNome,
+            loja: melhorUsuario.loja._id,
+            lojaInfo: {
+              codigo: melhorUsuario.loja.codigo,
+              nome: melhorUsuario.loja.nome,
+            },
+            pontuacao: melhorUsuario.totais.pontuacaoTotal,
+            itensProcessados: melhorUsuario.totais.totalItens,
+            especialidade: "geral",
+          }
+        : null,
       topLojas,
       topUsuarios,
     };
@@ -835,8 +1114,10 @@ class MetricsCalculationService {
         dadosRegiao.itensAtualizados += metricaLoja.totais.itensAtualizados;
 
         // Verificar se é a melhor loja da região
-        if (!dadosRegiao.melhorLoja ||
-            metricaLoja.ranking.pontuacaoTotal > dadosRegiao.melhorLoja.percentual) {
+        if (
+          !dadosRegiao.melhorLoja ||
+          metricaLoja.ranking.pontuacaoTotal > dadosRegiao.melhorLoja.percentual
+        ) {
           dadosRegiao.melhorLoja = {
             codigo: metricaLoja.loja.codigo,
             nome: metricaLoja.loja.nome,
@@ -848,11 +1129,12 @@ class MetricsCalculationService {
 
     // Calcular percentuais e ranking
     const resultadoRegioes = Array.from(regioes.values())
-      .map(regiao => ({
+      .map((regiao) => ({
         ...regiao,
-        percentualConclusao: regiao.totalItens > 0
-          ? Math.round((regiao.itensAtualizados / regiao.totalItens) * 100)
-          : 0,
+        percentualConclusao:
+          regiao.totalItens > 0
+            ? Math.round((regiao.itensAtualizados / regiao.totalItens) * 100)
+            : 0,
       }))
       .sort((a, b) => b.percentualConclusao - a.percentualConclusao)
       .map((regiao, index) => ({
@@ -902,7 +1184,10 @@ class MetricsCalculationService {
       .map(([local, totalItens]) => ({
         local,
         totalItens,
-        percentual: auditorias.length > 0 ? Math.round((totalItens / auditorias.length) * 100) : 0,
+        percentual:
+          auditorias.length > 0
+            ? Math.round((totalItens / auditorias.length) * 100)
+            : 0,
       }))
       .sort((a, b) => b.totalItens - a.totalItens)
       .slice(0, 10);
@@ -928,7 +1213,10 @@ class MetricsCalculationService {
         setor,
         totalRupturas: dados.totalRupturas,
         custoTotal: dados.custoTotal,
-        percentual: auditorias.length > 0 ? Math.round((dados.totalRupturas / auditorias.length) * 100) : 0,
+        percentual:
+          auditorias.length > 0
+            ? Math.round((dados.totalRupturas / auditorias.length) * 100)
+            : 0,
       }))
       .sort((a, b) => b.custoTotal - a.custoTotal)
       .slice(0, 10);
@@ -954,7 +1242,10 @@ class MetricsCalculationService {
         fornecedor,
         totalRupturas: dados.totalRupturas,
         custoTotal: dados.custoTotal,
-        percentual: auditorias.length > 0 ? Math.round((dados.totalRupturas / auditorias.length) * 100) : 0,
+        percentual:
+          auditorias.length > 0
+            ? Math.round((dados.totalRupturas / auditorias.length) * 100)
+            : 0,
       }))
       .sort((a, b) => b.custoTotal - a.custoTotal)
       .slice(0, 10);
@@ -982,9 +1273,10 @@ class MetricsCalculationService {
         setor,
         totalItens: dados.totalItens,
         presencasConfirmadas: dados.presencasConfirmadas,
-        percentualPresenca: dados.totalItens > 0
-          ? Math.round((dados.presencasConfirmadas / dados.totalItens) * 100)
-          : 0,
+        percentualPresenca:
+          dados.totalItens > 0
+            ? Math.round((dados.presencasConfirmadas / dados.totalItens) * 100)
+            : 0,
       }))
       .sort((a, b) => b.percentualPresenca - a.percentualPresenca)
       .slice(0, 10);
@@ -1028,9 +1320,10 @@ class MetricsCalculationService {
     return Array.from(lojas.values())
       .map((loja, index) => ({
         ...loja,
-        percentualConclusao: loja.totalItens > 0
-          ? Math.round((loja.itensAtualizados / loja.totalItens) * 100)
-          : 0,
+        percentualConclusao:
+          loja.totalItens > 0
+            ? Math.round((loja.itensAtualizados / loja.totalItens) * 100)
+            : 0,
         usuariosAtivos: loja.usuariosAtivos.size,
         posicaoRanking: index + 1,
       }))
@@ -1039,6 +1332,60 @@ class MetricsCalculationService {
         ...loja,
         posicaoRanking: index + 1,
       }));
+  }
+  async validarConsistenciaDados(periodo, dataInicio, dataFim) {
+    try {
+      console.log(`🔍 Validando consistência de dados...`);
+
+      // Buscar auditorias do período
+      const auditorias = await Auditoria.find({
+        data: { $gte: dataInicio, $lte: dataFim },
+      });
+
+      // Contar auditorias por usuário e tipo
+      const contagemPorUsuario = {};
+
+      for (const auditoria of auditorias) {
+        const chave = `${auditoria.usuarioId}_${auditoria.loja}_${auditoria.tipo}`;
+
+        if (!contagemPorUsuario[chave]) {
+          contagemPorUsuario[chave] = {
+            usuarioId: auditoria.usuarioId,
+            loja: auditoria.loja,
+            tipo: auditoria.tipo,
+            total: 0,
+            atualizados: 0,
+          };
+        }
+
+        contagemPorUsuario[chave].total++;
+        if (auditoria.situacao === "Atualizado") {
+          contagemPorUsuario[chave].atualizados++;
+        }
+      }
+
+      // Verificar usuários com possíveis dados duplicados
+      const usuariosComProblemas = Object.values(contagemPorUsuario).filter(
+        (item) => item.total > 1000 // Limite arbitrário para investigação
+      );
+
+      if (usuariosComProblemas.length > 0) {
+        console.log(
+          `⚠️ Possíveis dados duplicados encontrados:`,
+          usuariosComProblemas
+        );
+      }
+
+      return {
+        totalAuditorias: auditorias.length,
+        usuariosUnicos: Object.keys(contagemPorUsuario).length,
+        usuariosComProblemas: usuariosComProblemas.length,
+        detalhes: usuariosComProblemas,
+      };
+    } catch (error) {
+      console.error(`❌ Erro na validação de consistência:`, error);
+      return { error: error.message };
+    }
   }
 }
 
