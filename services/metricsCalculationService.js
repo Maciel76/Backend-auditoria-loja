@@ -45,10 +45,36 @@ class MetricsCalculationService {
   async calcularMetricasUsuarios(periodo, dataInicio, dataFim) {
     console.log(`📊 Calculando métricas de usuários...`);
 
-    // Buscar auditorias do período
+    // Buscar todas as auditorias do período
     const auditorias = await Auditoria.find({
       data: { $gte: dataInicio, $lte: dataFim },
-    }).populate("loja", "codigo nome regiao");
+    }).populate('loja', 'codigo nome regiao');
+
+    // Calcular totais por loja para cada tipo de auditoria
+    const totaisPorLoja = {};
+
+    for (const auditoria of auditorias) {
+      const lojaId = auditoria.loja._id.toString();
+
+      if (!totaisPorLoja[lojaId]) {
+        totaisPorLoja[lojaId] = {
+          etiquetas: { itensLidos: 0 },
+          rupturas: { itensLidos: 0 },
+          presencas: { itensLidos: 0 }
+        };
+      }
+
+      // Contar itens lidos por tipo para cada loja
+      if (auditoria.situacao && auditoria.situacao !== "Não lido") {
+        if (auditoria.tipo === "etiqueta") {
+          totaisPorLoja[lojaId].etiquetas.itensLidos++;
+        } else if (auditoria.tipo === "ruptura") {
+          totaisPorLoja[lojaId].rupturas.itensLidos++;
+        } else if (auditoria.tipo === "presenca") {
+          totaisPorLoja[lojaId].presencas.itensLidos++;
+        }
+      }
+    }
 
     // Agrupar por usuário e loja
     const usuariosMap = new Map();
@@ -68,6 +94,7 @@ class MetricsCalculationService {
             itensDesatualizado: 0,
             itensSemEstoque: 0,
             itensNaopertence: 0,
+            percentualConclusao: 0
           },
           rupturas: {
             totalItens: 0,
@@ -77,6 +104,9 @@ class MetricsCalculationService {
             itensDesatualizado: 0,
             itensSemEstoque: 0,
             itensNaopertence: 0,
+            percentualConclusao: 0,
+            custoTotalRuptura: 0,
+            custoMedioRuptura: 0
           },
           presencas: {
             totalItens: 0,
@@ -86,13 +116,95 @@ class MetricsCalculationService {
             itensDesatualizado: 0,
             itensSemEstoque: 0,
             itensNaopertence: 0,
+            percentualConclusao: 0,
+            percentualPresenca: 0
           },
+          // NOVOS CONTADORES
+          ContadorClassesProduto: new Map([
+            ["A CLASSIFICAR", 0],
+            ["ALTO GIRO", 0],
+            ["BAZAR", 0],
+            ["DIVERSOS", 0],
+            ["DPH", 0],
+            ["FLV", 0],
+            ["LATICINIOS 1", 0],
+            ["LIQUIDA", 0],
+            ["PERECIVEL 1", 0],
+            ["PERECIVEL 2", 0],
+            ["PERECIVEL 2 B", 0],
+            ["PERECIVEL 3", 0],
+            ["SECA DOCE", 0],
+            ["SECA SALGADA", 0],
+            ["SECA SALGADA 2", 0],
+          ]),
+          ContadorLocais: new Map([
+            ["C01 - C01", 0],
+            ["CS01 - CS01", 0],
+            ["F01 - F01", 0],
+            ["F02 - F02", 0],
+            ["FLV - FLV", 0],
+            ["G01A - G01A", 0],
+            ["G01B - G01B", 0],
+            ["G02A - G02A", 0],
+            ["G02B - G02B", 0],
+            ["G03A - G03A", 0],
+            ["G03B - G03B", 0],
+            ["G04A - G04A", 0],
+            ["G04B - G04B", 0],
+            ["G05A - G05A", 0],
+            ["G05B - G05B", 0],
+            ["G06A - G06A", 0],
+            ["G06B - G06B", 0],
+            ["G07A - G07A", 0],
+            ["G07B - G07B", 0],
+            ["G08A - G08A", 0],
+            ["G08B - G08B", 0],
+            ["G09A - G09A", 0],
+            ["G09B - G09B", 0],
+            ["G10A - G10A", 0],
+            ["G10B - G10B", 0],
+            ["G11A - G11A", 0],
+            ["G11B - G11B", 0],
+            ["G12A - G12A", 0],
+            ["G12B - G12B", 0],
+            ["G13A - G13A", 0],
+            ["G13B - G13B", 0],
+            ["G14A - G14A", 0],
+            ["G14B - G14B", 0],
+            ["G15A - G15A", 0],
+            ["G15B - G15B", 0],
+            ["G16A - G16A", 0],
+            ["G16B - G16B", 0],
+            ["G17A - G17A", 0],
+            ["G17B - G17B", 0],
+            ["G18A - G18A", 0],
+            ["G18B - G18B", 0],
+            ["G19A - G19A", 0],
+            ["G19B - G19B", 0],
+            ["G20A - G20A", 0],
+            ["G20B - G20B", 0],
+            ["G21A - G21A", 0],
+            ["G21B - G21B", 0],
+            ["G22A - G22A", 0],
+            ["G22B - G22B", 0],
+            ["GELO - GELO", 0],
+            ["I01 - I01", 0],
+            ["PA01 - PA01", 0],
+            ["PAO - PAO", 0],
+            ["PF01 - PF01", 0],
+            ["PF02 - PF02", 0],
+            ["PF03 - PF03", 0],
+            ["PL01 - PL01", 0],
+            ["PL02 - PL02", 0],
+            ["SORVETE - SORVETE", 0]
+          ])
         });
       }
 
       const dadosUsuario = usuariosMap.get(chaveUsuario);
+      const lojaId = auditoria.loja._id.toString();
 
-      // CONTAGEM CORRIGIDA - Baseada na situação real
+      // Processar por tipo de auditoria
       if (auditoria.tipo === "etiqueta") {
         dadosUsuario.etiquetas.totalItens++;
 
@@ -100,8 +212,7 @@ class MetricsCalculationService {
           dadosUsuario.etiquetas.itensLidos++;
         }
 
-        // CONTAGEM ESPECÍFICA POR SITUAÇÃO
-        switch (auditoria.situacao) {
+        switch(auditoria.situacao) {
           case "Atualizado":
             dadosUsuario.etiquetas.itensAtualizados++;
             break;
@@ -115,6 +226,7 @@ class MetricsCalculationService {
             dadosUsuario.etiquetas.itensNaopertence++;
             break;
         }
+
       } else if (auditoria.tipo === "ruptura") {
         dadosUsuario.rupturas.totalItens++;
 
@@ -122,7 +234,7 @@ class MetricsCalculationService {
           dadosUsuario.rupturas.itensLidos++;
         }
 
-        switch (auditoria.situacao) {
+        switch(auditoria.situacao) {
           case "Atualizado":
             dadosUsuario.rupturas.itensAtualizados++;
             break;
@@ -147,7 +259,7 @@ class MetricsCalculationService {
           dadosUsuario.presencas.itensLidos++;
         }
 
-        switch (auditoria.situacao) {
+        switch(auditoria.situacao) {
           case "Atualizado":
             dadosUsuario.presencas.itensAtualizados++;
             break;
@@ -166,67 +278,71 @@ class MetricsCalculationService {
           dadosUsuario.presencas.presencasConfirmadas++;
         }
       }
+
+      // CONTAR CLASSES DE PRODUTO - usando o novo campo ClasseProduto
+      if (auditoria.ClasseProduto) {
+        const classe = auditoria.ClasseProduto;
+        if (dadosUsuario.ContadorClassesProduto.has(classe)) {
+          dadosUsuario.ContadorClassesProduto.set(classe, dadosUsuario.ContadorClassesProduto.get(classe) + 1);
+        }
+      }
+      // Fallback para o campo antigo se o novo não existir
+      else if (auditoria.classeProdutoRaiz) {
+        const classe = auditoria.classeProdutoRaiz;
+        if (dadosUsuario.ContadorClassesProduto.has(classe)) {
+          dadosUsuario.ContadorClassesProduto.set(classe, dadosUsuario.ContadorClassesProduto.get(classe) + 1);
+        }
+      }
+
+      // CONTAR LOCAIS
+      if (auditoria.local) {
+        const local = auditoria.local;
+        if (dadosUsuario.ContadorLocais.has(local)) {
+          dadosUsuario.ContadorLocais.set(local, dadosUsuario.ContadorLocais.get(local) + 1);
+        }
+      }
     }
 
-    // Salvar métricas de cada usuário
+    // Calcular percentuais em relação ao total da loja e salvar métricas
     for (const [chave, dados] of usuariosMap) {
       try {
-        // Calcular percentuais para etiquetas
+        const lojaId = dados.loja._id.toString();
+        const totaisDaLoja = totaisPorLoja[lojaId] || {
+          etiquetas: { itensLidos: 0 },
+          rupturas: { itensLidos: 0 },
+          presencas: { itensLidos: 0 }
+        };
+
+        // CALCULAR PERCENTUAIS EM RELAÇÃO AO TOTAL DA LOJA
         const etiquetas = {
           ...dados.etiquetas,
-          percentualConclusao:
-            dados.etiquetas.totalItens > 0
-              ? Math.round(
-                  (dados.etiquetas.itensAtualizados /
-                    dados.etiquetas.totalItens) *
-                    100
-                )
-              : 0,
-          tempoMedioItem: 5, // Estimativa base
+          percentualConclusao: totaisDaLoja.etiquetas.itensLidos > 0
+            ? Math.round((dados.etiquetas.itensLidos / totaisDaLoja.etiquetas.itensLidos) * 100)
+            : 0,
         };
 
-        // Calcular percentuais para rupturas
         const rupturas = {
           ...dados.rupturas,
-          percentualConclusao:
-            dados.rupturas.totalItens > 0
-              ? Math.round(
-                  (dados.rupturas.itensAtualizados /
-                    dados.rupturas.totalItens) *
-                    100
-                )
-              : 0,
+          percentualConclusao: totaisDaLoja.rupturas.itensLidos > 0
+            ? Math.round((dados.rupturas.itensLidos / totaisDaLoja.rupturas.itensLidos) * 100)
+            : 0,
           custoTotalRuptura: dados.rupturas.custoTotal,
-          custoMedioRuptura:
-            dados.rupturas.totalItens > 0
-              ? Math.round(
-                  dados.rupturas.custoTotal / dados.rupturas.totalItens
-                )
-              : 0,
+          custoMedioRuptura: dados.rupturas.totalItens > 0
+            ? dados.rupturas.custoTotal / dados.rupturas.totalItens
+            : 0,
         };
 
-        // Calcular percentuais para presenças
         const presencas = {
           ...dados.presencas,
-          percentualConclusao:
-            dados.presencas.totalItens > 0
-              ? Math.round(
-                  (dados.presencas.itensAtualizados /
-                    dados.presencas.totalItens) *
-                    100
-                )
-              : 0,
-          percentualPresenca:
-            dados.presencas.totalItens > 0
-              ? Math.round(
-                  (dados.presencas.presencasConfirmadas /
-                    dados.presencas.totalItens) *
-                    100
-                )
-              : 0,
+          percentualConclusao: totaisDaLoja.presencas.itensLidos > 0
+            ? Math.round((dados.presencas.itensLidos / totaisDaLoja.presencas.itensLidos) * 100)
+            : 0,
+          percentualPresenca: dados.presencas.totalItens > 0
+            ? Math.round((dados.presencas.presencasConfirmadas / dados.presencas.totalItens) * 100)
+            : 0,
         };
 
-        // Buscar métricas existentes ou criar nova
+        // Buscar ou criar métricas do usuário
         let metricasUsuario = await MetricasUsuario.findOne({
           loja: dados.loja._id,
           usuarioId: dados.usuarioId,
@@ -250,6 +366,47 @@ class MetricsCalculationService {
         metricasUsuario.etiquetas = etiquetas;
         metricasUsuario.rupturas = rupturas;
         metricasUsuario.presencas = presencas;
+
+        // Atualizar novos contadores
+        metricasUsuario.ContadorClassesProduto = Object.fromEntries(dados.ContadorClassesProduto);
+        metricasUsuario.ContadorLocais = Object.fromEntries(dados.ContadorLocais);
+
+        // Calcular diasAtivos - dias únicos que o usuário fez auditoria
+        const diasUnicos = await Auditoria.aggregate([
+          {
+            $match: {
+              loja: dados.loja._id,
+              usuarioId: dados.usuarioId,
+              data: { $gte: dataInicio, $lte: dataFim },
+            },
+          },
+          {
+            $group: {
+              _id: { $dateToString: { format: "%Y-%m-%d", date: "$data" } },
+            },
+          },
+        ]);
+
+        const diasAtivos = diasUnicos.length;
+        const mediaItensPerDia = diasAtivos > 0
+          ? Math.round(dados.etiquetas.itensLidos / diasAtivos)
+          : 0;
+
+        // Calcular melhoriaPercentual - comparar com período anterior
+        let melhoriaPercentual = 0;
+        const periodoAnterior = await this.obterPeriodoAnteriorUsuario(
+          dados.loja._id,
+          dados.usuarioId,
+          periodo,
+          dataInicio
+        );
+
+        if (periodoAnterior && periodoAnterior.totais.percentualConclusaoGeral !== undefined) {
+          const percentualAtual = dados.etiquetas.totalItens > 0
+            ? Math.round((dados.etiquetas.itensAtualizados / dados.etiquetas.totalItens) * 100)
+            : 0;
+          melhoriaPercentual = percentualAtual - periodoAnterior.totais.percentualConclusaoGeral;
+        }
 
         // Calcular contadores de auditorias (quantas auditorias únicas fez por tipo)
         const auditoriasPorTipo = await Auditoria.aggregate([
@@ -885,8 +1042,8 @@ class MetricsCalculationService {
     return { dataInicio, dataFim };
   }
 
+  // Atualizar o método de ranking
   async atualizarRankingUsuarios(periodo, dataInicio, dataFim) {
-    // Buscar usuários por loja e atualizar ranking
     const lojas = await Loja.find({ ativa: true });
 
     for (const loja of lojas) {
@@ -896,49 +1053,25 @@ class MetricsCalculationService {
         dataInicio,
       }).sort({ "totais.pontuacaoTotal": -1 });
 
-      // Atualizar posição no ranking da loja
       for (let i = 0; i < usuariosLoja.length; i++) {
         const posicao = i + 1;
         const usuario = usuariosLoja[i];
 
-        // Atualizar posição atual
         usuario.ranking.posicaoLoja = posicao;
 
-        // Atualizar histórico de ranking (apenas top 10)
         if (posicao <= 10) {
-          if (!usuario.historicoRanking) {
-            usuario.historicoRanking = {
-              posicao1: 0,
-              posicao2: 0,
-              posicao3: 0,
-              posicao4: 0,
-              posicao5: 0,
-              posicao6: 0,
-              posicao7: 0,
-              posicao8: 0,
-              posicao9: 0,
-              posicao10: 0,
-              totalTop10: 0,
-              melhorPosicao: null,
-            };
-          }
-
-          // Incrementar contador da posição específica
           const campoPosicao = `posicao${posicao}`;
           if (usuario.historicoRanking[campoPosicao] !== undefined) {
             usuario.historicoRanking[campoPosicao]++;
           }
-
-          // Atualizar totais
           usuario.historicoRanking.totalTop10++;
+        } else {
+          // NOVO: Contar vezes que ficou acima do 10º lugar
+          usuario.historicoRanking.ACIMA10 = (usuario.historicoRanking.ACIMA10 || 0) + 1;
+        }
 
-          // Atualizar melhor posição (menor número = melhor)
-          if (
-            usuario.historicoRanking.melhorPosicao === null ||
-            posicao < usuario.historicoRanking.melhorPosicao
-          ) {
-            usuario.historicoRanking.melhorPosicao = posicao;
-          }
+        if (usuario.historicoRanking.melhorPosicao === null || posicao < usuario.historicoRanking.melhorPosicao) {
+          usuario.historicoRanking.melhorPosicao = posicao;
         }
 
         await usuario.save();
