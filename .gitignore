@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 node_modules
+uploads
 *.local
 
 # Editor directories and files

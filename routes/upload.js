@@ -119,21 +119,31 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
     const compraKey = todasChaves.find((key) =>
       key.toLowerCase().includes("compra")
     );
-    const classeProdutoKey = todasChaves.find((key) =>
-      key.toLowerCase().includes("classe") && key.toLowerCase().includes("produto")
+    const classeProdutoKey = todasChaves.find(
+      (key) =>
+        key.toLowerCase().includes("classe") &&
+        key.toLowerCase().includes("produto")
     );
     // Buscar colunas "Auditado em" - Excel/XLSX cria "_1", "_2" etc para colunas duplicadas
     const auditadoEmDataKey = todasChaves.find((key) => {
       const keyLower = key.toLowerCase().trim();
-      return (keyLower === "auditado em" ||
-              (keyLower.includes("auditado") && keyLower.includes("em") && !keyLower.includes("_")));
+      return (
+        keyLower === "auditado em" ||
+        (keyLower.includes("auditado") &&
+          keyLower.includes("em") &&
+          !keyLower.includes("_"))
+      );
     });
 
     const auditadoEmHoraKey = todasChaves.find((key) => {
       const keyLower = key.toLowerCase().trim();
-      return (keyLower === "auditado em_1" ||
-              keyLower.includes("auditado em_") ||
-              (keyLower.includes("auditado") && keyLower.includes("em") && keyLower.includes("_")));
+      return (
+        keyLower === "auditado em_1" ||
+        keyLower.includes("auditado em_") ||
+        (keyLower.includes("auditado") &&
+          keyLower.includes("em") &&
+          keyLower.includes("_"))
+      );
     });
 
     // Processando dados
@@ -160,7 +170,10 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
       if (auditadoEmDataKey && item[auditadoEmDataKey]) {
         auditadoDia = String(item[auditadoEmDataKey]).trim();
         if (index === 0) {
-          console.log(`📅 Data encontrada (${auditadoEmDataKey}):`, auditadoDia);
+          console.log(
+            `📅 Data encontrada (${auditadoEmDataKey}):`,
+            auditadoDia
+          );
         }
       }
 
@@ -175,12 +188,19 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
           auditadoHora = horaCompleta;
         }
         if (index === 0) {
-          console.log(`⏰ Hora encontrada (${auditadoEmHoraKey}):`, horaCompleta, "→", auditadoHora);
+          console.log(
+            `⏰ Hora encontrada (${auditadoEmHoraKey}):`,
+            horaCompleta,
+            "→",
+            auditadoHora
+          );
         }
       }
 
       if (index === 0) {
-        console.log(`✅ Resultado final - Dia: "${auditadoDia}", Hora: "${auditadoHora}"`);
+        console.log(
+          `✅ Resultado final - Dia: "${auditadoDia}", Hora: "${auditadoHora}"`
+        );
       }
 
       // Adicionar ao batch de auditorias - COM LOJA OBRIGATÓRIA
@@ -195,7 +215,9 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
         data: dataAuditoria,
         codigo: codigoKey ? String(item[codigoKey] || "") : "",
         produto: produtoKey ? String(item[produtoKey] || "") : "",
-        ClasseProduto: classeProdutoKey ? String(item[classeProdutoKey] || "").trim() : "",
+        ClasseProduto: classeProdutoKey
+          ? String(item[classeProdutoKey] || "").trim()
+          : "",
         local: localKey
           ? String(item[localKey] || "Não especificado")
           : "Não especificado",
@@ -509,7 +531,9 @@ async function processarRuptura(file, dataAuditoria, loja) {
         data: dataAuditoriaFinal,
         codigo: item.codigo,
         produto: item.produto,
-        ClasseProduto: item.classeProdutoRaiz ? String(item.classeProdutoRaiz).trim() : "",
+        ClasseProduto: item.classeProdutoRaiz
+          ? String(item.classeProdutoRaiz).trim()
+          : "",
         local: item.local,
         situacao: item.situacao,
         situacaoAtual: item.situacaoAuditoria || "",
@@ -524,8 +548,15 @@ async function processarRuptura(file, dataAuditoria, loja) {
         fornecedor: item.fornecedor,
         diasSemVenda: item.diasSemVenda,
         custoRuptura: item.custoRuptura,
-        AuditadoDia: item.auditadoEm ? item.auditadoEm.toLocaleDateString("pt-BR") : "",
-        AuditadoHora: item.auditadoEm ? item.auditadoEm.toLocaleTimeString("pt-BR", {hour: '2-digit', minute: '2-digit'}) : "",
+        AuditadoDia: item.auditadoEm
+          ? item.auditadoEm.toLocaleDateString("pt-BR")
+          : "",
+        AuditadoHora: item.auditadoEm
+          ? item.auditadoEm.toLocaleTimeString("pt-BR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "",
         metadata: item.metadata,
       }));
 
@@ -793,7 +824,9 @@ async function processarPresenca(file, dataAuditoria, loja) {
         data: dataAuditoriaFinal,
         codigo: item.codigo,
         produto: item.produto,
-        ClasseProduto: item.classeProdutoRaiz ? String(item.classeProdutoRaiz).trim() : "",
+        ClasseProduto: item.classeProdutoRaiz
+          ? String(item.classeProdutoRaiz).trim()
+          : "",
         local: item.local,
         situacao: item.situacao,
         situacaoAtual: item.situacaoAuditoria || "",
@@ -811,8 +844,15 @@ async function processarPresenca(file, dataAuditoria, loja) {
         fornecedor: item.fornecedor,
         diasSemVenda: item.diasSemVenda,
         custoRuptura: item.custoRuptura,
-        AuditadoDia: item.auditadoEm ? item.auditadoEm.toLocaleDateString("pt-BR") : "",
-        AuditadoHora: item.auditadoEm ? item.auditadoEm.toLocaleTimeString("pt-BR", {hour: '2-digit', minute: '2-digit'}) : "",
+        AuditadoDia: item.auditadoEm
+          ? item.auditadoEm.toLocaleDateString("pt-BR")
+          : "",
+        AuditadoHora: item.auditadoEm
+          ? item.auditadoEm.toLocaleTimeString("pt-BR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "",
         metadata: item.metadata,
       }));
 
@@ -1083,11 +1123,16 @@ router.post(
         // Atualizar UserDailyMetrics se métricas diárias foram calculadas com sucesso
         if (resultadoDiario.success) {
           try {
-            console.log(`📊 Atualizando UserDailyMetrics para loja ${loja.codigo}...`);
-            await atualizarUserDailyMetrics(loja, dataMetricas);
+            console.log(
+              `📊 Atualizando UserDailyMetrics para loja ${loja.codigo}...`
+            );
+            await atualizarUserDailyMetrics(loja, dataMetricas, tipoAuditoria);
             console.log(`✅ UserDailyMetrics atualizado com sucesso`);
           } catch (errorDailyMetrics) {
-            console.error(`❌ Erro ao atualizar UserDailyMetrics:`, errorDailyMetrics.message);
+            console.error(
+              `❌ Erro ao atualizar UserDailyMetrics:`,
+              errorDailyMetrics.message
+            );
           }
         }
 
@@ -1791,212 +1836,343 @@ router.get(
   }
 );
 
-// Endpoint para testar UserDailyMetrics - DEBUG
-router.get("/test-daily-metrics", verificarLojaObrigatoria, async (req, res) => {
+// Endpoint para RankingColaboradores - UserDailyMetrics
+// Endpoint para RankingColaboradores - UserDailyMetrics - VERSÃO CORRIGIDA
+router.get("/ranking-colaboradores", verificarLojaObrigatoria, async (req, res) => {
   try {
     const loja = req.loja;
-    const UserDailyMetrics = (await import("../models/UserDailyMetrics.js")).default;
+    const { tipo } = req.query;
+
+    console.log(`🏆 Buscando ranking para loja ${loja.codigo}, tipo: ${tipo || 'todos'}`);
 
     // Buscar todos os UserDailyMetrics da loja
-    const usuarios = await UserDailyMetrics.find({ loja: loja._id })
-      .populate('loja', 'nome codigo')
-      .sort({ ultimaAtualizacao: -1 });
+    const usuarios = await UserDailyMetrics.find({ loja: loja._id });
 
-    const resultado = {
-      loja: {
-        codigo: loja.codigo,
-        nome: loja.nome,
-      },
-      totalUsuarios: usuarios.length,
-      usuarios: usuarios.map(usuario => ({
-        usuarioId: usuario.usuarioId,
-        usuarioNome: usuario.usuarioNome,
-        lojaNome: usuario.lojaNome,
-        totalDias: usuario.metricasDiarias.length,
-        ultimaAtualizacao: usuario.ultimaAtualizacao,
-        ultimoDia: usuario.metricasDiarias.length > 0 ? {
-          data: usuario.metricasDiarias[usuario.metricasDiarias.length - 1].data,
-          totais: usuario.metricasDiarias[usuario.metricasDiarias.length - 1].totais,
-          etiquetas: usuario.metricasDiarias[usuario.metricasDiarias.length - 1].etiquetas,
-          rupturas: usuario.metricasDiarias[usuario.metricasDiarias.length - 1].rupturas,
-          presencas: usuario.metricasDiarias[usuario.metricasDiarias.length - 1].presencas,
-        } : null
-      }))
-    };
+    const ranking = [];
 
-    res.json(resultado);
+    for (const usuario of usuarios) {
+      if (!usuario.metricas) continue;
+
+      // Usar a nova estrutura com objeto único
+      const metricas = usuario.metricas;
+
+      let contador = 0;
+
+      // LÓGICA CORRETA: Pegar dados específicos do tipo solicitado
+      if (!tipo || tipo === "todos") {
+        // Para "todos": somar todos os tipos
+        contador = (metricas.etiquetas?.itensAtualizados || 0) +
+                   (metricas.rupturas?.itensAtualizados || 0) +
+                   (metricas.presencas?.itensAtualizados || 0);
+      } else if (tipo === "etiqueta") {
+        contador = metricas.etiquetas?.itensAtualizados || 0;
+      } else if (tipo === "ruptura") {
+        contador = metricas.rupturas?.itensAtualizados || 0;
+      } else if (tipo === "presenca") {
+        contador = metricas.presencas?.itensAtualizados || 0;
+      }
+
+      // Filtrar usuários inválidos
+      const isValidUser = contador > 0 &&
+                         usuario.usuarioNome &&
+                         !usuario.usuarioNome.toLowerCase().includes("produto não auditado") &&
+                         !usuario.usuarioNome.toLowerCase().includes("usuário não identificado") &&
+                         usuario.usuarioId &&
+                         !usuario.usuarioId.toLowerCase().includes("produto não auditado") &&
+                         !usuario.usuarioId.toLowerCase().includes("usuário não identificado");
+
+      if (isValidUser) {
+        ranking.push({
+          id: usuario.usuarioId,
+          nome: usuario.usuarioNome,
+          contador: contador,
+          loja: usuario.lojaNome,
+          metricas: metricas,
+          eficiencia: metricas.totais?.percentualConclusaoGeral || 0,
+          pontuacao: metricas.totais?.pontuacaoTotal || 0,
+          posicaoLoja: 0
+        });
+      }
+    }
+
+    // Ordenar por contador
+    ranking.sort((a, b) => b.contador - a.contador);
+
+    console.log(`✅ Ranking gerado: ${ranking.length} colaboradores - Tipo: ${tipo || 'todos'}`);
+
+    res.json(ranking);
   } catch (error) {
-    console.error("❌ Erro ao buscar UserDailyMetrics:", error);
+    console.error("❌ Erro ao buscar ranking colaboradores:", error);
     res.status(500).json({
-      erro: "Falha ao buscar UserDailyMetrics",
+      erro: "Falha ao buscar ranking colaboradores",
       detalhes: error.message
     });
   }
 });
 
-// Função para atualizar UserDailyMetrics seguindo o padrão do User.js
-async function atualizarUserDailyMetrics(loja, dataMetricas) {
-  const MetricasUsuario = (await import("../models/MetricasUsuario.js")).default;
-
-  console.log(`📊 Buscando métricas diárias para loja ${loja.codigo} na data ${dataMetricas.toISOString()}`);
-
-  // Buscar todas as métricas de usuários para a data específica
-  const metricasUsuarios = await MetricasUsuario.find({
-    loja: loja._id,
-    periodo: "diario",
-    dataInicio: {
-      $gte: new Date(dataMetricas.toDateString()),
-      $lt: new Date(new Date(dataMetricas.toDateString()).getTime() + 24 * 60 * 60 * 1000),
-    },
-  });
-
-  console.log(`📊 Encontradas ${metricasUsuarios.length} métricas de usuários para atualizar`);
-
-  // Processar cada usuário seguindo o padrão do User.js
-  for (const metricaUsuario of metricasUsuarios) {
+// Endpoint para obter datas de auditoria disponíveis - UserDailyMetrics
+router.get(
+  "/datas-auditoria-colaboradores",
+  verificarLojaObrigatoria,
+  async (req, res) => {
     try {
-      // Buscar ou criar usuário com upsert (IGUAL ao User.js)
-      let userDailyMetrics = await UserDailyMetrics.findOneAndUpdate(
-        {
-          $or: [
-            { usuarioId: metricaUsuario.usuarioId, loja: loja._id },
-            { usuarioNome: metricaUsuario.usuarioNome, loja: loja._id },
-          ],
-        },
-        {
-          $setOnInsert: {
-            usuarioId: metricaUsuario.usuarioId,
-            usuarioNome: metricaUsuario.usuarioNome,
-            loja: loja._id,
-            lojaNome: loja.nome,
-            metricasDiarias: [],
-            versaoCalculo: "1.0",
-          },
-        },
-        {
-          upsert: true,
-          new: true,
-          runValidators: true,
+      const loja = req.loja;
+
+      // Buscar todos os UserDailyMetrics da loja
+      const usuarios = await UserDailyMetrics.find({ loja: loja._id });
+
+      // Coletar todas as datas únicas
+      const datasSet = new Set();
+
+      usuarios.forEach((usuario) => {
+        if (usuario.metricas && usuario.metricas.data) {
+          datasSet.add(usuario.metricas.data.toDateString());
         }
+      });
+
+      // Converter para array e ordenar
+      const datas = Array.from(datasSet)
+        .map((dataString) => new Date(dataString))
+        .sort((a, b) => b - a) // Mais recente primeiro
+        .map((data) => ({
+          data: data.toISOString().split("T")[0],
+          dataFormatada: data.toLocaleDateString("pt-BR", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
+          timestamp: data.getTime(),
+        }));
+
+      console.log(
+        `📅 Encontradas ${datas.length} datas de auditoria disponíveis`
       );
 
-      console.log(`👤 Usuário processado: ${userDailyMetrics.usuarioNome} (${userDailyMetrics.usuarioId})`);
-
-      // Encontrar ou criar métricas para a data atual (IGUAL ao User.js)
-      const metricasIndex = userDailyMetrics.metricasDiarias.findIndex(
-        (m) => m.data.toDateString() === dataMetricas.toDateString()
-      );
-
-      if (metricasIndex === -1) {
-        userDailyMetrics.metricasDiarias.push({
-          data: dataMetricas,
-          etiquetas: {},
-          rupturas: {},
-          presencas: {},
-          contadorClasses: {},
-          contadorLocais: {},
-          totais: {},
-          contadoresAuditorias: {},
-          ranking: {},
-          tendencias: {},
-          ultimaAtualizacao: new Date(),
-        });
-      }
-
-      const metricasDia = userDailyMetrics.metricasDiarias[
-        metricasIndex === -1
-          ? userDailyMetrics.metricasDiarias.length - 1
-          : metricasIndex
-      ];
-
-      // Limpar e atualizar dados (IGUAL ao User.js: auditoria.detalhes = [])
-      // Etiquetas
-      metricasDia.etiquetas = {
-        totalItens: metricaUsuario.etiquetas?.totalItens || 0,
-        itensLidos: metricaUsuario.etiquetas?.itensLidos || 0,
-        itensAtualizados: metricaUsuario.etiquetas?.itensAtualizados || 0,
-        itensDesatualizado: metricaUsuario.etiquetas?.itensDesatualizado || 0,
-        itensSemEstoque: metricaUsuario.etiquetas?.itensSemEstoque || 0,
-        itensNaopertence: metricaUsuario.etiquetas?.itensNaopertence || 0,
-        percentualConclusao: metricaUsuario.etiquetas?.percentualConclusao || 0,
-      };
-
-      // Rupturas
-      metricasDia.rupturas = {
-        totalItens: metricaUsuario.rupturas?.totalItens || 0,
-        itensLidos: metricaUsuario.rupturas?.itensLidos || 0,
-        itensAtualizados: metricaUsuario.rupturas?.itensAtualizados || 0,
-        itensDesatualizado: metricaUsuario.rupturas?.itensDesatualizado || 0,
-        itensSemEstoque: metricaUsuario.rupturas?.itensSemEstoque || 0,
-        itensNaopertence: metricaUsuario.rupturas?.itensNaopertence || 0,
-        percentualConclusao: metricaUsuario.rupturas?.percentualConclusao || 0,
-        custoTotalRuptura: metricaUsuario.rupturas?.custoTotalRuptura || 0,
-        custoMedioRuptura: metricaUsuario.rupturas?.custoMedioRuptura || 0,
-      };
-
-      // Presenças
-      metricasDia.presencas = {
-        totalItens: metricaUsuario.presencas?.totalItens || 0,
-        itensLidos: metricaUsuario.presencas?.itensLidos || 0,
-        itensAtualizados: metricaUsuario.presencas?.itensAtualizados || 0,
-        itensDesatualizado: metricaUsuario.presencas?.itensDesatualizado || 0,
-        itensSemEstoque: metricaUsuario.presencas?.itensSemEstoque || 0,
-        itensNaopertence: metricaUsuario.presencas?.itensNaopertence || 0,
-        percentualConclusao: metricaUsuario.presencas?.percentualConclusao || 0,
-        presencasConfirmadas: metricaUsuario.presencas?.presencasConfirmadas || 0,
-        percentualPresenca: metricaUsuario.presencas?.percentualPresenca || 0,
-      };
-
-      // Contadores
-      metricasDia.contadorClasses = metricaUsuario.ContadorClassesProduto ?
-        Object.fromEntries(metricaUsuario.ContadorClassesProduto) : {};
-      metricasDia.contadorLocais = metricaUsuario.ContadorLocais ?
-        Object.fromEntries(metricaUsuario.ContadorLocais) : {};
-
-      // Totais
-      metricasDia.totais = {
-        totalItens: metricaUsuario.totais?.totalItens || 0,
-        itensLidos: metricaUsuario.totais?.itensLidos || 0,
-        itensAtualizados: metricaUsuario.totais?.itensAtualizados || 0,
-        percentualConclusaoGeral: metricaUsuario.totais?.percentualConclusaoGeral || 0,
-        pontuacaoTotal: metricaUsuario.totais?.pontuacaoTotal || 0,
-      };
-
-      // Contadores de auditorias
-      metricasDia.contadoresAuditorias = {
-        totalEtiquetas: metricaUsuario.contadoresAuditorias?.totalEtiquetas || 0,
-        totalRupturas: metricaUsuario.contadoresAuditorias?.totalRupturas || 0,
-        totalPresencas: metricaUsuario.contadoresAuditorias?.totalPresencas || 0,
-        totalGeral: metricaUsuario.contadoresAuditorias?.totalGeral || 0,
-      };
-
-      // Ranking
-      metricasDia.ranking = {
-        posicaoLoja: metricaUsuario.ranking?.posicaoLoja || 0,
-        posicaoGeral: metricaUsuario.ranking?.posicaoGeral || 0,
-        pontosPorItem: metricaUsuario.ranking?.pontosPorItem || 0,
-      };
-
-      // Tendências
-      metricasDia.tendencias = {
-        diasAtivos: metricaUsuario.tendencias?.diasAtivos || 0,
-        mediaItensPerDia: metricaUsuario.tendencias?.mediaItensPerDia || 0,
-        melhoriaPercentual: metricaUsuario.tendencias?.melhoriaPercentual || 0,
-      };
-
-      metricasDia.ultimaAtualizacao = new Date();
-      userDailyMetrics.ultimaAtualizacao = new Date();
-
-      // Salvar no MongoDB (IGUAL ao User.js)
-      await userDailyMetrics.save();
-
-      console.log(`✅ UserDailyMetrics atualizado para usuário: ${metricaUsuario.usuarioNome} (${metricaUsuario.usuarioId})`);
+      res.json(datas);
     } catch (error) {
-      console.error(`❌ Erro ao atualizar UserDailyMetrics para usuário ${metricaUsuario.usuarioNome}:`, error.message);
+      console.error("❌ Erro ao buscar datas de auditoria:", error);
+      res.status(500).json({
+        erro: "Falha ao buscar datas de auditoria",
+        detalhes: error.message,
+      });
     }
   }
+);
 
-  console.log(`✅ Processamento UserDailyMetrics concluído para ${metricasUsuarios.length} usuários`);
+// Endpoint para testar UserDailyMetrics - DEBUG
+router.get(
+  "/test-daily-metrics",
+  verificarLojaObrigatoria,
+  async (req, res) => {
+    try {
+      const loja = req.loja;
+      const UserDailyMetrics = (await import("../models/UserDailyMetrics.js"))
+        .default;
+
+      // Buscar todos os UserDailyMetrics da loja
+      const usuarios = await UserDailyMetrics.find({ loja: loja._id })
+        .populate("loja", "nome codigo")
+        .sort({ ultimaAtualizacao: -1 });
+
+      const resultado = {
+        loja: {
+          codigo: loja.codigo,
+          nome: loja.nome,
+        },
+        totalUsuarios: usuarios.length,
+        usuarios: usuarios.map((usuario) => ({
+          usuarioId: usuario.usuarioId,
+          usuarioNome: usuario.usuarioNome,
+          lojaNome: usuario.lojaNome,
+          totalDias: usuario.metricasDiarias.length,
+          ultimaAtualizacao: usuario.ultimaAtualizacao,
+          ultimoDia:
+            usuario.metricasDiarias.length > 0
+              ? {
+                  data: usuario.metricasDiarias[
+                    usuario.metricasDiarias.length - 1
+                  ].data,
+                  totais:
+                    usuario.metricasDiarias[usuario.metricasDiarias.length - 1]
+                      .totais,
+                  etiquetas:
+                    usuario.metricasDiarias[usuario.metricasDiarias.length - 1]
+                      .etiquetas,
+                  rupturas:
+                    usuario.metricasDiarias[usuario.metricasDiarias.length - 1]
+                      .rupturas,
+                  presencas:
+                    usuario.metricasDiarias[usuario.metricasDiarias.length - 1]
+                      .presencas,
+                }
+              : null,
+        })),
+      };
+
+      res.json(resultado);
+    } catch (error) {
+      console.error("❌ Erro ao buscar UserDailyMetrics:", error);
+      res.status(500).json({
+        erro: "Falha ao buscar UserDailyMetrics",
+        detalhes: error.message,
+      });
+    }
+  }
+);
+
+// Função para atualizar UserDailyMetrics seguindo o padrão do User.js
+// Função para atualizar UserDailyMetrics - VERSÃO SIMPLIFICADA (apenas última auditoria)
+async function atualizarUserDailyMetrics(loja, dataMetricas, tipoAuditoria) {
+  try {
+    console.log(
+      `📊 Atualizando UserDailyMetrics para loja ${loja.codigo}, tipo: ${tipoAuditoria}`
+    );
+
+    // Buscar métricas do período diário para esta data
+    const MetricasUsuario = (await import("../models/MetricasUsuario.js"))
+      .default;
+    const metricasUsuarios = await MetricasUsuario.find({
+      loja: loja._id,
+      periodo: "diario",
+      dataInicio: {
+        $gte: new Date(dataMetricas.toDateString()),
+        $lt: new Date(
+          new Date(dataMetricas.toDateString()).getTime() + 24 * 60 * 60 * 1000
+        ),
+      },
+    });
+
+    console.log(
+      `📊 Encontradas ${metricasUsuarios.length} métricas de usuários para atualizar`
+    );
+
+    for (const metricaUsuario of metricasUsuarios) {
+      try {
+        // Buscar ou criar usuário - USANDO NOVA ESTRUTURA COM OBJETO ÚNICO
+        let userDailyMetrics = await UserDailyMetrics.findOneAndUpdate(
+          {
+            usuarioId: metricaUsuario.usuarioId,
+            loja: loja._id,
+          },
+          {
+            $setOnInsert: {
+              usuarioId: metricaUsuario.usuarioId,
+              usuarioNome: metricaUsuario.usuarioNome,
+              loja: loja._id,
+              lojaNome: loja.nome,
+              metricas: {
+                data: dataMetricas,
+                etiquetas: {},
+                rupturas: {},
+                presencas: {},
+                totais: {},
+                ultimaAtualizacao: new Date(),
+              },
+              versaoCalculo: "2.0",
+            },
+          },
+          {
+            upsert: true,
+            new: true,
+            runValidators: true,
+          }
+        );
+
+        // Garantir que as métricas existam
+        if (!userDailyMetrics.metricas) {
+          userDailyMetrics.metricas = {
+            data: dataMetricas,
+            etiquetas: {},
+            rupturas: {},
+            presencas: {},
+            totais: {},
+            ultimaAtualizacao: new Date(),
+          };
+        }
+
+        // ATUALIZAR APENAS O TIPO ESPECÍFICO - mantém os outros tipos intactos
+        if (tipoAuditoria === "etiqueta") {
+          userDailyMetrics.metricas.etiquetas = {
+            totalItens: metricaUsuario.etiquetas?.totalItens || 0,
+            itensLidos: metricaUsuario.etiquetas?.itensLidos || 0,
+            itensAtualizados: metricaUsuario.etiquetas?.itensAtualizados || 0,
+            itensDesatualizado:
+              metricaUsuario.etiquetas?.itensDesatualizado || 0,
+            itensSemEstoque: metricaUsuario.etiquetas?.itensSemEstoque || 0,
+            itensNaopertence: metricaUsuario.etiquetas?.itensNaopertence || 0,
+            percentualConclusao:
+              metricaUsuario.etiquetas?.percentualConclusao || 0,
+            contadorClasses: metricaUsuario.contadores?.classes || {},
+            contadorLocais: metricaUsuario.contadores?.locais || {},
+          };
+        } else if (tipoAuditoria === "ruptura") {
+          userDailyMetrics.metricas.rupturas = {
+            totalItens: metricaUsuario.rupturas?.totalItens || 0,
+            itensLidos: metricaUsuario.rupturas?.itensLidos || 0,
+            itensAtualizados: metricaUsuario.rupturas?.itensAtualizados || 0,
+            itensDesatualizado:
+              metricaUsuario.rupturas?.itensDesatualizado || 0,
+            itensSemEstoque: metricaUsuario.rupturas?.itensSemEstoque || 0,
+            itensNaopertence: metricaUsuario.rupturas?.itensNaopertence || 0,
+            percentualConclusao:
+              metricaUsuario.rupturas?.percentualConclusao || 0,
+            custoTotalRuptura: metricaUsuario.rupturas?.custoTotalRuptura || 0,
+            custoMedioRuptura: metricaUsuario.rupturas?.custoMedioRuptura || 0,
+            contadorClasses: metricaUsuario.contadores?.classes || {},
+            contadorLocais: metricaUsuario.contadores?.locais || {},
+          };
+        } else if (tipoAuditoria === "presenca") {
+          userDailyMetrics.metricas.presencas = {
+            totalItens: metricaUsuario.presencas?.totalItens || 0,
+            itensLidos: metricaUsuario.presencas?.itensLidos || 0,
+            itensAtualizados: metricaUsuario.presencas?.itensAtualizados || 0,
+            itensDesatualizado:
+              metricaUsuario.presencas?.itensDesatualizado || 0,
+            itensSemEstoque: metricaUsuario.presencas?.itensSemEstoque || 0,
+            itensNaopertence: metricaUsuario.presencas?.itensNaopertence || 0,
+            percentualConclusao:
+              metricaUsuario.presencas?.percentualConclusao || 0,
+            presencasConfirmadas:
+              metricaUsuario.presencas?.presencasConfirmadas || 0,
+            percentualPresenca:
+              metricaUsuario.presencas?.percentualPresenca || 0,
+            contadorClasses: metricaUsuario.contadores?.classes || {},
+            contadorLocais: metricaUsuario.contadores?.locais || {},
+          };
+        }
+
+        // Atualizar totais gerais usando os métodos do schema
+        userDailyMetrics.atualizarTotais();
+
+        // REMOVER CAMPOS LEGADOS que não devem mais existir
+        userDailyMetrics.metricas.contadorClasses = undefined;
+        userDailyMetrics.metricas.contadorLocais = undefined;
+        userDailyMetrics.metricas.contadoresAuditorias = undefined;
+        userDailyMetrics.metricas.ranking = undefined;
+        userDailyMetrics.metricas.tendencias = undefined;
+
+        await userDailyMetrics.save();
+        console.log(
+          `✅ UserDailyMetrics atualizado para ${metricaUsuario.usuarioNome} - Tipo: ${tipoAuditoria}`
+        );
+      } catch (error) {
+        console.error(
+          `❌ Erro ao atualizar usuário ${metricaUsuario.usuarioNome}:`,
+          error.message
+        );
+      }
+    }
+
+    console.log(
+      `✅ UserDailyMetrics atualizado para ${metricasUsuarios.length} usuários`
+    );
+  } catch (error) {
+    console.error(
+      `❌ Erro geral ao atualizar UserDailyMetrics:`,
+      error.message
+    );
+  }
 }
 
 export default router;

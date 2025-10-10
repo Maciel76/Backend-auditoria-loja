@@ -1,4 +1,4 @@
-// models/UserDailyMetrics.js - Métricas diárias em tempo real do usuário
+// models/UserDailyMetrics.js - Métricas diárias em tempo real do usuário (VERSÃO SIMPLIFICADA)
 import mongoose from "mongoose";
 
 const metricasEtiquetasSchema = new mongoose.Schema({
@@ -9,6 +9,86 @@ const metricasEtiquetasSchema = new mongoose.Schema({
   itensSemEstoque: { type: Number, default: 0 },
   itensNaopertence: { type: Number, default: 0 },
   percentualConclusao: { type: Number, default: 0 },
+
+  // Contadores específicos de etiquetas
+  contadorClasses: {
+    "A CLASSIFICAR": { type: Number, default: 0 },
+    "ALTO GIRO": { type: Number, default: 0 },
+    BAZAR: { type: Number, default: 0 },
+    DIVERSOS: { type: Number, default: 0 },
+    DPH: { type: Number, default: 0 },
+    FLV: { type: Number, default: 0 },
+    "LATICINIOS 1": { type: Number, default: 0 },
+    LIQUIDA: { type: Number, default: 0 },
+    "PERECIVEL 1": { type: Number, default: 0 },
+    "PERECIVEL 2": { type: Number, default: 0 },
+    "PERECIVEL 2 B": { type: Number, default: 0 },
+    "PERECIVEL 3": { type: Number, default: 0 },
+    "SECA DOCE": { type: Number, default: 0 },
+    "SECA SALGADA": { type: Number, default: 0 },
+    "SECA SALGADA 2": { type: Number, default: 0 },
+  },
+  contadorLocais: {
+    "C01 - C01": { type: Number, default: 0 },
+    "CS01 - CS01": { type: Number, default: 0 },
+    "F01 - F01": { type: Number, default: 0 },
+    "F02 - F02": { type: Number, default: 0 },
+    "FLV - FLV": { type: Number, default: 0 },
+    "G01A - G01A": { type: Number, default: 0 },
+    "G01B - G01B": { type: Number, default: 0 },
+    "G02A - G02A": { type: Number, default: 0 },
+    "G02B - G02B": { type: Number, default: 0 },
+    "G03A - G03A": { type: Number, default: 0 },
+    "G03B - G03B": { type: Number, default: 0 },
+    "G04A - G04A": { type: Number, default: 0 },
+    "G04B - G04B": { type: Number, default: 0 },
+    "G05A - G05A": { type: Number, default: 0 },
+    "G05B - G05B": { type: Number, default: 0 },
+    "G06A - G06A": { type: Number, default: 0 },
+    "G06B - G06B": { type: Number, default: 0 },
+    "G07A - G07A": { type: Number, default: 0 },
+    "G07B - G07B": { type: Number, default: 0 },
+    "G08A - G08A": { type: Number, default: 0 },
+    "G08B - G08B": { type: Number, default: 0 },
+    "G09A - G09A": { type: Number, default: 0 },
+    "G09B - G09B": { type: Number, default: 0 },
+    "G10A - G10A": { type: Number, default: 0 },
+    "G10B - G10B": { type: Number, default: 0 },
+    "G11A - G11A": { type: Number, default: 0 },
+    "G11B - G11B": { type: Number, default: 0 },
+    "G12A - G12A": { type: Number, default: 0 },
+    "G12B - G12B": { type: Number, default: 0 },
+    "G13A - G13A": { type: Number, default: 0 },
+    "G13B - G13B": { type: Number, default: 0 },
+    "G14A - G14A": { type: Number, default: 0 },
+    "G14B - G14B": { type: Number, default: 0 },
+    "G15A - G15A": { type: Number, default: 0 },
+    "G15B - G15B": { type: Number, default: 0 },
+    "G16A - G16A": { type: Number, default: 0 },
+    "G16B - G16B": { type: Number, default: 0 },
+    "G17A - G17A": { type: Number, default: 0 },
+    "G17B - G17B": { type: Number, default: 0 },
+    "G18A - G18A": { type: Number, default: 0 },
+    "G18B - G18B": { type: Number, default: 0 },
+    "G19A - G19A": { type: Number, default: 0 },
+    "G19B - G19B": { type: Number, default: 0 },
+    "G20A - G20A": { type: Number, default: 0 },
+    "G20B - G20B": { type: Number, default: 0 },
+    "G21A - G21A": { type: Number, default: 0 },
+    "G21B - G21B": { type: Number, default: 0 },
+    "G22A - G22A": { type: Number, default: 0 },
+    "G22B - G22B": { type: Number, default: 0 },
+    "GELO - GELO": { type: Number, default: 0 },
+    "I01 - I01": { type: Number, default: 0 },
+    "PA01 - PA01": { type: Number, default: 0 },
+    "PAO - PAO": { type: Number, default: 0 },
+    "PF01 - PF01": { type: Number, default: 0 },
+    "PF02 - PF02": { type: Number, default: 0 },
+    "PF03 - PF03": { type: Number, default: 0 },
+    "PL01 - PL01": { type: Number, default: 0 },
+    "PL02 - PL02": { type: Number, default: 0 },
+    "SORVETE - SORVETE": { type: Number, default: 0 },
+  },
 });
 
 const metricasRupturasSchema = new mongoose.Schema({
@@ -21,6 +101,86 @@ const metricasRupturasSchema = new mongoose.Schema({
   percentualConclusao: { type: Number, default: 0 },
   custoTotalRuptura: { type: Number, default: 0 },
   custoMedioRuptura: { type: Number, default: 0 },
+
+  // Contadores específicos de rupturas
+  contadorClasses: {
+    "A CLASSIFICAR": { type: Number, default: 0 },
+    "ALTO GIRO": { type: Number, default: 0 },
+    BAZAR: { type: Number, default: 0 },
+    DIVERSOS: { type: Number, default: 0 },
+    DPH: { type: Number, default: 0 },
+    FLV: { type: Number, default: 0 },
+    "LATICINIOS 1": { type: Number, default: 0 },
+    LIQUIDA: { type: Number, default: 0 },
+    "PERECIVEL 1": { type: Number, default: 0 },
+    "PERECIVEL 2": { type: Number, default: 0 },
+    "PERECIVEL 2 B": { type: Number, default: 0 },
+    "PERECIVEL 3": { type: Number, default: 0 },
+    "SECA DOCE": { type: Number, default: 0 },
+    "SECA SALGADA": { type: Number, default: 0 },
+    "SECA SALGADA 2": { type: Number, default: 0 },
+  },
+  contadorLocais: {
+    "C01 - C01": { type: Number, default: 0 },
+    "CS01 - CS01": { type: Number, default: 0 },
+    "F01 - F01": { type: Number, default: 0 },
+    "F02 - F02": { type: Number, default: 0 },
+    "FLV - FLV": { type: Number, default: 0 },
+    "G01A - G01A": { type: Number, default: 0 },
+    "G01B - G01B": { type: Number, default: 0 },
+    "G02A - G02A": { type: Number, default: 0 },
+    "G02B - G02B": { type: Number, default: 0 },
+    "G03A - G03A": { type: Number, default: 0 },
+    "G03B - G03B": { type: Number, default: 0 },
+    "G04A - G04A": { type: Number, default: 0 },
+    "G04B - G04B": { type: Number, default: 0 },
+    "G05A - G05A": { type: Number, default: 0 },
+    "G05B - G05B": { type: Number, default: 0 },
+    "G06A - G06A": { type: Number, default: 0 },
+    "G06B - G06B": { type: Number, default: 0 },
+    "G07A - G07A": { type: Number, default: 0 },
+    "G07B - G07B": { type: Number, default: 0 },
+    "G08A - G08A": { type: Number, default: 0 },
+    "G08B - G08B": { type: Number, default: 0 },
+    "G09A - G09A": { type: Number, default: 0 },
+    "G09B - G09B": { type: Number, default: 0 },
+    "G10A - G10A": { type: Number, default: 0 },
+    "G10B - G10B": { type: Number, default: 0 },
+    "G11A - G11A": { type: Number, default: 0 },
+    "G11B - G11B": { type: Number, default: 0 },
+    "G12A - G12A": { type: Number, default: 0 },
+    "G12B - G12B": { type: Number, default: 0 },
+    "G13A - G13A": { type: Number, default: 0 },
+    "G13B - G13B": { type: Number, default: 0 },
+    "G14A - G14A": { type: Number, default: 0 },
+    "G14B - G14B": { type: Number, default: 0 },
+    "G15A - G15A": { type: Number, default: 0 },
+    "G15B - G15B": { type: Number, default: 0 },
+    "G16A - G16A": { type: Number, default: 0 },
+    "G16B - G16B": { type: Number, default: 0 },
+    "G17A - G17A": { type: Number, default: 0 },
+    "G17B - G17B": { type: Number, default: 0 },
+    "G18A - G18A": { type: Number, default: 0 },
+    "G18B - G18B": { type: Number, default: 0 },
+    "G19A - G19A": { type: Number, default: 0 },
+    "G19B - G19B": { type: Number, default: 0 },
+    "G20A - G20A": { type: Number, default: 0 },
+    "G20B - G20B": { type: Number, default: 0 },
+    "G21A - G21A": { type: Number, default: 0 },
+    "G21B - G21B": { type: Number, default: 0 },
+    "G22A - G22A": { type: Number, default: 0 },
+    "G22B - G22B": { type: Number, default: 0 },
+    "GELO - GELO": { type: Number, default: 0 },
+    "I01 - I01": { type: Number, default: 0 },
+    "PA01 - PA01": { type: Number, default: 0 },
+    "PAO - PAO": { type: Number, default: 0 },
+    "PF01 - PF01": { type: Number, default: 0 },
+    "PF02 - PF02": { type: Number, default: 0 },
+    "PF03 - PF03": { type: Number, default: 0 },
+    "PL01 - PL01": { type: Number, default: 0 },
+    "PL02 - PL02": { type: Number, default: 0 },
+    "SORVETE - SORVETE": { type: Number, default: 0 },
+  },
 });
 
 const metricasPresencasSchema = new mongoose.Schema({
@@ -33,104 +193,112 @@ const metricasPresencasSchema = new mongoose.Schema({
   percentualConclusao: { type: Number, default: 0 },
   presencasConfirmadas: { type: Number, default: 0 },
   percentualPresenca: { type: Number, default: 0 },
+
+  // Contadores específicos de presenças
+  contadorClasses: {
+    "A CLASSIFICAR": { type: Number, default: 0 },
+    "ALTO GIRO": { type: Number, default: 0 },
+    BAZAR: { type: Number, default: 0 },
+    DIVERSOS: { type: Number, default: 0 },
+    DPH: { type: Number, default: 0 },
+    FLV: { type: Number, default: 0 },
+    "LATICINIOS 1": { type: Number, default: 0 },
+    LIQUIDA: { type: Number, default: 0 },
+    "PERECIVEL 1": { type: Number, default: 0 },
+    "PERECIVEL 2": { type: Number, default: 0 },
+    "PERECIVEL 2 B": { type: Number, default: 0 },
+    "PERECIVEL 3": { type: Number, default: 0 },
+    "SECA DOCE": { type: Number, default: 0 },
+    "SECA SALGADA": { type: Number, default: 0 },
+    "SECA SALGADA 2": { type: Number, default: 0 },
+  },
+  contadorLocais: {
+    "C01 - C01": { type: Number, default: 0 },
+    "CS01 - CS01": { type: Number, default: 0 },
+    "F01 - F01": { type: Number, default: 0 },
+    "F02 - F02": { type: Number, default: 0 },
+    "FLV - FLV": { type: Number, default: 0 },
+    "G01A - G01A": { type: Number, default: 0 },
+    "G01B - G01B": { type: Number, default: 0 },
+    "G02A - G02A": { type: Number, default: 0 },
+    "G02B - G02B": { type: Number, default: 0 },
+    "G03A - G03A": { type: Number, default: 0 },
+    "G03B - G03B": { type: Number, default: 0 },
+    "G04A - G04A": { type: Number, default: 0 },
+    "G04B - G04B": { type: Number, default: 0 },
+    "G05A - G05A": { type: Number, default: 0 },
+    "G05B - G05B": { type: Number, default: 0 },
+    "G06A - G06A": { type: Number, default: 0 },
+    "G06B - G06B": { type: Number, default: 0 },
+    "G07A - G07A": { type: Number, default: 0 },
+    "G07B - G07B": { type: Number, default: 0 },
+    "G08A - G08A": { type: Number, default: 0 },
+    "G08B - G08B": { type: Number, default: 0 },
+    "G09A - G09A": { type: Number, default: 0 },
+    "G09B - G09B": { type: Number, default: 0 },
+    "G10A - G10A": { type: Number, default: 0 },
+    "G10B - G10B": { type: Number, default: 0 },
+    "G11A - G11A": { type: Number, default: 0 },
+    "G11B - G11B": { type: Number, default: 0 },
+    "G12A - G12A": { type: Number, default: 0 },
+    "G12B - G12B": { type: Number, default: 0 },
+    "G13A - G13A": { type: Number, default: 0 },
+    "G13B - G13B": { type: Number, default: 0 },
+    "G14A - G14A": { type: Number, default: 0 },
+    "G14B - G14B": { type: Number, default: 0 },
+    "G15A - G15A": { type: Number, default: 0 },
+    "G15B - G15B": { type: Number, default: 0 },
+    "G16A - G16A": { type: Number, default: 0 },
+    "G16B - G16B": { type: Number, default: 0 },
+    "G17A - G17A": { type: Number, default: 0 },
+    "G17B - G17B": { type: Number, default: 0 },
+    "G18A - G18A": { type: Number, default: 0 },
+    "G18B - G18B": { type: Number, default: 0 },
+    "G19A - G19A": { type: Number, default: 0 },
+    "G19B - G19B": { type: Number, default: 0 },
+    "G20A - G20A": { type: Number, default: 0 },
+    "G20B - G20B": { type: Number, default: 0 },
+    "G21A - G21A": { type: Number, default: 0 },
+    "G21B - G21B": { type: Number, default: 0 },
+    "G22A - G22A": { type: Number, default: 0 },
+    "G22B - G22B": { type: Number, default: 0 },
+    "GELO - GELO": { type: Number, default: 0 },
+    "I01 - I01": { type: Number, default: 0 },
+    "PA01 - PA01": { type: Number, default: 0 },
+    "PAO - PAO": { type: Number, default: 0 },
+    "PF01 - PF01": { type: Number, default: 0 },
+    "PF02 - PF02": { type: Number, default: 0 },
+    "PF03 - PF03": { type: Number, default: 0 },
+    "PL01 - PL01": { type: Number, default: 0 },
+    "PL02 - PL02": { type: Number, default: 0 },
+    "SORVETE - SORVETE": { type: Number, default: 0 },
+  },
 });
 
-const contadoresClassesSchema = new mongoose.Schema({
-  "A CLASSIFICAR": { type: Number, default: 0 },
-  "ALTO GIRO": { type: Number, default: 0 },
-  "BAZAR": { type: Number, default: 0 },
-  "DIVERSOS": { type: Number, default: 0 },
-  "DPH": { type: Number, default: 0 },
-  "FLV": { type: Number, default: 0 },
-  "LATICINIOS 1": { type: Number, default: 0 },
-  "LIQUIDA": { type: Number, default: 0 },
-  "PERECIVEL 1": { type: Number, default: 0 },
-  "PERECIVEL 2": { type: Number, default: 0 },
-  "PERECIVEL 2 B": { type: Number, default: 0 },
-  "PERECIVEL 3": { type: Number, default: 0 },
-  "SECA DOCE": { type: Number, default: 0 },
-  "SECA SALGADA": { type: Number, default: 0 },
-  "SECA SALGADA 2": { type: Number, default: 0 },
-}, { _id: false });
 
-const contadoresLocaisSchema = new mongoose.Schema({
-  "C01 - C01": { type: Number, default: 0 },
-  "CS01 - CS01": { type: Number, default: 0 },
-  "F01 - F01": { type: Number, default: 0 },
-  "F02 - F02": { type: Number, default: 0 },
-  "FLV - FLV": { type: Number, default: 0 },
-  "G01A - G01A": { type: Number, default: 0 },
-  "G01B - G01B": { type: Number, default: 0 },
-  "G02A - G02A": { type: Number, default: 0 },
-  "G02B - G02B": { type: Number, default: 0 },
-  "G03A - G03A": { type: Number, default: 0 },
-  "G03B - G03B": { type: Number, default: 0 },
-  "G04A - G04A": { type: Number, default: 0 },
-  "G04B - G04B": { type: Number, default: 0 },
-  "G05A - G05A": { type: Number, default: 0 },
-  "G05B - G05B": { type: Number, default: 0 },
-  "G06A - G06A": { type: Number, default: 0 },
-  "G06B - G06B": { type: Number, default: 0 },
-  "G07A - G07A": { type: Number, default: 0 },
-  "G07B - G07B": { type: Number, default: 0 },
-  "G08A - G08A": { type: Number, default: 0 },
-  "G08B - G08B": { type: Number, default: 0 },
-  "G09A - G09A": { type: Number, default: 0 },
-  "G09B - G09B": { type: Number, default: 0 },
-  "G10A - G10A": { type: Number, default: 0 },
-  "G10B - G10B": { type: Number, default: 0 },
-  "G11A - G11A": { type: Number, default: 0 },
-  "G11B - G11B": { type: Number, default: 0 },
-  "G12A - G12A": { type: Number, default: 0 },
-  "G12B - G12B": { type: Number, default: 0 },
-  "G13A - G13A": { type: Number, default: 0 },
-  "G13B - G13B": { type: Number, default: 0 },
-  "G14A - G14A": { type: Number, default: 0 },
-  "G14B - G14B": { type: Number, default: 0 },
-  "G15A - G15A": { type: Number, default: 0 },
-  "G15B - G15B": { type: Number, default: 0 },
-  "G16A - G16A": { type: Number, default: 0 },
-  "G16B - G16B": { type: Number, default: 0 },
-  "G17A - G17A": { type: Number, default: 0 },
-  "G17B - G17B": { type: Number, default: 0 },
-  "G18A - G18A": { type: Number, default: 0 },
-  "G18B - G18B": { type: Number, default: 0 },
-  "G19A - G19A": { type: Number, default: 0 },
-  "G19B - G19B": { type: Number, default: 0 },
-  "G20A - G20A": { type: Number, default: 0 },
-  "G20B - G20B": { type: Number, default: 0 },
-  "G21A - G21A": { type: Number, default: 0 },
-  "G21B - G21B": { type: Number, default: 0 },
-  "G22A - G22A": { type: Number, default: 0 },
-  "G22B - G22B": { type: Number, default: 0 },
-  "GELO - GELO": { type: Number, default: 0 },
-  "I01 - I01": { type: Number, default: 0 },
-  "PA01 - PA01": { type: Number, default: 0 },
-  "PAO - PAO": { type: Number, default: 0 },
-  "PF01 - PF01": { type: Number, default: 0 },
-  "PF02 - PF02": { type: Number, default: 0 },
-  "PF03 - PF03": { type: Number, default: 0 },
-  "PL01 - PL01": { type: Number, default: 0 },
-  "PL02 - PL02": { type: Number, default: 0 },
-  "SORVETE - SORVETE": { type: Number, default: 0 },
-}, { _id: false });
-
-const metricasDiariaSchema = new mongoose.Schema({
+const metricasSchema = new mongoose.Schema({
+  // Data da última atualização
   data: {
     type: Date,
     required: true,
-    index: true,
+    default: Date.now,
   },
-  // Métricas por tipo de auditoria
-  etiquetas: metricasEtiquetasSchema,
-  rupturas: metricasRupturasSchema,
-  presencas: metricasPresencasSchema,
 
-  // Contadores por classificação e local
-  contadorClasses: contadoresClassesSchema,
-  contadorLocais: contadoresLocaisSchema,
+  // Métricas por tipo de auditoria - CACHE DA ÚLTIMA AUDITORIA
+  etiquetas: {
+    type: metricasEtiquetasSchema,
+    default: () => ({}),
+  },
+  rupturas: {
+    type: metricasRupturasSchema,
+    default: () => ({}),
+  },
+  presencas: {
+    type: metricasPresencasSchema,
+    default: () => ({}),
+  },
 
-  // Métricas consolidadas do dia
+  // Métricas consolidadas
   totais: {
     totalItens: { type: Number, default: 0 },
     itensLidos: { type: Number, default: 0 },
@@ -139,29 +307,7 @@ const metricasDiariaSchema = new mongoose.Schema({
     pontuacaoTotal: { type: Number, default: 0 },
   },
 
-  // Contadores de auditorias realizadas
-  contadoresAuditorias: {
-    totalEtiquetas: { type: Number, default: 0 },
-    totalRupturas: { type: Number, default: 0 },
-    totalPresencas: { type: Number, default: 0 },
-    totalGeral: { type: Number, default: 0 },
-  },
-
-  // Ranking do dia
-  ranking: {
-    posicaoLoja: { type: Number, default: 0 },
-    posicaoGeral: { type: Number, default: 0 },
-    pontosPorItem: { type: Number, default: 0 },
-  },
-
-  // Análise temporal
-  tendencias: {
-    diasAtivos: { type: Number, default: 0 },
-    mediaItensPerDia: { type: Number, default: 0 },
-    melhoriaPercentual: { type: Number, default: 0 },
-  },
-
-  // Timestamp da última atualização dos dados do dia
+  // Timestamp da última atualização
   ultimaAtualizacao: {
     type: Date,
     default: Date.now,
@@ -192,17 +338,20 @@ const userDailyMetricsSchema = new mongoose.Schema(
       required: true,
     },
 
-    // Array de métricas diárias
-    metricasDiarias: [metricasDiariaSchema],
+    // ÚNICA instância de métricas (não array) - CACHE DA ÚLTIMA AUDITORIA
+    metricas: {
+      type: metricasSchema,
+      default: () => ({}),
+    },
 
-    // Resumo geral (última auditoria)
+    // Timestamps
     ultimaAtualizacao: {
       type: Date,
       default: Date.now,
     },
     versaoCalculo: {
       type: String,
-      default: "1.0",
+      default: "2.0", // Versão atualizada
     },
   },
   {
@@ -213,45 +362,31 @@ const userDailyMetricsSchema = new mongoose.Schema(
 // Índices compostos para queries otimizadas
 userDailyMetricsSchema.index({ loja: 1, usuarioId: 1 });
 userDailyMetricsSchema.index({ loja: 1, usuarioNome: 1 });
-userDailyMetricsSchema.index({ "metricasDiarias.data": -1 });
-userDailyMetricsSchema.index({ loja: 1, "metricasDiarias.totais.pontuacaoTotal": -1 });
+userDailyMetricsSchema.index({ "metricas.data": -1 });
+userDailyMetricsSchema.index({ loja: 1, "metricas.totais.pontuacaoTotal": -1 });
 
 // Índice único para evitar duplicatas por usuário e loja
-userDailyMetricsSchema.index(
-  { loja: 1, usuarioId: 1 },
-  { unique: true }
-);
+userDailyMetricsSchema.index({ loja: 1, usuarioId: 1 }, { unique: true });
 
-// Métodos estáticos
-userDailyMetricsSchema.statics.obterMetricasAtuais = function (lojaId, usuarioId) {
+// Métodos estáticos ATUALIZADOS
+userDailyMetricsSchema.statics.obterMetricasAtuais = function (
+  lojaId,
+  usuarioId
+) {
   return this.findOne({
     loja: lojaId,
     usuarioId: usuarioId,
   });
 };
 
-userDailyMetricsSchema.statics.obterRankingLoja = function (lojaId, data) {
-  const dataString = data.toDateString();
-  return this.find({
-    loja: lojaId,
-    "metricasDiarias.data": {
-      $gte: new Date(dataString),
-      $lt: new Date(new Date(dataString).getTime() + 24 * 60 * 60 * 1000),
-    },
-  })
-    .sort({ "metricasDiarias.totais.pontuacaoTotal": -1 })
+userDailyMetricsSchema.statics.obterRankingLoja = function (lojaId) {
+  return this.find({ loja: lojaId })
+    .sort({ "metricas.totais.pontuacaoTotal": -1 })
     .limit(50);
 };
 
-// Métodos de instância
-userDailyMetricsSchema.methods.obterMetricasDia = function (data) {
-  const dataString = data.toDateString();
-  return this.metricasDiarias.find(
-    (m) => m.data.toDateString() === dataString
-  );
-};
-
-userDailyMetricsSchema.methods.calcularPontuacaoTotal = function (metricas) {
+// Métodos de instância ATUALIZADOS
+userDailyMetricsSchema.methods.calcularPontuacaoTotal = function () {
   const pesos = {
     etiquetas: 1.0,
     rupturas: 1.5,
@@ -259,15 +394,17 @@ userDailyMetricsSchema.methods.calcularPontuacaoTotal = function (metricas) {
   };
 
   let pontuacao = 0;
-  pontuacao += metricas.etiquetas.itensAtualizados * pesos.etiquetas;
-  pontuacao += metricas.rupturas.itensAtualizados * pesos.rupturas;
-  pontuacao += metricas.presencas.itensAtualizados * pesos.presencas;
+  pontuacao +=
+    (this.metricas.etiquetas?.itensAtualizados || 0) * pesos.etiquetas;
+  pontuacao += (this.metricas.rupturas?.itensAtualizados || 0) * pesos.rupturas;
+  pontuacao +=
+    (this.metricas.presencas?.itensAtualizados || 0) * pesos.presencas;
 
   // Bonus por consistência
   const tiposTrabalho = [
-    metricas.etiquetas.totalItens > 0,
-    metricas.rupturas.totalItens > 0,
-    metricas.presencas.totalItens > 0,
+    (this.metricas.etiquetas?.totalItens || 0) > 0,
+    (this.metricas.rupturas?.totalItens || 0) > 0,
+    (this.metricas.presencas?.totalItens || 0) > 0,
   ].filter(Boolean).length;
 
   if (tiposTrabalho >= 2) {
@@ -280,31 +417,41 @@ userDailyMetricsSchema.methods.calcularPontuacaoTotal = function (metricas) {
   return Math.round(pontuacao);
 };
 
-userDailyMetricsSchema.methods.atualizarTotaisDia = function (metricas) {
-  metricas.totais.totalItens =
-    metricas.etiquetas.totalItens +
-    metricas.rupturas.totalItens +
-    metricas.presencas.totalItens;
+userDailyMetricsSchema.methods.atualizarTotais = function () {
+  this.metricas.totais.totalItens =
+    (this.metricas.etiquetas?.totalItens || 0) +
+    (this.metricas.rupturas?.totalItens || 0) +
+    (this.metricas.presencas?.totalItens || 0);
 
-  metricas.totais.itensLidos =
-    metricas.etiquetas.itensLidos +
-    metricas.rupturas.itensLidos +
-    metricas.presencas.itensLidos;
+  this.metricas.totais.itensLidos =
+    (this.metricas.etiquetas?.itensLidos || 0) +
+    (this.metricas.rupturas?.itensLidos || 0) +
+    (this.metricas.presencas?.itensLidos || 0);
 
-  metricas.totais.itensAtualizados =
-    metricas.etiquetas.itensAtualizados +
-    metricas.rupturas.itensAtualizados +
-    metricas.presencas.itensAtualizados;
+  this.metricas.totais.itensAtualizados =
+    (this.metricas.etiquetas?.itensAtualizados || 0) +
+    (this.metricas.rupturas?.itensAtualizados || 0) +
+    (this.metricas.presencas?.itensAtualizados || 0);
 
-  if (metricas.totais.totalItens > 0) {
-    metricas.totais.percentualConclusaoGeral = Math.round(
-      (metricas.totais.itensAtualizados / metricas.totais.totalItens) * 100
+  if (this.metricas.totais.totalItens > 0) {
+    this.metricas.totais.percentualConclusaoGeral = Math.round(
+      (this.metricas.totais.itensAtualizados /
+        this.metricas.totais.totalItens) *
+        100
     );
   }
 
-  metricas.totais.pontuacaoTotal = this.calcularPontuacaoTotal(metricas);
-  metricas.ultimaAtualizacao = new Date();
+  this.metricas.totais.pontuacaoTotal = this.calcularPontuacaoTotal();
+  this.metricas.ultimaAtualizacao = new Date();
   this.ultimaAtualizacao = new Date();
 };
+
+// Middleware para garantir que as métricas sejam inicializadas
+userDailyMetricsSchema.pre("save", function (next) {
+  if (!this.metricas) {
+    this.metricas = {};
+  }
+  next();
+});
 
 export default mongoose.model("UserDailyMetrics", userDailyMetricsSchema);
