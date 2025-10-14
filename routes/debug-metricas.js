@@ -155,20 +155,19 @@ router.post("/calcular-agora", verificarLojaObrigatoria, async (req, res) => {
     const verificacao = await Promise.all([
       MetricasUsuario.countDocuments({
         loja: req.loja._id,
-        periodo,
-        dataInicio: resultado.dataInicio
+        periodo: "periodo_completo", // MetricasUsuario sempre usa periodo_completo
       }),
       MetricasLoja.countDocuments({
         loja: req.loja._id,
-        periodo,
+        periodo: resultado.periodo || periodo,
         dataInicio: resultado.dataInicio
       }),
       MetricasAuditoria.countDocuments({
-        periodo,
+        periodo: resultado.periodo || periodo,
         dataInicio: resultado.dataInicio
       }),
       MetricasGlobais.countDocuments({
-        periodo,
+        periodo: resultado.periodo || periodo,
         dataInicio: resultado.dataInicio
       }),
     ]);

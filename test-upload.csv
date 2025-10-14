@@ -1,0 +1,2 @@
+Código,Produto,Classe de Produto Raiz,Classe de Produto,Local,Usuário,Situação,Situação atual da auditoria,Auditado em,Auditado em_1,Estoque atual,Presença confirmada,Presença confirmada_1,Estoque Leitura,Resíduo,Última compra,Última compra_1
+123,Produto Teste,SECA DOCE,SECA DOCE,G01A - G01A,USUARIO TESTE,Atualizado,Auditado,10/22/25,14:30:00,5,SIM,Sim,5,0,10/20/25,10:00:00

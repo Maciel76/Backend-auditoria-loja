@@ -19,12 +19,18 @@ const metricasUsuarioSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    lojaNome: {
+      type: String,
+      required: true,
+      index: true,
+    },
 
-    // Período das métricas
+    // Período das métricas - AGORA APENAS PERÍODO COMPLETO
     periodo: {
       type: String,
       required: true,
-      enum: ["diario", "semanal", "mensal"],
+      enum: ["periodo_completo"],
+      default: "periodo_completo",
       index: true,
     },
     dataInicio: {
@@ -237,32 +243,29 @@ const metricasUsuarioSchema = new mongoose.Schema(
   }
 );
 
-// Índices compostos
-metricasUsuarioSchema.index({ loja: 1, periodo: 1, dataInicio: -1 });
-metricasUsuarioSchema.index({ loja: 1, usuarioId: 1, periodo: 1 });
+// Índices compostos - ATUALIZADOS PARA PERÍODO COMPLETO
+metricasUsuarioSchema.index({ loja: 1, dataInicio: -1 });
+metricasUsuarioSchema.index({ loja: 1, usuarioId: 1 });
 metricasUsuarioSchema.index({
-  periodo: 1,
   dataInicio: -1,
   "totais.pontuacaoTotal": -1,
 });
 metricasUsuarioSchema.index({ loja: 1, "ranking.posicaoLoja": 1 });
 
-// Índice único para evitar duplicatas
+// Índice único para evitar duplicatas - REMOVER PERÍODO
 metricasUsuarioSchema.index(
-  { loja: 1, usuarioId: 1, periodo: 1, dataInicio: 1 },
+  { loja: 1, usuarioId: 1, dataInicio: 1 },
   { unique: true }
 );
 
-// Métodos estáticos
+// Métodos estáticos - ATUALIZADOS PARA PERÍODO COMPLETO
 metricasUsuarioSchema.statics.obterRankingLoja = function (
   lojaId,
-  periodo,
   dataInicio,
   dataFim
 ) {
   return this.find({
     loja: lojaId,
-    periodo: periodo,
     dataInicio: { $gte: dataInicio },
     dataFim: { $lte: dataFim },
   })
@@ -270,19 +273,20 @@ metricasUsuarioSchema.statics.obterRankingLoja = function (
     .limit(50);
 };
 
-metricasUsuarioSchema.statics.obterMetricasPeriodo = function (
+metricasUsuarioSchema.statics.obterMetricasUsuario = function (
   usuarioId,
   lojaId,
-  periodo,
   dataInicio,
   dataFim
 ) {
   return this.findOne({
     usuarioId: usuarioId,
     loja: lojaId,
-    periodo: periodo,
-    dataInicio: { $gte: dataInicio },
-    dataFim: { $lte: dataFim },
+    $or: [
+      { dataInicio: { $gte: dataInicio, $lte: dataFim } },
+      { dataFim: { $gte: dataInicio, $lte: dataFim } },
+      { $and: [{ dataInicio: { $lte: dataInicio } }, { dataFim: { $gte: dataFim } }] }
+    ]
   });
 };
 

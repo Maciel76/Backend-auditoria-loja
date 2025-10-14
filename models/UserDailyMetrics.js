@@ -417,6 +417,109 @@ userDailyMetricsSchema.methods.calcularPontuacaoTotal = function () {
   return Math.round(pontuacao);
 };
 
+userDailyMetricsSchema.methods.calcularContadorClassesProduto = function (auditorias) {
+  const contadores = {
+    "A CLASSIFICAR": 0,
+    "ALTO GIRO": 0,
+    "BAZAR": 0,
+    "DIVERSOS": 0,
+    "DPH": 0,
+    "FLV": 0,
+    "LATICINIOS 1": 0,
+    "LIQUIDA": 0,
+    "PERECIVEL 1": 0,
+    "PERECIVEL 2": 0,
+    "PERECIVEL 2 B": 0,
+    "PERECIVEL 3": 0,
+    "SECA DOCE": 0,
+    "SECA SALGADA": 0,
+    "SECA SALGADA 2": 0,
+  };
+
+  for (const auditoria of auditorias) {
+    // Usar o campo ClasseProduto primeiro, fallback para classeProdutoRaiz
+    const classe = auditoria.ClasseProduto || auditoria.classeProdutoRaiz;
+    if (classe && contadores.hasOwnProperty(classe)) {
+      contadores[classe]++;
+    }
+  }
+
+  return contadores;
+};
+
+userDailyMetricsSchema.methods.calcularContadorLocais = function (auditorias) {
+  const contadores = {
+    "C01 - C01": 0,
+    "CS01 - CS01": 0,
+    "F01 - F01": 0,
+    "F02 - F02": 0,
+    "FLV - FLV": 0,
+    "G01A - G01A": 0,
+    "G01B - G01B": 0,
+    "G02A - G02A": 0,
+    "G02B - G02B": 0,
+    "G03A - G03A": 0,
+    "G03B - G03B": 0,
+    "G04A - G04A": 0,
+    "G04B - G04B": 0,
+    "G05A - G05A": 0,
+    "G05B - G05B": 0,
+    "G06A - G06A": 0,
+    "G06B - G06B": 0,
+    "G07A - G07A": 0,
+    "G07B - G07B": 0,
+    "G08A - G08A": 0,
+    "G08B - G08B": 0,
+    "G09A - G09A": 0,
+    "G09B - G09B": 0,
+    "G10A - G10A": 0,
+    "G10B - G10B": 0,
+    "G11A - G11A": 0,
+    "G11B - G11B": 0,
+    "G12A - G12A": 0,
+    "G12B - G12B": 0,
+    "G13A - G13A": 0,
+    "G13B - G13B": 0,
+    "G14A - G14A": 0,
+    "G14B - G14B": 0,
+    "G15A - G15A": 0,
+    "G15B - G15B": 0,
+    "G16A - G16A": 0,
+    "G16B - G16B": 0,
+    "G17A - G17A": 0,
+    "G17B - G17B": 0,
+    "G18A - G18A": 0,
+    "G18B - G18B": 0,
+    "G19A - G19A": 0,
+    "G19B - G19B": 0,
+    "G20A - G20A": 0,
+    "G20B - G20B": 0,
+    "G21A - G21A": 0,
+    "G21B - G21B": 0,
+    "G22A - G22A": 0,
+    "G22B - G22B": 0,
+    "GELO - GELO": 0,
+    "I01 - I01": 0,
+    "PA01 - PA01": 0,
+    "PAO - PAO": 0,
+    "PF01 - PF01": 0,
+    "PF02 - PF02": 0,
+    "PF03 - PF03": 0,
+    "PL01 - PL01": 0,
+    "PL02 - PL02": 0,
+    "SORVETE - SORVETE": 0,
+  };
+
+  for (const auditoria of auditorias) {
+    const local = auditoria.local;
+    if (local && contadores.hasOwnProperty(local)) {
+      contadores[local]++;
+    }
+  }
+
+  return contadores;
+};
+
 userDailyMetricsSchema.methods.atualizarTotais = function () {
   this.metricas.totais.totalItens =
     (this.metricas.etiquetas?.totalItens || 0) +

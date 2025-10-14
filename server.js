@@ -12,6 +12,7 @@ import lojaRouter from "./routes/lojas.js";
 import metricasRouter from "./routes/metricas.js";
 import debugMetricasRouter from "./routes/debug-metricas.js";
 import endpointsListRouter from "./routes/endpoints-list.js";
+import sugestoesRouter from "./routes/sugestoes.js";
 import "./utils/planilhaHelpers.js";
 
 const app = express();
@@ -132,11 +133,18 @@ try {
   console.log("❌ Erro na lista de endpoints:", error.message);
 }
 
+try {
+  app.use("/", sugestoesRouter);
+  console.log("✅ Rotas de sugestões carregadas");
+} catch (error) {
+  console.log("❌ Erro nas rotas de sugestões:", error.message);
+}
+
 
 // Rota de sincronização removida - agora usa modelos unificados
 
 // Start
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`\n🚀 SERVIDOR DE AUDITORIAS COM MÉTRICAS RODANDO`);
   console.log(`📍 URL: http://localhost:${PORT}`);

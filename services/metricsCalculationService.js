@@ -20,11 +20,21 @@ class MetricsCalculationService {
 
       const { dataInicio, dataFim } = this.obterPeriodo(periodo, data);
 
-      // Calcular métricas em ordem hierárquica
-      await this.calcularMetricasUsuarios(periodo, dataInicio, dataFim);
-      await this.calcularMetricasLojas(periodo, dataInicio, dataFim);
-      await this.calcularMetricasAuditorias(periodo, dataInicio, dataFim);
-      await this.calcularMetricasGlobais(periodo, dataInicio, dataFim);
+      // NOVA LÓGICA: Se é diário, não calcular MetricasUsuario (será no UserDailyMetrics)
+      if (periodo === "diario") {
+        console.log(`⏭️ Pulando MetricasUsuario para período diário (será processado no UserDailyMetrics)`);
+        // Só calcular outras métricas
+        await this.calcularMetricasLojas(periodo, dataInicio, dataFim);
+        await this.calcularMetricasAuditorias(periodo, dataInicio, dataFim);
+        await this.calcularMetricasGlobais(periodo, dataInicio, dataFim);
+      } else {
+        // Para períodos mensais ou outros, calcular MetricasUsuario como período completo
+        const periodoMetricas = "periodo_completo";
+        await this.calcularMetricasUsuarios(periodoMetricas, dataInicio, dataFim);
+        await this.calcularMetricasLojas(periodo, dataInicio, dataFim);
+        await this.calcularMetricasAuditorias(periodo, dataInicio, dataFim);
+        await this.calcularMetricasGlobais(periodo, dataInicio, dataFim);
+      }
 
       console.log(`✅ Métricas ${periodo} calculadas com sucesso`);
 
@@ -45,9 +55,10 @@ class MetricsCalculationService {
   async calcularMetricasUsuarios(periodo, dataInicio, dataFim) {
     console.log(`📊 Calculando métricas de usuários...`);
 
-    // Buscar todas as auditorias do período
+    // CORREÇÃO: Buscar TODAS as auditorias para cálculo de período completo
+    // Não filtrar por data pois é período_completo acumulativo
     const auditorias = await Auditoria.find({
-      data: { $gte: dataInicio, $lte: dataFim },
+      // REMOVIDO: filtro de data para buscar TODAS as auditorias
     }).populate('loja', 'codigo nome regiao');
 
     // Calcular totais por loja para cada tipo de auditoria
@@ -342,24 +353,41 @@ class MetricsCalculationService {
             : 0,
         };
 
-        // Buscar ou criar métricas do usuário
+        // Buscar ou criar métricas do usuário - PERÍODO COMPLETO
+        // CORREÇÃO: Não usar dataInicio como critério pois é período completo
         let metricasUsuario = await MetricasUsuario.findOne({
           loja: dados.loja._id,
           usuarioId: dados.usuarioId,
-          periodo,
-          dataInicio,
+          periodo: "periodo_completo",
         });
 
         if (!metricasUsuario) {
+          console.log(`📝 Criando novo MetricasUsuario para ${dados.usuarioNome}`);
+          console.log(`🏪 lojaNome será definido como: "${dados.loja.nome}"`);
           metricasUsuario = new MetricasUsuario({
             loja: dados.loja._id,
             usuarioId: dados.usuarioId,
             usuarioNome: dados.usuarioNome,
-            periodo,
+            lojaNome: dados.loja.nome, // Adicionar nome da loja
+            periodo: "periodo_completo",
             dataInicio,
             dataFim,
             versaoCalculo: this.versaoCalculo,
           });
+          console.log(`🔍 MetricasUsuario criado com lojaNome: "${metricasUsuario.lojaNome}"`);
+        } else {
+          console.log(`🔄 Atualizando MetricasUsuario existente ${metricasUsuario._id} para ${dados.usuarioNome}`);
+          console.log(`🔍 lojaNome atual: "${metricasUsuario.lojaNome}"`);
+          // Atualizar as datas para o período mais recente e nome da loja se necessário
+          if (!metricasUsuario.lojaNome) {
+            metricasUsuario.lojaNome = dados.loja.nome;
+            console.log(`🏪 lojaNome atualizado para: "${metricasUsuario.lojaNome}"`);
+          }
+          metricasUsuario.dataFim = dataFim;
+          if (!metricasUsuario.dataInicio || dataInicio < metricasUsuario.dataInicio) {
+            metricasUsuario.dataInicio = dataInicio;
+          }
+          metricasUsuario.usuarioNome = dados.usuarioNome;
         }
 
         // Atualizar dados principais
@@ -371,13 +399,13 @@ class MetricsCalculationService {
         metricasUsuario.ContadorClassesProduto = Object.fromEntries(dados.ContadorClassesProduto);
         metricasUsuario.ContadorLocais = Object.fromEntries(dados.ContadorLocais);
 
-        // Calcular diasAtivos - dias únicos que o usuário fez auditoria
+        // Calcular diasAtivos - dias únicos que o usuário fez auditoria (TODAS as datas)
         const diasUnicos = await Auditoria.aggregate([
           {
             $match: {
               loja: dados.loja._id,
               usuarioId: dados.usuarioId,
-              data: { $gte: dataInicio, $lte: dataFim },
+              // REMOVIDO: filtro de data para contar TODOS os dias
             },
           },
           {
@@ -408,13 +436,13 @@ class MetricsCalculationService {
           melhoriaPercentual = percentualAtual - periodoAnterior.totais.percentualConclusaoGeral;
         }
 
-        // Calcular contadores de auditorias (quantas auditorias únicas fez por tipo)
+        // Calcular contadores de auditorias (quantas auditorias únicas fez por tipo) - TODAS as datas
         const auditoriasPorTipo = await Auditoria.aggregate([
           {
             $match: {
               loja: dados.loja._id,
               usuarioId: dados.usuarioId,
-              data: { $gte: dataInicio, $lte: dataFim },
+              // REMOVIDO: filtro de data para contar TODAS as auditorias
             },
           },
           {
@@ -495,10 +523,25 @@ class MetricsCalculationService {
         // Calcular totais e ranking
         metricasUsuario.atualizarTotais();
 
+        // DEBUG: Verificar campos antes de salvar
+        console.log(`💾 Salvando com lojaNome: "${metricasUsuario.lojaNome}"`);
+        console.log(`💾 Salvando com usuarioNome: "${metricasUsuario.usuarioNome}"`);
+
         await metricasUsuario.save();
         console.log(
-          `✅ Métricas salvas para usuário ${dados.usuarioNome} (${dados.usuarioId})`
+          `✅ Métricas salvas para usuário ${dados.usuarioNome} (${dados.usuarioId}) - ID: ${metricasUsuario._id}`
         );
+
+        // VALIDAÇÃO: Verificar se não há duplicatas
+        const contarMetricas = await MetricasUsuario.countDocuments({
+          loja: dados.loja._id,
+          usuarioId: dados.usuarioId,
+          periodo: "periodo_completo",
+        });
+
+        if (contarMetricas > 1) {
+          console.warn(`⚠️ AVISO: Encontradas ${contarMetricas} métricas para o mesmo usuário ${dados.usuarioId}!`);
+        }
       } catch (error) {
         console.error(
           `❌ Erro ao salvar métricas do usuário ${dados.usuarioId}:`,
