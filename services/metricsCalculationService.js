@@ -1,5 +1,6 @@
 import MetricasUsuario from "../models/MetricasUsuario.js";
 import MetricasLoja from "../models/MetricasLoja.js";
+import LojaDailyMetrics from "../models/LojaDailyMetrics.js";
 import MetricasAuditoria from "../models/MetricasAuditoria.js";
 import MetricasGlobais from "../models/MetricasGlobais.js";
 import Auditoria from "../models/Auditoria.js";
@@ -12,7 +13,7 @@ class MetricsCalculationService {
   }
 
   // Método principal para calcular todas as métricas
-  async calcularTodasMetricas(periodo = "diario", data = new Date()) {
+  async calcularTodasMetricas(periodo = "diario", data = new Date(), tipoAuditoria = null) {
     try {
       console.log(
         `🔄 Iniciando cálculo de métricas ${periodo} para ${data.toLocaleDateString()}`
@@ -23,8 +24,8 @@ class MetricsCalculationService {
       // NOVA LÓGICA: Se é diário, não calcular MetricasUsuario (será no UserDailyMetrics)
       if (periodo === "diario") {
         console.log(`⏭️ Pulando MetricasUsuario para período diário (será processado no UserDailyMetrics)`);
-        // Só calcular outras métricas
-        await this.calcularMetricasLojas(periodo, dataInicio, dataFim);
+        // Para diário, calcular LojaDailyMetrics ao invés de MetricasLoja
+        await this.calcularLojaDailyMetrics(dataInicio, dataFim, tipoAuditoria);
         await this.calcularMetricasAuditorias(periodo, dataInicio, dataFim);
         await this.calcularMetricasGlobais(periodo, dataInicio, dataFim);
       } else {
@@ -565,34 +566,60 @@ class MetricsCalculationService {
 
     for (const loja of lojas) {
       try {
-        // Buscar auditorias da loja no período
+        // Para MetricasLoja, sempre usar periodo_completo como padrão
+        const periodoMetricas = "periodo_completo";
+
+        // Buscar TODAS as auditorias da loja para período completo
         const auditorias = await Auditoria.find({
           loja: loja._id,
-          data: { $gte: dataInicio, $lte: dataFim },
+          // REMOVIDO: filtro de data para buscar TODAS as auditorias
         });
 
         // Contar usuários únicos ativos na loja
         const usuariosUnicos = new Set();
+
+        // Nova estrutura seguindo o padrão do MetricasLoja.js atualizado
         const tiposAuditoria = {
           etiqueta: {
             totalItens: 0,
-            itensLidos: 0,
+            itensValidos: 0,
             itensAtualizados: 0,
+            itensNaolidos: 0,
+            itensLidosSemEstoque: 0,
+            itensDesatualizado: 0,
+            itensSemEstoque: 0,
+            itensNaopertence: 0,
+            percentualConclusao: 0,
             usuarios: new Set(),
           },
           ruptura: {
             totalItens: 0,
-            itensLidos: 0,
+            itensValidos: 0,
             itensAtualizados: 0,
+            itensNaolidos: 0,
+            itensLidosSemEstoque: 0,
+            itensDesatualizado: 0,
+            itensSemEstoque: 0,
+            itensNaopertence: 0,
+            percentualConclusao: 0,
             usuarios: new Set(),
             custoTotal: 0,
+            custoTotalRuptura: 0,
+            custoMedioRuptura: 0,
           },
           presenca: {
             totalItens: 0,
-            itensLidos: 0,
+            itensValidos: 0,
             itensAtualizados: 0,
+            itensNaolidos: 0,
+            itensLidosSemEstoque: 0,
+            itensDesatualizado: 0,
+            itensSemEstoque: 0,
+            itensNaopertence: 0,
+            percentualConclusao: 0,
             usuarios: new Set(),
             presencasConfirmadas: 0,
+            percentualPresenca: 0,
           },
         };
 
@@ -605,16 +632,41 @@ class MetricsCalculationService {
             tipo.totalItens++;
             tipo.usuarios.add(auditoria.usuarioId);
 
-            if (auditoria.situacao && auditoria.situacao !== "Não lido") {
-              tipo.itensLidos++;
+            // Nova lógica baseada na situação da auditoria
+            switch(auditoria.situacao) {
+              case "Atualizado":
+                tipo.itensAtualizados++;
+                break;
+              case "Não lido":
+                // Verificar se tem estoque para determinar se é válido
+                if (auditoria.estoque && parseInt(auditoria.estoque) > 0) {
+                  tipo.itensNaolidos++; // Não lidos com estoque
+                } else {
+                  // Não lidos sem estoque - não conta como válido
+                }
+                break;
+              case "Desatualizado":
+                tipo.itensDesatualizado++;
+                break;
+              case "Sem estoque":
+                // Se foi lido mas sem estoque
+                if (auditoria.situacao !== "Não lido") {
+                  tipo.itensLidosSemEstoque++;
+                }
+                tipo.itensSemEstoque++;
+                break;
+              case "Não pertence":
+                tipo.itensNaopertence++;
+                break;
             }
-            if (auditoria.situacao === "Atualizado") {
-              tipo.itensAtualizados++;
-            }
+
+            // Calcular itensValidos: [Atualizado] + [Não lidos com estoque] + [Lido sem estoque]
+            tipo.itensValidos = tipo.itensAtualizados + tipo.itensNaolidos + tipo.itensLidosSemEstoque;
 
             // Específicos por tipo
             if (auditoria.tipo === "ruptura" && auditoria.custoRuptura) {
               tipo.custoTotal += auditoria.custoRuptura;
+              tipo.custoTotalRuptura += auditoria.custoRuptura;
             }
             if (auditoria.tipo === "presenca" && auditoria.presenca) {
               tipo.presencasConfirmadas++;
@@ -622,36 +674,61 @@ class MetricsCalculationService {
           }
         }
 
+        // Calcular itensValidos após processar todas as auditorias
+        tiposAuditoria.etiqueta.itensValidos = tiposAuditoria.etiqueta.itensAtualizados + tiposAuditoria.etiqueta.itensNaolidos + tiposAuditoria.etiqueta.itensLidosSemEstoque;
+        tiposAuditoria.ruptura.itensValidos = tiposAuditoria.ruptura.itensAtualizados + tiposAuditoria.ruptura.itensNaolidos + tiposAuditoria.ruptura.itensLidosSemEstoque;
+        tiposAuditoria.presenca.itensValidos = tiposAuditoria.presenca.itensAtualizados + tiposAuditoria.presenca.itensNaolidos + tiposAuditoria.presenca.itensLidosSemEstoque;
+
+        // Calcular itensLidos (todos exceto "Não lido")
+        tiposAuditoria.etiqueta.itensLidos = tiposAuditoria.etiqueta.itensAtualizados + tiposAuditoria.etiqueta.itensDesatualizado + tiposAuditoria.etiqueta.itensLidosSemEstoque + tiposAuditoria.etiqueta.itensNaopertence;
+        tiposAuditoria.ruptura.itensLidos = tiposAuditoria.ruptura.itensAtualizados + tiposAuditoria.ruptura.itensDesatualizado + tiposAuditoria.ruptura.itensLidosSemEstoque + tiposAuditoria.ruptura.itensNaopertence;
+        tiposAuditoria.presenca.itensLidos = tiposAuditoria.presenca.itensAtualizados + tiposAuditoria.presenca.itensDesatualizado + tiposAuditoria.presenca.itensLidosSemEstoque + tiposAuditoria.presenca.itensNaopertence;
+
         // Calcular métricas consolidadas
         const etiquetas = {
-          ...tiposAuditoria.etiqueta,
+          totalItens: tiposAuditoria.etiqueta.totalItens,
+          itensValidos: tiposAuditoria.etiqueta.itensValidos,
+          itensLidos: tiposAuditoria.etiqueta.itensLidos,
+          itensAtualizados: tiposAuditoria.etiqueta.itensAtualizados,
+          itensNaolidos: tiposAuditoria.etiqueta.itensNaolidos,
+          itensLidosSemEstoque: tiposAuditoria.etiqueta.itensLidosSemEstoque,
+          itensDesatualizado: tiposAuditoria.etiqueta.itensDesatualizado,
+          itensSemEstoque: tiposAuditoria.etiqueta.itensSemEstoque,
+          itensNaopertence: tiposAuditoria.etiqueta.itensNaopertence,
           percentualConclusao:
-            tiposAuditoria.etiqueta.totalItens > 0
+            tiposAuditoria.etiqueta.itensValidos > 0
               ? Math.round(
                   (tiposAuditoria.etiqueta.itensAtualizados /
-                    tiposAuditoria.etiqueta.totalItens) *
+                    tiposAuditoria.etiqueta.itensValidos) *
                     100
                 )
               : 0,
           usuariosAtivos: tiposAuditoria.etiqueta.usuarios.size,
-          tempoMedioProcessamento: 2, // Estimativa base em horas
         };
 
         const rupturas = {
-          ...tiposAuditoria.ruptura,
+          totalItens: tiposAuditoria.ruptura.totalItens,
+          itensValidos: tiposAuditoria.ruptura.itensValidos,
+          itensLidos: tiposAuditoria.ruptura.itensLidos,
+          itensAtualizados: tiposAuditoria.ruptura.itensAtualizados,
+          itensNaolidos: tiposAuditoria.ruptura.itensNaolidos,
+          itensLidosSemEstoque: tiposAuditoria.ruptura.itensLidosSemEstoque,
+          itensDesatualizado: tiposAuditoria.ruptura.itensDesatualizado,
+          itensSemEstoque: tiposAuditoria.ruptura.itensSemEstoque,
+          itensNaopertence: tiposAuditoria.ruptura.itensNaopertence,
           percentualConclusao:
-            tiposAuditoria.ruptura.totalItens > 0
+            tiposAuditoria.ruptura.itensValidos > 0
               ? Math.round(
                   (tiposAuditoria.ruptura.itensAtualizados /
-                    tiposAuditoria.ruptura.totalItens) *
+                    tiposAuditoria.ruptura.itensValidos) *
                     100
                 )
               : 0,
-          custoTotalRuptura: tiposAuditoria.ruptura.custoTotal,
+          custoTotalRuptura: tiposAuditoria.ruptura.custoTotalRuptura,
           custoMedioRuptura:
             tiposAuditoria.ruptura.totalItens > 0
               ? Math.round(
-                  tiposAuditoria.ruptura.custoTotal /
+                  tiposAuditoria.ruptura.custoTotalRuptura /
                     tiposAuditoria.ruptura.totalItens
                 )
               : 0,
@@ -662,12 +739,20 @@ class MetricsCalculationService {
         };
 
         const presencas = {
-          ...tiposAuditoria.presenca,
+          totalItens: tiposAuditoria.presenca.totalItens,
+          itensValidos: tiposAuditoria.presenca.itensValidos,
+          itensLidos: tiposAuditoria.presenca.itensLidos,
+          itensAtualizados: tiposAuditoria.presenca.itensAtualizados,
+          itensNaolidos: tiposAuditoria.presenca.itensNaolidos,
+          itensLidosSemEstoque: tiposAuditoria.presenca.itensLidosSemEstoque,
+          itensDesatualizado: tiposAuditoria.presenca.itensDesatualizado,
+          itensSemEstoque: tiposAuditoria.presenca.itensSemEstoque,
+          itensNaopertence: tiposAuditoria.presenca.itensNaopertence,
           percentualConclusao:
-            tiposAuditoria.presenca.totalItens > 0
+            tiposAuditoria.presenca.itensValidos > 0
               ? Math.round(
                   (tiposAuditoria.presenca.itensAtualizados /
-                    tiposAuditoria.presenca.totalItens) *
+                    tiposAuditoria.presenca.itensValidos) *
                     100
                 )
               : 0,
@@ -683,21 +768,32 @@ class MetricsCalculationService {
           usuariosAtivos: tiposAuditoria.presenca.usuarios.size,
         };
 
-        // Buscar ou criar métricas da loja
+        // Buscar ou criar métricas da loja - SEMPRE periodo_completo
         let metricasLoja = await MetricasLoja.findOne({
           loja: loja._id,
-          periodo,
-          dataInicio,
+          periodo: periodoMetricas,
         });
 
         if (!metricasLoja) {
+          console.log(`📝 Criando novo MetricasLoja para loja ${loja.nome}`);
           metricasLoja = new MetricasLoja({
             loja: loja._id,
-            periodo,
+            lojaNome: loja.nome,
+            periodo: periodoMetricas,
             dataInicio,
             dataFim,
             versaoCalculo: this.versaoCalculo,
           });
+        } else {
+          console.log(`🔄 Atualizando MetricasLoja existente para loja ${loja.nome}`);
+          // Atualizar nome da loja se necessário
+          if (!metricasLoja.lojaNome) {
+            metricasLoja.lojaNome = loja.nome;
+          }
+          metricasLoja.dataFim = dataFim;
+          if (!metricasLoja.dataInicio || dataInicio < metricasLoja.dataInicio) {
+            metricasLoja.dataInicio = dataInicio;
+          }
         }
 
         // Atualizar dados
@@ -1046,6 +1142,463 @@ class MetricsCalculationService {
       console.error(`❌ Erro ao calcular métricas globais:`, error);
       throw error;
     }
+  }
+
+  // Calcular métricas diárias de lojas
+  async calcularLojaDailyMetrics(dataInicio, dataFim, tipoAuditoria = null) {
+    console.log(`🏪📅 Calculando métricas diárias de lojas${tipoAuditoria ? ` - tipo: ${tipoAuditoria}` : ''}...`);
+
+    // Buscar todas as lojas ativas
+    const lojas = await Loja.find({ ativa: true });
+
+    for (const loja of lojas) {
+      try {
+        // Se tipoAuditoria específico foi fornecido, processar apenas esse tipo
+        // Senão, buscar TODAS as auditorias da loja
+        let filtroAuditoria = { loja: loja._id };
+        if (tipoAuditoria) {
+          // Para tipo específico, buscar auditorias do dia atual desse tipo
+          filtroAuditoria = {
+            loja: loja._id,
+            tipo: tipoAuditoria,
+            data: { $gte: dataInicio, $lte: dataFim },
+          };
+          console.log(`🔍 Buscando auditorias específicas do tipo ${tipoAuditoria} para loja ${loja.codigo}`);
+        } else {
+          console.log(`🔍 Buscando TODAS as auditorias para recálculo completo da loja ${loja.codigo}`);
+        }
+
+        const auditorias = await Auditoria.find(filtroAuditoria);
+
+        // Estrutura seguindo o padrão do LojaDailyMetrics.js
+        const contadoresClasses = new Map([
+          ["A CLASSIFICAR", 0],
+          ["ALTO GIRO", 0],
+          ["BAZAR", 0],
+          ["DIVERSOS", 0],
+          ["DPH", 0],
+          ["FLV", 0],
+          ["LATICINIOS 1", 0],
+          ["LIQUIDA", 0],
+          ["PERECIVEL 1", 0],
+          ["PERECIVEL 2", 0],
+          ["PERECIVEL 2 B", 0],
+          ["PERECIVEL 3", 0],
+          ["SECA DOCE", 0],
+          ["SECA SALGADA", 0],
+          ["SECA SALGADA 2", 0],
+        ]);
+
+        const contadoresLocais = new Map([
+          ["C01 - C01", 0],
+          ["CS01 - CS01", 0],
+          ["F01 - F01", 0],
+          ["F02 - F02", 0],
+          ["FLV - FLV", 0],
+          ["G01A - G01A", 0],
+          ["G01B - G01B", 0],
+          ["G02A - G02A", 0],
+          ["G02B - G02B", 0],
+          ["G03A - G03A", 0],
+          ["G03B - G03B", 0],
+          ["G04A - G04A", 0],
+          ["G04B - G04B", 0],
+          ["G05A - G05A", 0],
+          ["G05B - G05B", 0],
+          ["G06A - G06A", 0],
+          ["G06B - G06B", 0],
+          ["G07A - G07A", 0],
+          ["G07B - G07B", 0],
+          ["G08A - G08A", 0],
+          ["G08B - G08B", 0],
+          ["G09A - G09A", 0],
+          ["G09B - G09B", 0],
+          ["G10A - G10A", 0],
+          ["G10B - G10B", 0],
+          ["G11A - G11A", 0],
+          ["G11B - G11B", 0],
+          ["G12A - G12A", 0],
+          ["G12B - G12B", 0],
+          ["G13A - G13A", 0],
+          ["G13B - G13B", 0],
+          ["G14A - G14A", 0],
+          ["G14B - G14B", 0],
+          ["G15A - G15A", 0],
+          ["G15B - G15B", 0],
+          ["G16A - G16A", 0],
+          ["G16B - G16B", 0],
+          ["G17A - G17A", 0],
+          ["G17B - G17B", 0],
+          ["G18A - G18A", 0],
+          ["G18B - G18B", 0],
+          ["G19A - G19A", 0],
+          ["G19B - G19B", 0],
+          ["G20A - G20A", 0],
+          ["G20B - G20B", 0],
+          ["G21A - G21A", 0],
+          ["G21B - G21B", 0],
+          ["G22A - G22A", 0],
+          ["G22B - G22B", 0],
+          ["GELO - GELO", 0],
+          ["I01 - I01", 0],
+          ["PA01 - PA01", 0],
+          ["PAO - PAO", 0],
+          ["PF01 - PF01", 0],
+          ["PF02 - PF02", 0],
+          ["PF03 - PF03", 0],
+          ["PL01 - PL01", 0],
+          ["PL02 - PL02", 0],
+          ["SORVETE - SORVETE", 0],
+        ]);
+
+        const tiposAuditoria = {
+          etiquetas: {
+            totalItens: 0,
+            itensLidos: 0,  // Campo necessário para todos
+            itensValidos: 0,
+            itensAtualizados: 0,
+            itensNaolidos: 0,
+            itensDesatualizado: 0,
+            itensNaopertence: 0,
+            itensLidosemestoque: 0,
+            itensNlidocomestoque: 0,
+            itensSemestoque: 0,
+            percentualConclusao: 0,
+            percentualRestante: 0,
+            usuariosAtivos: 0,
+            usuarios: new Set(),
+          },
+          rupturas: {
+            totalItens: 0,
+            itensLidos: 0,  // Campo obrigatório no schema
+            itensValidos: 0,
+            itensAtualizados: 0,
+            itensNaolidos: 0,
+            itensDesatualizado: 0,
+            itensNaopertence: 0,
+            itensLidosemestoque: 0,
+            itensNlidocomestoque: 0,
+            itensSemestoque: 0,
+            percentualConclusao: 0,
+            percentualRestante: 0,
+            custoTotalRuptura: 0,
+            custoMedioRuptura: 0,
+            rupturasCriticas: 0, // Campo obrigatório no schema
+            usuariosAtivos: 0,
+            usuarios: new Set(),
+          },
+          presencas: {
+            totalItens: 0,
+            itensLidos: 0,  // Campo obrigatório no schema
+            itensValidos: 0,
+            itensAtualizados: 0,
+            itensNaolidos: 0,
+            itensDesatualizado: 0,
+            itensNaopertence: 0,
+            itensLidosemestoque: 0,
+            itensNlidocomestoque: 0,
+            itensSemestoque: 0,
+            percentualConclusao: 0,
+            percentualRestante: 0,
+            presencasConfirmadas: 0,
+            percentualPresenca: 0,
+            usuariosAtivos: 0,
+            usuarios: new Set(),
+          },
+        };
+
+        // Processar cada auditoria
+        for (const auditoria of auditorias) {
+          // Mapear o tipo corretamente: etiqueta -> etiquetas, ruptura -> rupturas, presenca -> presencas
+          let tipoMapeado;
+          if (auditoria.tipo === 'etiqueta') tipoMapeado = 'etiquetas';
+          else if (auditoria.tipo === 'ruptura') tipoMapeado = 'rupturas';
+          else if (auditoria.tipo === 'presenca') tipoMapeado = 'presencas';
+
+          const tipo = tiposAuditoria[tipoMapeado];
+          if (tipo) {
+            tipo.totalItens++;
+            tipo.usuarios.add(auditoria.usuarioId);
+
+            if (auditoria.situacao && auditoria.situacao !== "Não lido") {
+              tipo.itensLidos = (tipo.itensLidos || 0) + 1;
+            }
+
+            switch(auditoria.situacao) {
+              case "Atualizado":
+                tipo.itensAtualizados++;
+                break;
+              case "Desatualizado":
+                tipo.itensDesatualizado++;
+                break;
+              case "Sem estoque":
+                tipo.itensSemestoque++;
+                // Se foi lido mas estava sem estoque
+                if (auditoria.situacao !== "Não lido") {
+                  tipo.itensLidosemestoque++;
+                }
+                break;
+              case "Não pertence":
+                tipo.itensNaopertence++;
+                break;
+              case "Não lido":
+                // Verificar se tem estoque para determinar se é válido
+                if (auditoria.estoque && parseInt(auditoria.estoque) > 0) {
+                  tipo.itensNlidocomestoque++; // Não lidos com estoque
+                  tipo.itensNaolidos++; // Contador para itensNaolidos
+                }
+                break;
+            }
+
+            // Específicos por tipo
+            if (auditoria.tipo === "ruptura") {
+              if (auditoria.custoRuptura) {
+                tipo.custoTotalRuptura += auditoria.custoRuptura;
+                // Contar rupturas críticas (custo > 100)
+                if (auditoria.custoRuptura > 100) {
+                  tipo.rupturasCriticas++;
+                }
+              }
+            }
+            if (auditoria.tipo === "presenca" && auditoria.presenca) {
+              tipo.presencasConfirmadas++;
+            }
+          }
+
+          // Contar classes de produto
+          if (auditoria.ClasseProduto && contadoresClasses.has(auditoria.ClasseProduto)) {
+            contadoresClasses.set(auditoria.ClasseProduto, contadoresClasses.get(auditoria.ClasseProduto) + 1);
+          } else if (auditoria.classeProdutoRaiz && contadoresClasses.has(auditoria.classeProdutoRaiz)) {
+            contadoresClasses.set(auditoria.classeProdutoRaiz, contadoresClasses.get(auditoria.classeProdutoRaiz) + 1);
+          }
+
+          // Contar locais
+          if (auditoria.local && contadoresLocais.has(auditoria.local)) {
+            contadoresLocais.set(auditoria.local, contadoresLocais.get(auditoria.local) + 1);
+          }
+        }
+
+        // Calcular valores derivados e percentuais
+        Object.values(tiposAuditoria).forEach(tipo => {
+          // Calcular itensValidos: [Atualizado] + [Não lidos com estoque] + [Lido sem estoque]
+          tipo.itensValidos = tipo.itensAtualizados + tipo.itensNaolidos + tipo.itensLidosemestoque;
+
+          if (tipo.itensValidos > 0) {
+            tipo.percentualConclusao = Math.round((tipo.itensAtualizados / tipo.itensValidos) * 100);
+            tipo.percentualRestante = 100 - tipo.percentualConclusao;
+          } else if (tipo.totalItens > 0) {
+            tipo.percentualConclusao = Math.round((tipo.itensAtualizados / tipo.totalItens) * 100);
+            tipo.percentualRestante = 100 - tipo.percentualConclusao;
+          }
+
+          if (tipo.custoTotalRuptura && tipo.totalItens > 0) {
+            tipo.custoMedioRuptura = Math.round(tipo.custoTotalRuptura / tipo.totalItens);
+          }
+
+          if (tipo.presencasConfirmadas !== undefined && tipo.totalItens > 0) {
+            tipo.percentualPresenca = Math.round((tipo.presencasConfirmadas / tipo.totalItens) * 100);
+          }
+
+          // Converter Set para number
+          tipo.usuariosAtivos = tipo.usuarios.size;
+          delete tipo.usuarios; // Remover o Set já que não vamos salvar
+        });
+
+        // Buscar ou criar LojaDailyMetrics usando findOneAndUpdate como UserDailyMetrics
+        // Usar somente loja como critério único, igual ao UserDailyMetrics
+        let lojaDailyMetrics = await LojaDailyMetrics.findOneAndUpdate(
+          {
+            loja: loja._id,
+          },
+          {
+            $setOnInsert: {
+              loja: loja._id,
+              lojaNome: loja.nome,
+              data: new Date(), // Data atual para registro
+              dataInicio: dataInicio,
+              dataFim: dataFim,
+              versaoCalculo: this.versaoCalculo,
+              etiquetas: {
+                totalItens: 0,
+                itensValidos: 0,
+                itensAtualizados: 0,
+                itensNaolidos: 0,
+                itensDesatualizado: 0,
+                itensNaopertence: 0,
+                itensLidosemestoque: 0,
+                itensNlidocomestoque: 0,
+                itensSemestoque: 0,
+                percentualConclusao: 0,
+                percentualRestante: 0,
+                usuariosAtivos: 0,
+              },
+              rupturas: {
+                totalItens: 0,
+                itensValidos: 0,
+                itensAtualizados: 0,
+                itensNaolidos: 0,
+                itensDesatualizado: 0,
+                itensNaopertence: 0,
+                itensLidosemestoque: 0,
+                itensNlidocomestoque: 0,
+                itensSemestoque: 0,
+                percentualConclusao: 0,
+                percentualRestante: 0,
+                custoTotalRuptura: 0,
+                custoMedioRuptura: 0,
+                usuariosAtivos: 0,
+              },
+              presencas: {
+                totalItens: 0,
+                itensValidos: 0,
+                itensAtualizados: 0,
+                itensNaolidos: 0,
+                itensDesatualizado: 0,
+                itensNaopertence: 0,
+                itensLidosemestoque: 0,
+                itensNlidocomestoque: 0,
+                itensSemestoque: 0,
+                percentualConclusao: 0,
+                percentualRestante: 0,
+                presencasConfirmadas: 0,
+                percentualPresenca: 0,
+                usuariosAtivos: 0,
+              },
+              ContadorClassesProduto: Object.fromEntries(contadoresClasses),
+              ContadorLocais: Object.fromEntries(contadoresLocais),
+            },
+          },
+          {
+            upsert: true,
+            new: true,
+            runValidators: true,
+          }
+        );
+
+        // Verificar se é novo documento criado
+        const isNewDocument = !lojaDailyMetrics.etiquetas || lojaDailyMetrics.etiquetas.totalItens === 0;
+        if (isNewDocument) {
+          console.log(`📝 Criando novo LojaDailyMetrics para loja ${loja.nome}`);
+        } else {
+          console.log(`🔄 Atualizando LojaDailyMetrics existente ${lojaDailyMetrics._id} para loja ${loja.nome}`);
+          console.log(`🔍 Dados atuais: E:${lojaDailyMetrics.etiquetas?.totalItens || 0} R:${lojaDailyMetrics.rupturas?.totalItens || 0} P:${lojaDailyMetrics.presencas?.totalItens || 0}`);
+        }
+
+        // Garantir que o nome da loja esteja atualizado
+        if (!lojaDailyMetrics.lojaNome) {
+          lojaDailyMetrics.lojaNome = loja.nome;
+        }
+
+        // Atualizar dataFim sempre com a data mais recente
+        lojaDailyMetrics.dataFim = dataFim;
+
+        // Função para mapear dados calculados para estrutura do schema
+        const mapearParaSchema = (dados, tipoSchema) => {
+          // Verificar se dados existem e não são undefined/null
+          if (!dados || typeof dados !== 'object') {
+            console.log(`⚠️  Dados vazios para ${tipoSchema}, retornando objeto padrão`);
+            dados = {};
+          }
+
+          // Função auxiliar para calcular percentual de conclusão de forma segura
+          const calcularPercentual = (numerador, denominador) => {
+            if (!denominador || denominador === 0 || !numerador) return 0;
+            const percentual = (numerador / denominador) * 100;
+            return isNaN(percentual) ? 0 : Math.round(percentual);
+          };
+
+          if (tipoSchema === 'etiquetas') {
+            // Etiquetas têm todos os campos detalhados
+            return {
+              totalItens: Number(dados.totalItens) || 0,
+              itensValidos: Number(dados.itensValidos) || 0,
+              itensAtualizados: Number(dados.itensAtualizados) || 0,
+              itensNaolidos: Number(dados.itensNaolidos) || 0,
+              itensDesatualizado: Number(dados.itensDesatualizado) || 0,
+              itensNaopertence: Number(dados.itensNaopertence) || 0,
+              itensLidosemestoque: Number(dados.itensLidosSemEstoque || dados.itensLidosemestoque) || 0,
+              itensNlidocomestoque: Number(dados.itensNlidocomestoque) || 0,
+              itensSemestoque: Number(dados.itensSemEstoque || dados.itensSemestoque) || 0,
+              percentualConclusao: calcularPercentual(dados.itensAtualizados, dados.totalItens),
+              percentualRestante: calcularPercentual(dados.totalItens - (dados.itensAtualizados || 0), dados.totalItens),
+              usuariosAtivos: Number(dados.usuariosAtivos) || 0,
+            };
+          } else if (tipoSchema === 'rupturas') {
+            // Rupturas têm apenas campos básicos
+            return {
+              totalItens: Number(dados.totalItens) || 0,
+              itensLidos: Number(dados.itensLidos) || 0,
+              itensAtualizados: Number(dados.itensAtualizados) || 0,
+              percentualConclusao: calcularPercentual(dados.itensAtualizados, dados.totalItens),
+              percentualRestante: calcularPercentual(dados.totalItens - (dados.itensAtualizados || 0), dados.totalItens),
+              custoTotalRuptura: Number(dados.custoTotalRuptura) || 0,
+              rupturasCriticas: Number(dados.rupturasCriticas) || 0,
+              usuariosAtivos: Number(dados.usuariosAtivos) || 0,
+            };
+          } else if (tipoSchema === 'presencas') {
+            // Presencas têm campos básicos + presença específicos
+            return {
+              totalItens: Number(dados.totalItens) || 0,
+              itensLidos: Number(dados.itensLidos) || 0,
+              itensAtualizados: Number(dados.itensAtualizados) || 0,
+              percentualConclusao: calcularPercentual(dados.itensAtualizados, dados.totalItens),
+              percentualRestante: calcularPercentual(dados.totalItens - (dados.itensAtualizados || 0), dados.totalItens),
+              presencasConfirmadas: Number(dados.presencasConfirmadas) || 0,
+              percentualPresenca: calcularPercentual(dados.presencasConfirmadas, dados.totalItens),
+              usuariosAtivos: Number(dados.usuariosAtivos) || 0,
+            };
+          }
+          console.log(`⚠️  Tipo de schema desconhecido: ${tipoSchema}`);
+          return {};
+        };
+
+        // Atualizar dados - lógica condicional baseada no tipo
+        if (tipoAuditoria) {
+          // Para tipo específico, atualizar apenas esse tipo (manter outros dados existentes)
+          if (tipoAuditoria === 'etiqueta') {
+            console.log(`🔄 Atualizando apenas dados de ETIQUETAS`);
+            lojaDailyMetrics.etiquetas = mapearParaSchema(tiposAuditoria.etiquetas, 'etiquetas');
+            // Manter rupturas e presencas existentes
+          } else if (tipoAuditoria === 'ruptura') {
+            console.log(`🔄 Atualizando apenas dados de RUPTURAS`);
+            lojaDailyMetrics.rupturas = mapearParaSchema(tiposAuditoria.rupturas, 'rupturas');
+            // Manter etiquetas e presencas existentes
+          } else if (tipoAuditoria === 'presenca') {
+            console.log(`🔄 Atualizando apenas dados de PRESENÇAS`);
+            lojaDailyMetrics.presencas = mapearParaSchema(tiposAuditoria.presencas, 'presencas');
+            // Manter etiquetas e rupturas existentes
+          }
+        } else {
+          // Para recálculo completo, atualizar todos os tipos
+          console.log(`🔄 Recalculando TODOS os tipos de auditoria`);
+          lojaDailyMetrics.etiquetas = mapearParaSchema(tiposAuditoria.etiquetas, 'etiquetas');
+          lojaDailyMetrics.rupturas = mapearParaSchema(tiposAuditoria.rupturas, 'rupturas');
+          lojaDailyMetrics.presencas = mapearParaSchema(tiposAuditoria.presencas, 'presencas');
+        }
+
+        // Atualizar contadores apenas se não for tipo específico (recálculo completo)
+        if (!tipoAuditoria) {
+          // Para recálculo completo, atualizar todos os contadores
+          lojaDailyMetrics.ContadorClassesProduto = Object.fromEntries(contadoresClasses);
+          lojaDailyMetrics.ContadorLocais = Object.fromEntries(contadoresLocais);
+          console.log(`📊 Contadores atualizados completamente`);
+        } else {
+          console.log(`📊 Contadores mantidos (atualização parcial do tipo ${tipoAuditoria})`);
+        }
+
+        // Atualizar totais usando método do schema
+        lojaDailyMetrics.atualizarTotais();
+
+        await lojaDailyMetrics.save();
+        console.log(`✅ LojaDailyMetrics salvo para loja ${loja.codigo} - ID: ${lojaDailyMetrics._id}`);
+        console.log(`📊 Dados salvos: E:${lojaDailyMetrics.etiquetas.totalItens} R:${lojaDailyMetrics.rupturas.totalItens} P:${lojaDailyMetrics.presencas.totalItens}`);
+
+      } catch (error) {
+        console.error(`❌ Erro ao calcular métricas diárias da loja ${loja.codigo}:`, error);
+      }
+    }
+
+    console.log(`✅ Métricas diárias de ${lojas.length} lojas calculadas`);
   }
 
   // Métodos auxiliares

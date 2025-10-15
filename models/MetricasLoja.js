@@ -1,6 +1,5 @@
+// models/MetricasLoja.js - VERSÃO ATUALIZADA COM PERÍODO COMPLETO
 import mongoose from "mongoose";
-// anotaçoes para implementar validações e regras de negócio para o schema de métricas da loja
-// cada loja tera apenas um id unicos e todas as metricas serao da loja serao enviadas para esse id da loja o nome da loja atulmente ta como id mas eu quero o nome da loja ou id da loja por exemplo loja 056 ou a loja selecionada
 
 const metricasLojaSchema = new mongoose.Schema(
   {
@@ -12,11 +11,19 @@ const metricasLojaSchema = new mongoose.Schema(
       index: true,
     },
 
-    // Período das métricas
+    // NOVO: Nome da loja desnormalizado para consultas rápidas
+    lojaNome: {
+      type: String,
+      required: true,
+      index: true,
+    },
+
+    // Período das métricas - AGORA APENAS PERÍODO COMPLETO
     periodo: {
       type: String,
       required: true,
-      enum: ["diario", "semanal", "mensal"],
+      enum: ["periodo_completo"],
+      default: "periodo_completo",
       index: true,
     },
     dataInicio: {
@@ -30,25 +37,31 @@ const metricasLojaSchema = new mongoose.Schema(
       index: true,
     },
 
-    // Métricas por tipo de auditoria
+    // Métricas por tipo de auditoria - ESTRUTURA ATUALIZADA
     etiquetas: {
-      totalItens: { type: Number, default: 0 },
-      itensLidos: { type: Number, default: 0 },
-      itensAtualizados: { type: Number, default: 0 },
-      percentualConclusao: { type: Number, default: 0 },
-      usuariosAtivos: { type: Number, default: 0 },
-      tempoMedioProcessamento: { type: Number, default: 0 }, // em horas
+      totalItens: { type: Number, default: 0 }, // Quantidade total de itens da planilha
+      itensValidos: { type: Number, default: 0 }, // Itens que podem ser auditados: [Atualizado]+[Não lidos com estoque]+[Lido sem estoque]
+      itensAtualizados: { type: Number, default: 0 }, // Situação: Atualizado
+      itensNaolidos: { type: Number, default: 0 }, // Situação: Não lidos com estoque
+      itensDesatualizado: { type: Number, default: 0 }, // Situação: Desatualizado
+      itensNaopertence: { type: Number, default: 0 }, // Situação: Lido não pertence
+      itensLidosemestoque: { type: Number, default: 0 }, // Situação: Lido sem estoque
+      itensNlidocomestoque: { type: Number, default: 0 }, // Situação: Não lidos com estoque
+      itensSemestoque: { type: Number, default: 0 }, // Situação: Sem Estoque
+      percentualConclusao: { type: Number, default: 0 }, // % de itensAtualizados em relação aos itensValidos
+      percentualRestante: { type: Number, default: 0 }, // % que ainda falta concluir
+      usuariosAtivos: { type: Number, default: 0 }, // Quantidade de usuários únicos nas auditorias
     },
 
     rupturas: {
-      totalItens: { type: Number, default: 0 },
-      itensLidos: { type: Number, default: 0 },
-      itensAtualizados: { type: Number, default: 0 },
-      percentualConclusao: { type: Number, default: 0 },
+      totalItens: { type: Number, default: 0 }, // Quantidade total de itens da planilha de ruptura
+      itensLidos: { type: Number, default: 0 }, // Quantidade de itens lidos na auditoria
+      itensAtualizados: { type: Number, default: 0 }, // Situação: Com Presença e com Estoque
+      percentualConclusao: { type: Number, default: 0 }, // % de conclusão
+      percentualRestante: { type: Number, default: 0 }, // % restante
       custoTotalRuptura: { type: Number, default: 0 },
-      custoMedioRuptura: { type: Number, default: 0 },
       rupturasCriticas: { type: Number, default: 0 }, // > R$ 100
-      usuariosAtivos: { type: Number, default: 0 },
+      usuariosAtivos: { type: Number, default: 0 }, // Quantidade de usuários únicos nas auditorias
     },
 
     presencas: {
@@ -149,7 +162,7 @@ const metricasLojaSchema = new mongoose.Schema(
     },
     versaoCalculo: {
       type: String,
-      default: "1.0",
+      default: "2.0", // Versão atualizada
     },
   },
   {
@@ -157,30 +170,28 @@ const metricasLojaSchema = new mongoose.Schema(
   }
 );
 
-// Índices compostos para queries otimizadas
-metricasLojaSchema.index({ loja: 1, periodo: 1, dataInicio: -1 });
+// Índices compostos para queries otimizadas - ATUALIZADOS PARA PERÍODO COMPLETO
+metricasLojaSchema.index({ loja: 1, dataInicio: -1 });
 metricasLojaSchema.index({
-  periodo: 1,
   dataInicio: -1,
   "ranking.pontuacaoTotal": -1,
 });
-metricasLojaSchema.index({ "ranking.posicaoGeral": 1, periodo: 1 });
+metricasLojaSchema.index({ "ranking.posicaoGeral": 1 });
+metricasLojaSchema.index({ lojaNome: 1 });
 
-// Índice único para evitar duplicatas
+// Índice único para evitar duplicatas - REMOVIDO PERÍODO
 metricasLojaSchema.index(
-  { loja: 1, periodo: 1, dataInicio: 1 },
+  { loja: 1, dataInicio: 1 },
   { unique: true }
 );
 
-// Métodos estáticos úteis
+// Métodos estáticos úteis - ATUALIZADOS PARA PERÍODO COMPLETO
 metricasLojaSchema.statics.obterRankingGeral = function (
-  periodo,
   dataInicio,
   dataFim,
   limite = 50
 ) {
   return this.find({
-    periodo: periodo,
     dataInicio: { $gte: dataInicio },
     dataFim: { $lte: dataFim },
   })
@@ -191,13 +202,11 @@ metricasLojaSchema.statics.obterRankingGeral = function (
 
 metricasLojaSchema.statics.obterComparacaoLojas = function (
   lojasIds,
-  periodo,
   dataInicio,
   dataFim
 ) {
   return this.find({
     loja: { $in: lojasIds },
-    periodo: periodo,
     dataInicio: { $gte: dataInicio },
     dataFim: { $lte: dataFim },
   })
@@ -207,30 +216,32 @@ metricasLojaSchema.statics.obterComparacaoLojas = function (
 
 metricasLojaSchema.statics.obterTendenciaLoja = function (
   lojaId,
-  periodo,
   limite = 12
 ) {
   return this.find({
     loja: lojaId,
-    periodo: periodo,
   })
     .sort({ dataInicio: -1 })
     .limit(limite);
 };
 
 metricasLojaSchema.statics.obterLojasComProblemas = function (
-  periodo,
   dataInicio,
   dataFim
 ) {
   return this.find({
-    periodo: periodo,
     dataInicio: { $gte: dataInicio },
     dataFim: { $lte: dataFim },
     "alertas.severidade": { $in: ["alta", "critica"] },
   })
     .populate("loja", "codigo nome cidade regiao")
     .sort({ "alertas.severidade": -1 });
+};
+
+// NOVO MÉTODO: Obter métrica única da loja
+metricasLojaSchema.statics.obterMetricaLoja = function (lojaId) {
+  return this.findOne({ loja: lojaId })
+    .populate("loja", "codigo nome cidade regiao");
 };
 
 // Métodos de instância
@@ -284,30 +295,114 @@ metricasLojaSchema.methods.atualizarTotais = function () {
     this.etiquetas.totalItens +
     this.rupturas.totalItens +
     this.presencas.totalItens;
+
+  // Usar itensValidos para etiquetas e itensLidos para outros
   this.totais.itensLidos =
-    this.etiquetas.itensLidos +
+    this.etiquetas.itensValidos +
     this.rupturas.itensLidos +
     this.presencas.itensLidos;
+
   this.totais.itensAtualizados =
     this.etiquetas.itensAtualizados +
     this.rupturas.itensAtualizados +
     this.presencas.itensAtualizados;
 
-  if (this.totais.totalItens > 0) {
+  // Calcular percentual usando itensValidos como base
+  if (this.totais.itensLidos > 0) {
     this.totais.percentualConclusaoGeral = Math.round(
-      (this.totais.itensAtualizados / this.totais.totalItens) * 100
+      (this.totais.itensAtualizados / this.totais.itensLidos) * 100
     );
   }
 
-  // Calcular usuários ativos únicos
-  this.totais.usuariosAtivos = Math.max(
-    this.etiquetas.usuariosAtivos,
-    this.rupturas.usuariosAtivos,
-    this.presencas.usuariosAtivos
-  );
+  // Calcular usuários ativos únicos (somar em vez de usar max)
+  this.totais.usuariosAtivos =
+    this.etiquetas.usuariosAtivos +
+    this.rupturas.usuariosAtivos +
+    this.presencas.usuariosAtivos;
+
+  // Atualizar percentuais restantes
+  this.etiquetas.percentualRestante = 100 - this.etiquetas.percentualConclusao;
+  this.rupturas.percentualRestante = 100 - this.rupturas.percentualConclusao;
+  this.presencas.percentualRestante = 100 - this.presencas.percentualConclusao;
 
   this.calcularPontuacaoTotal();
   this.ultimaAtualizacao = new Date();
+};
+
+// NOVO MÉTODO: Atualizar com base nos dados de auditoria
+metricasLojaSchema.methods.atualizarComAuditorias = function (auditorias, tipo) {
+  if (!auditorias || auditorias.length === 0) return;
+
+  const situacaoMap = new Map();
+  const usuariosUnicos = new Set();
+
+  // Contar situações e usuários
+  auditorias.forEach(auditoria => {
+    const situacao = auditoria.situacao || auditoria.Situacao;
+    situacaoMap.set(situacao, (situacaoMap.get(situacao) || 0) + 1);
+
+    if (auditoria.usuarioId || auditoria.Usuario) {
+      usuariosUnicos.add(auditoria.usuarioId || auditoria.Usuario);
+    }
+  });
+
+  if (tipo === 'etiquetas') {
+    this.etiquetas.totalItens = auditorias.length;
+    this.etiquetas.itensAtualizados = situacaoMap.get('Atualizado') || 0;
+    this.etiquetas.itensNaolidos = situacaoMap.get('Não lidos com estoque') || 0;
+    this.etiquetas.itensDesatualizado = situacaoMap.get('Desatualizado') || 0;
+    this.etiquetas.itensNaopertence = situacaoMap.get('Lido não pertence') || 0;
+    this.etiquetas.itensLidosemestoque = situacaoMap.get('Lido sem estoque') || 0;
+    this.etiquetas.itensNlidocomestoque = situacaoMap.get('Não lidos com estoque') || 0;
+    this.etiquetas.itensSemestoque = situacaoMap.get('Sem Estoque') || 0;
+
+    // Calcular itens válidos (que podem ser auditados)
+    this.etiquetas.itensValidos =
+      this.etiquetas.itensAtualizados +
+      this.etiquetas.itensNaolidos +
+      this.etiquetas.itensLidosemestoque;
+
+    // Calcular percentuais
+    if (this.etiquetas.itensValidos > 0) {
+      this.etiquetas.percentualConclusao = Math.round(
+        (this.etiquetas.itensAtualizados / this.etiquetas.itensValidos) * 100
+      );
+    }
+
+    this.etiquetas.usuariosAtivos = usuariosUnicos.size;
+  }
+
+  // Implementar lógica similar para rupturas e presencas...
+  if (tipo === 'rupturas') {
+    this.rupturas.totalItens = auditorias.length;
+    this.rupturas.itensAtualizados = situacaoMap.get('Com Presença e com Estoque') || 0;
+    this.rupturas.itensLidos = auditorias.filter(a => a.situacao !== 'Não lido').length;
+
+    if (this.rupturas.itensLidos > 0) {
+      this.rupturas.percentualConclusao = Math.round(
+        (this.rupturas.itensAtualizados / this.rupturas.itensLidos) * 100
+      );
+    }
+
+    this.rupturas.usuariosAtivos = usuariosUnicos.size;
+  }
+
+  if (tipo === 'presencas') {
+    this.presencas.totalItens = auditorias.length;
+    this.presencas.itensAtualizados = situacaoMap.get('Confirmado') || 0;
+    this.presencas.itensLidos = auditorias.filter(a => a.situacao !== 'Não lido').length;
+
+    if (this.presencas.itensLidos > 0) {
+      this.presencas.percentualConclusao = Math.round(
+        (this.presencas.itensAtualizados / this.presencas.itensLidos) * 100
+      );
+    }
+
+    this.presencas.usuariosAtivos = usuariosUnicos.size;
+  }
+
+  // Atualizar totais após modificação
+  this.atualizarTotais();
 };
 
 metricasLojaSchema.methods.detectarAlertas = function () {

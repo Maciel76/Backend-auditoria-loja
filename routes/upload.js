@@ -1114,7 +1114,8 @@ router.post(
         const resultadoDiario =
           await metricsCalculationService.calcularTodasMetricas(
             "diario",
-            dataMetricas
+            dataMetricas,
+            tipoAuditoria
           );
         metricsStatus.diario.success = resultadoDiario.success;
         console.log(
