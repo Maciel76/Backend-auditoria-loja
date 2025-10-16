@@ -13,6 +13,8 @@ import metricasRouter from "./routes/metricas.js";
 import debugMetricasRouter from "./routes/debug-metricas.js";
 import endpointsListRouter from "./routes/endpoints-list.js";
 import sugestoesRouter from "./routes/sugestoes.js";
+import avisosRouter from "./routes/avisos.js";
+import votacoesRouter from "./routes/votacoes.js";
 import "./utils/planilhaHelpers.js";
 
 const app = express();
@@ -139,6 +141,21 @@ try {
 } catch (error) {
   console.log("❌ Erro nas rotas de sugestões:", error.message);
 }
+
+try {
+  app.use("/", avisosRouter);
+  console.log("✅ Rotas de avisos carregadas");
+} catch (error) {
+  console.log("❌ Erro nas rotas de avisos:", error.message);
+}
+
+try {
+  app.use("/", votacoesRouter);
+  console.log("✅ Rotas de votações carregadas");
+} catch (error) {
+  console.log("❌ Erro nas rotas de votações:", error.message);
+}
+
 
 
 // Rota de sincronização removida - agora usa modelos unificados

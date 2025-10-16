@@ -1552,38 +1552,36 @@ class MetricsCalculationService {
           return {};
         };
 
-        // Atualizar dados - lógica condicional baseada no tipo
+        // Usar método processarAuditorias do modelo para garantir cálculos corretos
         if (tipoAuditoria) {
-          // Para tipo específico, atualizar apenas esse tipo (manter outros dados existentes)
-          if (tipoAuditoria === 'etiqueta') {
-            console.log(`🔄 Atualizando apenas dados de ETIQUETAS`);
-            lojaDailyMetrics.etiquetas = mapearParaSchema(tiposAuditoria.etiquetas, 'etiquetas');
-            // Manter rupturas e presencas existentes
-          } else if (tipoAuditoria === 'ruptura') {
-            console.log(`🔄 Atualizando apenas dados de RUPTURAS`);
-            lojaDailyMetrics.rupturas = mapearParaSchema(tiposAuditoria.rupturas, 'rupturas');
-            // Manter etiquetas e presencas existentes
-          } else if (tipoAuditoria === 'presenca') {
-            console.log(`🔄 Atualizando apenas dados de PRESENÇAS`);
-            lojaDailyMetrics.presencas = mapearParaSchema(tiposAuditoria.presencas, 'presencas');
-            // Manter etiquetas e rupturas existentes
+          // Para tipo específico, processar apenas esse tipo
+          const auditoriasFiltradas = auditorias.filter(a => a.tipo === tipoAuditoria);
+          if (auditoriasFiltradas.length > 0) {
+            console.log(`🔄 Processando ${auditoriasFiltradas.length} auditorias do tipo ${tipoAuditoria}`);
+            lojaDailyMetrics.processarAuditorias(auditoriasFiltradas, tipoAuditoria === 'etiqueta' ? 'etiquetas' : tipoAuditoria === 'ruptura' ? 'rupturas' : 'presencas');
           }
         } else {
-          // Para recálculo completo, atualizar todos os tipos
+          // Para recálculo completo, processar todos os tipos
           console.log(`🔄 Recalculando TODOS os tipos de auditoria`);
-          lojaDailyMetrics.etiquetas = mapearParaSchema(tiposAuditoria.etiquetas, 'etiquetas');
-          lojaDailyMetrics.rupturas = mapearParaSchema(tiposAuditoria.rupturas, 'rupturas');
-          lojaDailyMetrics.presencas = mapearParaSchema(tiposAuditoria.presencas, 'presencas');
-        }
+          const etiquetasAuditorias = auditorias.filter(a => a.tipo === 'etiqueta');
+          const rupturasAuditorias = auditorias.filter(a => a.tipo === 'ruptura');
+          const presencasAuditorias = auditorias.filter(a => a.tipo === 'presenca');
 
-        // Atualizar contadores apenas se não for tipo específico (recálculo completo)
-        if (!tipoAuditoria) {
-          // Para recálculo completo, atualizar todos os contadores
-          lojaDailyMetrics.ContadorClassesProduto = Object.fromEntries(contadoresClasses);
-          lojaDailyMetrics.ContadorLocais = Object.fromEntries(contadoresLocais);
-          console.log(`📊 Contadores atualizados completamente`);
-        } else {
-          console.log(`📊 Contadores mantidos (atualização parcial do tipo ${tipoAuditoria})`);
+          if (etiquetasAuditorias.length > 0) {
+            lojaDailyMetrics.processarAuditorias(etiquetasAuditorias, 'etiquetas');
+          }
+          if (rupturasAuditorias.length > 0) {
+            lojaDailyMetrics.processarAuditorias(rupturasAuditorias, 'rupturas');
+          }
+          if (presencasAuditorias.length > 0) {
+            lojaDailyMetrics.processarAuditorias(presencasAuditorias, 'presencas');
+          }
+
+          // Para recálculo completo, calcular estatísticas dos locais com todas as auditorias
+          if (auditorias.length > 0) {
+            console.log(`📊 Calculando estatísticas de ${lojaDailyMetrics.locaisEstatisticas?.length || 0} locais`);
+            lojaDailyMetrics.calcularLocaisEstatisticas(auditorias);
+          }
         }
 
         // Atualizar totais usando método do schema

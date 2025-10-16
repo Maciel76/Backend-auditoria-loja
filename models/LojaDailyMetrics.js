@@ -407,10 +407,7 @@ lojaDailyMetricsSchema.index({ data: -1, "ranking.pontuacaoTotal": -1 });
 lojaDailyMetricsSchema.index({ loja: 1, "ranking.posicaoGeral": 1 });
 
 // Índice único para evitar duplicatas - UM documento por loja (igual ao UserDailyMetrics)
-lojaDailyMetricsSchema.index(
-  { loja: 1 },
-  { unique: true }
-);
+lojaDailyMetricsSchema.index({ loja: 1 }, { unique: true });
 
 // Métodos estáticos
 lojaDailyMetricsSchema.statics.obterMetricasDiarias = function (
@@ -421,8 +418,7 @@ lojaDailyMetricsSchema.statics.obterMetricasDiarias = function (
   return this.find({
     loja: lojaId,
     data: { $gte: dataInicio, $lte: dataFim },
-  })
-    .sort({ data: -1 });
+  }).sort({ data: -1 });
 };
 
 lojaDailyMetricsSchema.statics.obterRankingDiario = function (
@@ -539,7 +535,10 @@ lojaDailyMetricsSchema.methods.atualizarTotais = function () {
 };
 
 // Método para processar auditorias do dia
-lojaDailyMetricsSchema.methods.processarAuditorias = function (auditorias, tipo) {
+lojaDailyMetricsSchema.methods.processarAuditorias = function (
+  auditorias,
+  tipo
+) {
   if (!auditorias || auditorias.length === 0) return;
 
   const situacaoMap = new Map();
@@ -548,7 +547,7 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (auditorias, tipo)
   const locaisMap = new Map();
 
   // Contar situações, usuários, classes e locais
-  auditorias.forEach(auditoria => {
+  auditorias.forEach((auditoria) => {
     const situacao = auditoria.situacao || auditoria.Situacao;
     situacaoMap.set(situacao, (situacaoMap.get(situacao) || 0) + 1);
 
@@ -567,15 +566,18 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (auditorias, tipo)
     }
   });
 
-  if (tipo === 'etiquetas') {
+  if (tipo === "etiquetas") {
     this.etiquetas.totalItens = auditorias.length;
-    this.etiquetas.itensAtualizados = situacaoMap.get('Atualizado') || 0;
-    this.etiquetas.itensNaolidos = situacaoMap.get('Não lidos com estoque') || 0;
-    this.etiquetas.itensDesatualizado = situacaoMap.get('Desatualizado') || 0;
-    this.etiquetas.itensNaopertence = situacaoMap.get('Lido não pertence') || 0;
-    this.etiquetas.itensLidosemestoque = situacaoMap.get('Lido sem estoque') || 0;
-    this.etiquetas.itensNlidocomestoque = situacaoMap.get('Não lidos com estoque') || 0;
-    this.etiquetas.itensSemestoque = situacaoMap.get('Sem Estoque') || 0;
+    this.etiquetas.itensAtualizados = situacaoMap.get("Atualizado") || 0;
+    this.etiquetas.itensNaolidos =
+      situacaoMap.get("Não lidos com estoque") || 0;
+    this.etiquetas.itensDesatualizado = situacaoMap.get("Desatualizado") || 0;
+    this.etiquetas.itensNaopertence = situacaoMap.get("Lido não pertence") || 0;
+    this.etiquetas.itensLidosemestoque =
+      situacaoMap.get("Lido sem estoque") || 0;
+    this.etiquetas.itensNlidocomestoque =
+      situacaoMap.get("Não lidos com estoque") || 0;
+    this.etiquetas.itensSemestoque = situacaoMap.get("Sem Estoque") || 0;
 
     // Calcular itens válidos
     this.etiquetas.itensValidos =
@@ -589,7 +591,8 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (auditorias, tipo)
         (this.etiquetas.itensAtualizados / this.etiquetas.itensValidos) * 100
       );
     }
-    this.etiquetas.percentualRestante = 100 - this.etiquetas.percentualConclusao;
+    this.etiquetas.percentualRestante =
+      100 - this.etiquetas.percentualConclusao;
     this.etiquetas.usuariosAtivos = usuariosUnicos.size;
 
     // Atualizar contadores
@@ -607,10 +610,13 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (auditorias, tipo)
   }
 
   // Implementar lógica similar para rupturas e presenças
-  if (tipo === 'rupturas') {
+  if (tipo === "rupturas") {
     this.rupturas.totalItens = auditorias.length;
-    this.rupturas.itensAtualizados = situacaoMap.get('Com Presença e com Estoque') || 0;
-    this.rupturas.itensLidos = auditorias.filter(a => a.situacao !== 'Não lido').length;
+    this.rupturas.itensAtualizados =
+      situacaoMap.get("Com Presença e com Estoque") || 0;
+    this.rupturas.itensLidos = auditorias.filter(
+      (a) => a.situacao !== "Não lido"
+    ).length;
 
     if (this.rupturas.itensLidos > 0) {
       this.rupturas.percentualConclusao = Math.round(
@@ -634,10 +640,12 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (auditorias, tipo)
     }
   }
 
-  if (tipo === 'presencas') {
+  if (tipo === "presencas") {
     this.presencas.totalItens = auditorias.length;
-    this.presencas.itensAtualizados = situacaoMap.get('Confirmado') || 0;
-    this.presencas.itensLidos = auditorias.filter(a => a.situacao !== 'Não lido').length;
+    this.presencas.itensAtualizados = situacaoMap.get("Confirmado") || 0;
+    this.presencas.itensLidos = auditorias.filter(
+      (a) => a.situacao !== "Não lido"
+    ).length;
     this.presencas.presencasConfirmadas = this.presencas.itensAtualizados;
 
     if (this.presencas.itensLidos > 0) {
@@ -646,7 +654,8 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (auditorias, tipo)
       );
       this.presencas.percentualPresenca = this.presencas.percentualConclusao;
     }
-    this.presencas.percentualRestante = 100 - this.presencas.percentualConclusao;
+    this.presencas.percentualRestante =
+      100 - this.presencas.percentualConclusao;
     this.presencas.usuariosAtivos = usuariosUnicos.size;
 
     // Atualizar contadores

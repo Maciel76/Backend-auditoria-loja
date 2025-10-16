@@ -9,6 +9,11 @@ const sugestaoSchema = new mongoose.Schema(
       trim: true,
       maxlength: 2000,
     },
+    nome: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
     email: {
       type: String,
       trim: true,
@@ -24,7 +29,7 @@ const sugestaoSchema = new mongoose.Schema(
     },
     tipo: {
       type: String,
-      enum: ['dashboard', 'geral', 'ranking', 'auditoria', 'relatorios'],
+      enum: ['dashboard', 'geral', 'ranking', 'auditoria', 'relatorios', 'voting'],
       default: 'geral',
     },
     status: {
@@ -76,6 +81,25 @@ const sugestaoSchema = new mongoose.Schema(
         default: Date.now,
       }
     }],
+    // Sistema de reações
+    reactions: {
+      like: {
+        count: { type: Number, default: 0 },
+        users: [{ type: String }] // IPs ou IDs de usuários
+      },
+      dislike: {
+        count: { type: Number, default: 0 },
+        users: [{ type: String }]
+      },
+      fire: {
+        count: { type: Number, default: 0 },
+        users: [{ type: String }]
+      },
+      heart: {
+        count: { type: Number, default: 0 },
+        users: [{ type: String }]
+      }
+    },
   },
   {
     timestamps: true,

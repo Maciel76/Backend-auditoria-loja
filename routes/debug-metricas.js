@@ -3,6 +3,7 @@ import MetricasUsuario from "../models/MetricasUsuario.js";
 import MetricasLoja from "../models/MetricasLoja.js";
 import MetricasAuditoria from "../models/MetricasAuditoria.js";
 import MetricasGlobais from "../models/MetricasGlobais.js";
+import LojaDailyMetrics from "../models/LojaDailyMetrics.js";
 import Auditoria from "../models/Auditoria.js";
 import Loja from "../models/Loja.js";
 import User from "../models/User.js";
@@ -475,6 +476,74 @@ router.get("/testar-novos-campos", verificarLojaObrigatoria, async (req, res) =>
     console.error('❌ Erro ao testar novos campos:', error);
     res.status(500).json({
       erro: "Falha ao testar novos campos",
+      detalhes: error.message
+    });
+  }
+});
+
+// Ranking de lojas usando LojaDailyMetrics - rota simples para acessar os dados
+router.get("/lojas-daily-ranking", async (req, res) => {
+  try {
+    const { limite = 50, regiao } = req.query;
+
+    // Buscar todas as lojas com métricas diárias
+    const ranking = await LojaDailyMetrics.find({})
+      .populate("loja", "codigo nome cidade regiao")
+      .sort({ "ranking.pontuacaoTotal": -1 })
+      .limit(parseInt(limite));
+
+    // Filtrar por região se especificado
+    let rankingFiltrado = ranking;
+    if (regiao && regiao !== 'todas') {
+      rankingFiltrado = ranking.filter(loja => loja.loja?.regiao === regiao);
+    }
+
+    const rankingFormatado = rankingFiltrado.map((item, index) => ({
+      posicao: index + 1,
+      loja: {
+        codigo: item.loja?.codigo || 'N/A',
+        nome: item.loja?.nome || 'N/A',
+        cidade: item.loja?.cidade || 'N/A',
+        regiao: item.loja?.regiao || 'N/A',
+      },
+      pontuacao: item.ranking?.pontuacaoTotal || 0,
+      notaQualidade: item.ranking?.notaQualidade || 0,
+      eficienciaOperacional: item.ranking?.eficienciaOperacional || 0,
+
+      // Totais consolidados
+      totalItens: item.totais?.totalItens || 0,
+      percentualConclusao: item.totais?.percentualConclusaoGeral || 0,
+      usuariosAtivos: item.totais?.usuariosAtivos || 0,
+
+      // Dados por tipo - direto do modelo
+      etiquetas: item.etiquetas || {},
+      rupturas: item.rupturas || {},
+      presencas: item.presencas || {},
+
+      // Outros dados
+      alertas: item.alertas?.length || 0,
+      locaisComProblemas: item.locaisEstatisticas?.filter(l =>
+        l.prioridadeAtencao === 'alta' || l.prioridadeAtencao === 'critica'
+      ).length || 0,
+      ultimaAtualizacao: item.ultimaAtualizacao,
+    }));
+
+    res.json({
+      regiao: regiao || 'todas',
+      ranking: rankingFormatado,
+      totalLojas: rankingFormatado.length,
+      resumo: {
+        melhorLoja: rankingFormatado[0] || null,
+        mediaItens: rankingFormatado.length > 0 ? Math.round(rankingFormatado.reduce((acc, l) => acc + l.totalItens, 0) / rankingFormatado.length) : 0,
+        mediaEficiencia: rankingFormatado.length > 0 ? Math.round(rankingFormatado.reduce((acc, l) => acc + l.percentualConclusao, 0) / rankingFormatado.length) : 0,
+        totalUsuariosAtivos: rankingFormatado.reduce((acc, l) => acc + l.usuariosAtivos, 0),
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar ranking LojaDailyMetrics:', error);
+    res.status(500).json({
+      erro: "Falha ao buscar ranking de lojas diárias",
       detalhes: error.message
     });
   }

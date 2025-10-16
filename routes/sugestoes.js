@@ -5,10 +5,84 @@ import Loja from "../models/Loja.js";
 
 const router = express.Router();
 
+// TESTE: Rota simples sem /api prefix
+router.post("/test-react/:id", async (req, res) => {
+  console.log("🔥 TEST REACT ENDPOINT CHAMADO:", req.params, req.body);
+  return res.json({ message: "Test route works!", params: req.params, body: req.body });
+});
+
+// TESTE: Mover rota de react para o topo ABSOLUTO
+router.post("/api/sugestoes/:id/react", async (req, res) => {
+  console.log("🔥 REACT ENDPOINT CHAMADO NO TOPO:", req.params, req.body);
+  try {
+    const { id } = req.params;
+    const { reaction, userIdentifier } = req.body;
+
+    if (!['like', 'dislike', 'fire', 'heart'].includes(reaction)) {
+      return res.status(400).json({
+        erro: "Reação deve ser: like, dislike, fire ou heart"
+      });
+    }
+
+    if (!userIdentifier) {
+      return res.status(400).json({
+        erro: "Identificador do usuário é obrigatório"
+      });
+    }
+
+    const sugestao = await Sugestao.findById(id);
+    if (!sugestao) {
+      return res.status(404).json({
+        erro: "Sugestão não encontrada"
+      });
+    }
+
+    // Inicializar reactions se não existir
+    if (!sugestao.reactions) {
+      sugestao.reactions = {
+        like: { count: 0, users: [] },
+        dislike: { count: 0, users: [] },
+        fire: { count: 0, users: [] },
+        heart: { count: 0, users: [] }
+      };
+    }
+
+    // Verificar se usuário já reagiu a essa reação específica
+    const hasReacted = sugestao.reactions[reaction].users.includes(userIdentifier);
+
+    if (hasReacted) {
+      // Remover reação
+      sugestao.reactions[reaction].count = Math.max(0, sugestao.reactions[reaction].count - 1);
+      sugestao.reactions[reaction].users = sugestao.reactions[reaction].users.filter(
+        user => user !== userIdentifier
+      );
+    } else {
+      // Adicionar reação
+      sugestao.reactions[reaction].count += 1;
+      sugestao.reactions[reaction].users.push(userIdentifier);
+    }
+
+    await sugestao.save();
+
+    res.json({
+      message: hasReacted ? "Reação removida" : "Reação adicionada",
+      reactions: sugestao.reactions,
+      hasReacted: !hasReacted
+    });
+
+  } catch (error) {
+    console.error("Erro ao reagir:", error);
+    res.status(500).json({
+      erro: "Erro interno do servidor",
+      details: error.message
+    });
+  }
+});
+
 // POST /api/sugestoes - Criar nova sugestão
 router.post("/api/sugestoes", async (req, res) => {
   try {
-    const { sugestao, email, tipo = 'geral' } = req.body;
+    const { sugestao, nome, email, tipo = 'geral' } = req.body;
 
     // Validação básica
     if (!sugestao || sugestao.trim().length === 0) {
@@ -36,6 +110,7 @@ router.post("/api/sugestoes", async (req, res) => {
     // Criar nova sugestão
     const novaSugestao = new Sugestao({
       sugestao: sugestao.trim(),
+      nome: nome ? nome.trim() : null,
       email: email ? email.trim() : null,
       tipo,
       loja: lojaId,
@@ -224,6 +299,7 @@ router.put("/api/sugestoes/:id/status", async (req, res) => {
     });
   }
 });
+
 
 // POST /api/sugestoes/:id/votar - Votar em sugestão
 router.post("/api/sugestoes/:id/votar", async (req, res) => {
