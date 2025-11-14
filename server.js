@@ -15,6 +15,7 @@ import endpointsListRouter from "./routes/endpoints-list.js";
 import sugestoesRouter from "./routes/sugestoes.js";
 import avisosRouter from "./routes/avisos.js";
 import votacoesRouter from "./routes/votacoes.js";
+import articlesRouter from "./routes/articles.js";
 import "./utils/planilhaHelpers.js";
 
 const app = express();
@@ -156,7 +157,12 @@ try {
   console.log("❌ Erro nas rotas de votações:", error.message);
 }
 
-
+try {
+  app.use("/", articlesRouter);
+  console.log("✅ Rotas de artigos carregadas");
+} catch (error) {
+  console.log("❌ Erro nas rotas de artigos:", error.message);
+}
 
 // Rota de sincronização removida - agora usa modelos unificados
 
