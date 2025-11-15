@@ -95,6 +95,364 @@ const classesLeituraSchema = new mongoose.Schema({
   },
 });
 
+// Schema para contadores de leitura por local
+const locaisLeituraSchema = new mongoose.Schema({
+  "C01 - C01": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "CS01 - CS01": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "F01 - F01": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "F02 - F02": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "FLV - FLV": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G01A - G01A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G01B - G01B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G02A - G02A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G02B - G02B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G03A - G03A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G03B - G03B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G04A - G04A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G04B - G04B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G05A - G05A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G05B - G05B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G06A - G06A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G06B - G06B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G07A - G07A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G07B - G07B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G08A - G08A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G08B - G08B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G09A - G09A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G09B - G09B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G10A - G10A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G10B - G10B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G11A - G11A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G11B - G11B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G12A - G12A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G12B - G12B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G13A - G13A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G13B - G13B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G14A - G14A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G14B - G14B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G15A - G15A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G15B - G15B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G16A - G16A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G16B - G16B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G17A - G17A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G17B - G17B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G18A - G18A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G18B - G18B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G19A - G19A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G19B - G19B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G20A - G20A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G20B - G20B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G21A - G21A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G21B - G21B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G22A - G22A": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "G22B - G22B": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "GELO - GELO": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "I01 - I01": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "PA01 - PA01": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "PAO - PAO": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "PF01 - PF01": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "PF02 - PF02": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "PF03 - PF03": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "PL01 - PL01": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "PL02 - PL02": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "SORVETE - SORVETE": {
+    total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+});
+
 // Schema para métricas de etiquetas
 const metricasEtiquetasSchema = new mongoose.Schema({
   totalItens: { type: Number, default: 0 }, // Quantidade total de itens da planilha
@@ -113,6 +471,9 @@ const metricasEtiquetasSchema = new mongoose.Schema({
 
   // Contadores de leitura por classe de produto
   classesLeitura: { type: classesLeituraSchema, default: () => ({}) },
+
+  // Contadores de leitura por local
+  locaisLeitura: { type: locaisLeituraSchema, default: () => ({}) },
 
   // Contadores específicos de etiquetas
   contadorClasses: {
@@ -210,6 +571,9 @@ const metricasRupturasSchema = new mongoose.Schema({
   // Contadores de leitura por classe de produto
   classesLeitura: { type: classesLeituraSchema, default: () => ({}) },
 
+  // Contadores de leitura por local
+  locaisLeitura: { type: locaisLeituraSchema, default: () => ({}) },
+
   // Contadores específicos de rupturas
   contadorClasses: {
     "A CLASSIFICAR": { type: Number, default: 0 },
@@ -305,6 +669,9 @@ const metricasPresencasSchema = new mongoose.Schema({
 
   // Contadores de leitura por classe de produto
   classesLeitura: { type: classesLeituraSchema, default: () => ({}) },
+
+  // Contadores de leitura por local
+  locaisLeitura: { type: locaisLeituraSchema, default: () => ({}) },
 
   // Contadores específicos de presenças
   contadorClasses: {
@@ -798,6 +1165,9 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
   // Calcular métricas por classe de produto
   this.calcularMetricasPorClasse(auditorias, tipo);
 
+  // Calcular métricas por local
+  this.calcularMetricasPorLocal(auditorias, tipo);
+
   // Atualizar totais após modificação
   this.atualizarTotais();
 };
@@ -881,6 +1251,132 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
     this.rupturas.classesLeitura = classesLeitura;
   } else if (tipo === 'presencas') {
     this.presencas.classesLeitura = classesLeitura;
+  }
+};
+
+// Método para calcular métricas por local (corredor)
+lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, tipo) {
+  if (!auditorias || auditorias.length === 0) return;
+
+  // Inicializar objeto para armazenar métricas por local
+  const metricasPorLocal = {
+    "C01 - C01": { total: 0, itensValidos: 0, lidos: 0 },
+    "CS01 - CS01": { total: 0, itensValidos: 0, lidos: 0 },
+    "F01 - F01": { total: 0, itensValidos: 0, lidos: 0 },
+    "F02 - F02": { total: 0, itensValidos: 0, lidos: 0 },
+    "FLV - FLV": { total: 0, itensValidos: 0, lidos: 0 },
+    "G01A - G01A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G01B - G01B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G02A - G02A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G02B - G02B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G03A - G03A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G03B - G03B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G04A - G04A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G04B - G04B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G05A - G05A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G05B - G05B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G06A - G06A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G06B - G06B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G07A - G07A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G07B - G07B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G08A - G08A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G08B - G08B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G09A - G09A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G09B - G09B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G10A - G10A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G10B - G10B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G11A - G11A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G11B - G11B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G12A - G12A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G12B - G12B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G13A - G13A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G13B - G13B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G14A - G14A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G14B - G14B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G15A - G15A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G15B - G15B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G16A - G16A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G16B - G16B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G17A - G17A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G17B - G17B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G18A - G18A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G18B - G18B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G19A - G19A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G19B - G19B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G20A - G20A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G20B - G20B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G21A - G21A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G21B - G21B": { total: 0, itensValidos: 0, lidos: 0 },
+    "G22A - G22A": { total: 0, itensValidos: 0, lidos: 0 },
+    "G22B - G22B": { total: 0, itensValidos: 0, lidos: 0 },
+    "GELO - GELO": { total: 0, itensValidos: 0, lidos: 0 },
+    "I01 - I01": { total: 0, itensValidos: 0, lidos: 0 },
+    "PA01 - PA01": { total: 0, itensValidos: 0, lidos: 0 },
+    "PAO - PAO": { total: 0, itensValidos: 0, lidos: 0 },
+    "PF01 - PF01": { total: 0, itensValidos: 0, lidos: 0 },
+    "PF02 - PF02": { total: 0, itensValidos: 0, lidos: 0 },
+    "PF03 - PF03": { total: 0, itensValidos: 0, lidos: 0 },
+    "PL01 - PL01": { total: 0, itensValidos: 0, lidos: 0 },
+    "PL02 - PL02": { total: 0, itensValidos: 0, lidos: 0 },
+    "SORVETE - SORVETE": { total: 0, itensValidos: 0, lidos: 0 },
+  };
+
+  // Processar cada auditoria
+  for (const auditoria of auditorias) {
+    // Determinar local do produto
+    const local = auditoria.local;
+    if (!local) continue; // Pular se não tiver local definido
+
+    // Verificar se o local está no objeto de métricas
+    if (metricasPorLocal.hasOwnProperty(local)) {
+      const situacao = auditoria.situacao || auditoria.Situacao;
+
+      // Incrementar total (todos os itens)
+      metricasPorLocal[local].total++;
+
+      // Incrementar itens válidos (seguindo mesma lógica de etiquetas.itensValidos)
+      // Itens válidos = Atualizado + Desatualizado + Não lidos com estoque + Lido não pertence
+      // EXCLUINDO: "Sem Estoque" e "Lido sem estoque"
+      if (
+        situacao === "Atualizado" ||
+        situacao === "Desatualizado" ||
+        situacao === "Não lidos com estoque" ||
+        situacao === "Lido não pertence"
+      ) {
+        metricasPorLocal[local].itensValidos++;
+      }
+
+      // Incrementar itens lidos
+      // Itens lidos = Atualizado + Desatualizado + Lido não pertence
+      if (
+        situacao === "Atualizado" ||
+        situacao === "Desatualizado" ||
+        situacao === "Lido não pertence"
+      ) {
+        metricasPorLocal[local].lidos++;
+      }
+    }
+  }
+
+  // Calcular percentuais e atualizar o campo correspondente
+  const locaisLeitura = {};
+  for (const [local, valores] of Object.entries(metricasPorLocal)) {
+    // Percentual baseado em itensValidos (e não no total)
+    locaisLeitura[local] = {
+      total: valores.total,
+      itensValidos: valores.itensValidos,
+      lidos: valores.lidos,
+      percentual: valores.itensValidos > 0 ? (valores.lidos / valores.itensValidos) * 100 : 0,
+    };
+  }
+
+  // Atualizar os campos na estrutura correta para o tipo de auditoria
+  if (tipo === 'etiquetas') {
+    this.etiquetas.locaisLeitura = locaisLeitura;
+  } else if (tipo === 'rupturas') {
+    this.rupturas.locaisLeitura = locaisLeitura;
+  } else if (tipo === 'presencas') {
+    this.presencas.locaisLeitura = locaisLeitura;
   }
 };
 
