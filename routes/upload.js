@@ -2136,12 +2136,18 @@ async function atualizarUserDailyMetrics(loja, dataMetricas, tipoAuditoria) {
         // Calcular percentuais (SEM ARREDONDAMENTO)
         dados.etiquetas.percentualConclusao = dados.etiquetas.totalItens > 0
           ? (dados.etiquetas.itensAtualizados / dados.etiquetas.totalItens) * 100 : 0;
+        dados.etiquetas.percentualDesatualizado = dados.etiquetas.totalItens > 0
+          ? (dados.etiquetas.itensDesatualizado / dados.etiquetas.totalItens) * 100 : 0;
         dados.rupturas.percentualConclusao = dados.rupturas.totalItens > 0
           ? (dados.rupturas.itensAtualizados / dados.rupturas.totalItens) * 100 : 0;
+        dados.rupturas.percentualDesatualizado = dados.rupturas.totalItens > 0
+          ? (dados.rupturas.itensDesatualizado / dados.rupturas.totalItens) * 100 : 0;
         dados.rupturas.custoMedioRuptura = dados.rupturas.totalItens > 0
           ? dados.rupturas.custoTotalRuptura / dados.rupturas.totalItens : 0;
         dados.presencas.percentualConclusao = dados.presencas.totalItens > 0
           ? (dados.presencas.itensAtualizados / dados.presencas.totalItens) * 100 : 0;
+        dados.presencas.percentualDesatualizado = dados.presencas.totalItens > 0
+          ? (dados.presencas.itensDesatualizado / dados.presencas.totalItens) * 100 : 0;
         dados.presencas.percentualPresenca = dados.presencas.totalItens > 0
           ? (dados.presencas.presencasConfirmadas / dados.presencas.totalItens) * 100 : 0;
 
@@ -2201,12 +2207,18 @@ async function atualizarUserDailyMetrics(loja, dataMetricas, tipoAuditoria) {
         // Calcular percentuais finais (SEM ARREDONDAMENTO)
         metricasCompletas.etiquetas.percentualConclusao = metricasCompletas.etiquetas.totalItens > 0
           ? (metricasCompletas.etiquetas.itensAtualizados / metricasCompletas.etiquetas.totalItens) * 100 : 0;
+        metricasCompletas.etiquetas.percentualDesatualizado = metricasCompletas.etiquetas.totalItens > 0
+          ? (metricasCompletas.etiquetas.itensDesatualizado / metricasCompletas.etiquetas.totalItens) * 100 : 0;
         metricasCompletas.rupturas.percentualConclusao = metricasCompletas.rupturas.totalItens > 0
           ? (metricasCompletas.rupturas.itensAtualizados / metricasCompletas.rupturas.totalItens) * 100 : 0;
+        metricasCompletas.rupturas.percentualDesatualizado = metricasCompletas.rupturas.totalItens > 0
+          ? (metricasCompletas.rupturas.itensDesatualizado / metricasCompletas.rupturas.totalItens) * 100 : 0;
         metricasCompletas.rupturas.custoMedioRuptura = metricasCompletas.rupturas.totalItens > 0
           ? metricasCompletas.rupturas.custoTotalRuptura / metricasCompletas.rupturas.totalItens : 0;
         metricasCompletas.presencas.percentualConclusao = metricasCompletas.presencas.totalItens > 0
           ? (metricasCompletas.presencas.itensAtualizados / metricasCompletas.presencas.totalItens) * 100 : 0;
+        metricasCompletas.presencas.percentualDesatualizado = metricasCompletas.presencas.totalItens > 0
+          ? (metricasCompletas.presencas.itensDesatualizado / metricasCompletas.presencas.totalItens) * 100 : 0;
         metricasCompletas.presencas.percentualPresenca = metricasCompletas.presencas.totalItens > 0
           ? (metricasCompletas.presencas.presencasConfirmadas / metricasCompletas.presencas.totalItens) * 100 : 0;
 

@@ -1395,13 +1395,17 @@ class MetricsCalculationService {
               // Para etiquetas: percentual = (itens atualizados + itens desatualizados) / itens validos
               const itensLidosEtiquetas = tipo.itensAtualizados + tipo.itensDesatualizado;
               tipo.percentualConclusao = (itensLidosEtiquetas / tipo.itensValidos) * 100;
+              // Percentual de itens desatualizados em relação aos itens válidos
+              tipo.percentualDesatualizado = (tipo.itensDesatualizado / tipo.itensValidos) * 100;
             } else {
               // Para outros tipos: percentual = itens atualizados / itens validos
               tipo.percentualConclusao = (tipo.itensAtualizados / tipo.itensValidos) * 100;
+              tipo.percentualDesatualizado = 0; // Não aplicável para outros tipos
             }
             tipo.percentualRestante = 100 - tipo.percentualConclusao;
           } else if (tipo.totalItens > 0) {
             tipo.percentualConclusao = (tipo.itensAtualizados / tipo.totalItens) * 100;
+            tipo.percentualDesatualizado = 0; // Não calculado quando baseado em totalItens
             tipo.percentualRestante = 100 - tipo.percentualConclusao;
           }
 

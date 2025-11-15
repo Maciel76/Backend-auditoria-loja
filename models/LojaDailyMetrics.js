@@ -12,8 +12,9 @@ const metricasEtiquetasSchema = new mongoose.Schema({
   itensLidosemestoque: { type: Number, default: 0 }, // Situação: Lido sem estoque
   itensNlidocomestoque: { type: Number, default: 0 }, // Situação: Não lidos com estoque
   itensSemestoque: { type: Number, default: 0 }, // Situação: Sem Estoque
-  percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensValidos) * 100
+  percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itens válidos) * 100
   percentualRestante: { type: Number, default: 0 }, // % restante = 100 - percentualConclusao
+  percentualDesatualizado: { type: Number, default: 0 }, // % etiquetas desatualizadas = (itens desatualizados / itens válidos) * 100
   usuariosAtivos: { type: Number, default: 0 }, // Usuários únicos
 
   // Contadores específicos de etiquetas
@@ -104,6 +105,7 @@ const metricasRupturasSchema = new mongoose.Schema({
   itensAtualizados: { type: Number, default: 0 }, // Com Presença e com Estoque
   percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensLidos) * 100
   percentualRestante: { type: Number, default: 0 }, // % restante = 100 - percentualConclusao
+  percentualDesatualizado: { type: Number, default: 0 }, // % rupturas desatualizadas (não aplicável na maioria dos casos)
   custoTotalRuptura: { type: Number, default: 0 },
   rupturasCriticas: { type: Number, default: 0 },
   usuariosAtivos: { type: Number, default: 0 },
@@ -196,6 +198,7 @@ const metricasPresencasSchema = new mongoose.Schema({
   itensAtualizados: { type: Number, default: 0 },
   percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensLidos) * 100
   percentualRestante: { type: Number, default: 0 }, // % restante = 100 - percentualConclusao
+  percentualDesatualizado: { type: Number, default: 0 }, // % presencas desatualizadas (não aplicável na maioria dos casos)
   presencasConfirmadas: { type: Number, default: 0 },
   percentualPresenca: { type: Number, default: 0 },
   usuariosAtivos: { type: Number, default: 0 },
@@ -592,10 +595,15 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
     // Percentual de conclusão = (itens lidos / itens válidos) * 100
     // Itens lidos = itens atualizados + itens desatualizados
     // Percentual restante = 100 - percentualConclusao (garante soma exata de 100%)
+    // Percentual desatualizado = (itens desatualizados / itens válidos) * 100
     if (this.etiquetas.itensValidos > 0) {
       // Para etiquetas: itens lidos = itens atualizados + itens desatualizados
       const itensLidosEtiquetas = this.etiquetas.itensAtualizados + this.etiquetas.itensDesatualizado;
       this.etiquetas.percentualConclusao = (itensLidosEtiquetas / this.etiquetas.itensValidos) * 100;
+      // Percentual de itens desatualizados em relação aos itens válidos
+      this.etiquetas.percentualDesatualizado = (this.etiquetas.itensDesatualizado / this.etiquetas.itensValidos) * 100;
+    } else {
+      this.etiquetas.percentualDesatualizado = 0;
     }
     this.etiquetas.percentualRestante =
       100 - this.etiquetas.percentualConclusao;

@@ -9,6 +9,7 @@ const metricasEtiquetasSchema = new mongoose.Schema({
   itensSemEstoque: { type: Number, default: 0 },
   itensNaopertence: { type: Number, default: 0 },
   percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensLidos) * 100
+  percentualDesatualizado: { type: Number, default: 0 }, // % etiquetas desatualizadas = (itens desatualizados / itensLidos) * 100
 
   // Contadores específicos de etiquetas
   contadorClasses: {
@@ -99,6 +100,7 @@ const metricasRupturasSchema = new mongoose.Schema({
   itensSemEstoque: { type: Number, default: 0 },
   itensNaopertence: { type: Number, default: 0 },
   percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensLidos) * 100
+  percentualDesatualizado: { type: Number, default: 0 }, // % rupturas desatualizadas (não aplicável na maioria dos casos)
   custoTotalRuptura: { type: Number, default: 0 },
   custoMedioRuptura: { type: Number, default: 0 },
 
@@ -191,6 +193,7 @@ const metricasPresencasSchema = new mongoose.Schema({
   itensSemEstoque: { type: Number, default: 0 },
   itensNaopertence: { type: Number, default: 0 },
   percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensLidos) * 100
+  percentualDesatualizado: { type: Number, default: 0 }, // % presencas desatualizadas (não aplicável na maioria dos casos)
   presencasConfirmadas: { type: Number, default: 0 },
   percentualPresenca: { type: Number, default: 0 },
 
