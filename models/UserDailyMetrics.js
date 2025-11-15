@@ -11,6 +11,85 @@ const metricasEtiquetasSchema = new mongoose.Schema({
   percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensLidos) * 100
   percentualDesatualizado: { type: Number, default: 0 }, // % etiquetas desatualizadas = (itens desatualizados / itensLidos) * 100
 
+  // Contadores de leitura por classe de produto
+  classesLeitura: {
+    "A CLASSIFICAR": {
+      total: { type: Number, default: 0 },  // Total itens da classe
+      lidos: { type: Number, default: 0 },  // Quantidade de itens lidos (atualizados + desatualizado + nao_pertence)
+      percentual: { type: Number, default: 0 }, // Percentual (lidos/total)
+    },
+    "ALTO GIRO": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    BAZAR: {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    DIVERSOS: {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    DPH: {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    FLV: {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "LATICINIOS 1": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    LIQUIDA: {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "PERECIVEL 1": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "PERECIVEL 2": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "PERECIVEL 2 B": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "PERECIVEL 3": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "SECA DOCE": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "SECA SALGADA": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "SECA SALGADA 2": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+  },
+
   // Contadores específicos de etiquetas
   contadorClasses: {
     "A CLASSIFICAR": { type: Number, default: 0 },
@@ -104,6 +183,85 @@ const metricasRupturasSchema = new mongoose.Schema({
   custoTotalRuptura: { type: Number, default: 0 },
   custoMedioRuptura: { type: Number, default: 0 },
 
+  // Contadores de leitura por classe de produto
+  classesLeitura: {
+    "A CLASSIFICAR": {
+      total: { type: Number, default: 0 },  // Total itens da classe
+      lidos: { type: Number, default: 0 },  // Quantidade de itens lidos (atualizados + desatualizado + nao_pertence)
+      percentual: { type: Number, default: 0 }, // Percentual (lidos/total)
+    },
+    "ALTO GIRO": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    BAZAR: {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    DIVERSOS: {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    DPH: {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    FLV: {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "LATICINIOS 1": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    LIQUIDA: {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "PERECIVEL 1": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "PERECIVEL 2": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "PERECIVEL 2 B": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "PERECIVEL 3": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "SECA DOCE": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "SECA SALGADA": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "SECA SALGADA 2": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+  },
+
   // Contadores específicos de rupturas
   contadorClasses: {
     "A CLASSIFICAR": { type: Number, default: 0 },
@@ -196,6 +354,85 @@ const metricasPresencasSchema = new mongoose.Schema({
   percentualDesatualizado: { type: Number, default: 0 }, // % presencas desatualizadas (não aplicável na maioria dos casos)
   presencasConfirmadas: { type: Number, default: 0 },
   percentualPresenca: { type: Number, default: 0 },
+
+  // Contadores de leitura por classe de produto
+  classesLeitura: {
+    "A CLASSIFICAR": {
+      total: { type: Number, default: 0 },  // Total itens da classe
+      lidos: { type: Number, default: 0 },  // Quantidade de itens lidos (atualizados + desatualizado + nao_pertence)
+      percentual: { type: Number, default: 0 }, // Percentual (lidos/total)
+    },
+    "ALTO GIRO": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    BAZAR: {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    DIVERSOS: {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    DPH: {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    FLV: {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "LATICINIOS 1": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    LIQUIDA: {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "PERECIVEL 1": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "PERECIVEL 2": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "PERECIVEL 2 B": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "PERECIVEL 3": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "SECA DOCE": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "SECA SALGADA": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+    "SECA SALGADA 2": {
+      total: { type: Number, default: 0 },
+      lidos: { type: Number, default: 0 },
+      percentual: { type: Number, default: 0 },
+    },
+  },
 
   // Contadores específicos de presenças
   contadorClasses: {

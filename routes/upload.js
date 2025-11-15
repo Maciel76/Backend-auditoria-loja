@@ -2024,6 +2024,66 @@ router.get(
   }
 );
 
+// Função auxiliar para calcular métricas por classe de produto
+function calcularMetricasPorClasse(auditorias) {
+  // Inicializar objeto para armazenar métricas por classe
+  const metricasPorClasse = {
+    "A CLASSIFICAR": { total: 0, lidos: 0 },
+    "ALTO GIRO": { total: 0, lidos: 0 },
+    BAZAR: { total: 0, lidos: 0 },
+    DIVERSOS: { total: 0, lidos: 0 },
+    DPH: { total: 0, lidos: 0 },
+    FLV: { total: 0, lidos: 0 },
+    "LATICINIOS 1": { total: 0, lidos: 0 },
+    LIQUIDA: { total: 0, lidos: 0 },
+    "PERECIVEL 1": { total: 0, lidos: 0 },
+    "PERECIVEL 2": { total: 0, lidos: 0 },
+    "PERECIVEL 2 B": { total: 0, lidos: 0 },
+    "PERECIVEL 3": { total: 0, lidos: 0 },
+    "SECA DOCE": { total: 0, lidos: 0 },
+    "SECA SALGADA": { total: 0, lidos: 0 },
+    "SECA SALGADA 2": { total: 0, lidos: 0 },
+  };
+
+  // Processar cada auditoria
+  for (const auditoria of auditorias) {
+    // Determinar classe do produto
+    const classe = auditoria.ClasseProduto || auditoria.classeProdutoRaiz;
+    if (!classe) continue; // Pular se não tiver classe definida
+
+    // Verificar se a classe está no objeto de métricas
+    if (metricasPorClasse.hasOwnProperty(classe)) {
+      // Incrementar total
+      metricasPorClasse[classe].total++;
+
+      // Verificar se o item foi lido (qualquer situação exceto "Não lido")
+      if (auditoria.situacao && auditoria.situacao !== "Não lido") {
+        // Considerar como "lido" se for uma das situações de leitura
+        // Atualizado, Desatualizado, Não pertence são situações onde o item foi lido
+        if (
+          auditoria.situacao === "Atualizado" ||
+          auditoria.situacao === "Desatualizado" ||
+          auditoria.situacao === "Não pertence"
+        ) {
+          metricasPorClasse[classe].lidos++;
+        }
+      }
+    }
+  }
+
+  // Calcular percentuais e retornar o objeto final
+  const classesLeitura = {};
+  for (const [classe, valores] of Object.entries(metricasPorClasse)) {
+    classesLeitura[classe] = {
+      total: valores.total,
+      lidos: valores.lidos,
+      percentual: valores.total > 0 ? (valores.lidos / valores.total) * 100 : 0,
+    };
+  }
+
+  return classesLeitura;
+}
+
 // Função para atualizar UserDailyMetrics seguindo o padrão do User.js
 // Função para atualizar UserDailyMetrics - NOVA VERSÃO COM CONTADORES
 async function atualizarUserDailyMetrics(loja, dataMetricas, tipoAuditoria) {
@@ -2138,16 +2198,73 @@ async function atualizarUserDailyMetrics(loja, dataMetricas, tipoAuditoria) {
           ? (dados.etiquetas.itensAtualizados / dados.etiquetas.totalItens) * 100 : 0;
         dados.etiquetas.percentualDesatualizado = dados.etiquetas.totalItens > 0
           ? (dados.etiquetas.itensDesatualizado / dados.etiquetas.totalItens) * 100 : 0;
+        // Inicializar classesLeitura para etiquetas
+        dados.etiquetas.classesLeitura = {
+          "A CLASSIFICAR": { total: 0, lidos: 0, percentual: 0 },
+          "ALTO GIRO": { total: 0, lidos: 0, percentual: 0 },
+          BAZAR: { total: 0, lidos: 0, percentual: 0 },
+          DIVERSOS: { total: 0, lidos: 0, percentual: 0 },
+          DPH: { total: 0, lidos: 0, percentual: 0 },
+          FLV: { total: 0, lidos: 0, percentual: 0 },
+          "LATICINIOS 1": { total: 0, lidos: 0, percentual: 0 },
+          LIQUIDA: { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 1": { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 2": { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 2 B": { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 3": { total: 0, lidos: 0, percentual: 0 },
+          "SECA DOCE": { total: 0, lidos: 0, percentual: 0 },
+          "SECA SALGADA": { total: 0, lidos: 0, percentual: 0 },
+          "SECA SALGADA 2": { total: 0, lidos: 0, percentual: 0 },
+        };
+
         dados.rupturas.percentualConclusao = dados.rupturas.totalItens > 0
           ? (dados.rupturas.itensAtualizados / dados.rupturas.totalItens) * 100 : 0;
         dados.rupturas.percentualDesatualizado = dados.rupturas.totalItens > 0
           ? (dados.rupturas.itensDesatualizado / dados.rupturas.totalItens) * 100 : 0;
+        // Inicializar classesLeitura para rupturas
+        dados.rupturas.classesLeitura = {
+          "A CLASSIFICAR": { total: 0, lidos: 0, percentual: 0 },
+          "ALTO GIRO": { total: 0, lidos: 0, percentual: 0 },
+          BAZAR: { total: 0, lidos: 0, percentual: 0 },
+          DIVERSOS: { total: 0, lidos: 0, percentual: 0 },
+          DPH: { total: 0, lidos: 0, percentual: 0 },
+          FLV: { total: 0, lidos: 0, percentual: 0 },
+          "LATICINIOS 1": { total: 0, lidos: 0, percentual: 0 },
+          LIQUIDA: { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 1": { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 2": { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 2 B": { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 3": { total: 0, lidos: 0, percentual: 0 },
+          "SECA DOCE": { total: 0, lidos: 0, percentual: 0 },
+          "SECA SALGADA": { total: 0, lidos: 0, percentual: 0 },
+          "SECA SALGADA 2": { total: 0, lidos: 0, percentual: 0 },
+        };
+
         dados.rupturas.custoMedioRuptura = dados.rupturas.totalItens > 0
           ? dados.rupturas.custoTotalRuptura / dados.rupturas.totalItens : 0;
         dados.presencas.percentualConclusao = dados.presencas.totalItens > 0
           ? (dados.presencas.itensAtualizados / dados.presencas.totalItens) * 100 : 0;
         dados.presencas.percentualDesatualizado = dados.presencas.totalItens > 0
           ? (dados.presencas.itensDesatualizado / dados.presencas.totalItens) * 100 : 0;
+        // Inicializar classesLeitura para presencas
+        dados.presencas.classesLeitura = {
+          "A CLASSIFICAR": { total: 0, lidos: 0, percentual: 0 },
+          "ALTO GIRO": { total: 0, lidos: 0, percentual: 0 },
+          BAZAR: { total: 0, lidos: 0, percentual: 0 },
+          DIVERSOS: { total: 0, lidos: 0, percentual: 0 },
+          DPH: { total: 0, lidos: 0, percentual: 0 },
+          FLV: { total: 0, lidos: 0, percentual: 0 },
+          "LATICINIOS 1": { total: 0, lidos: 0, percentual: 0 },
+          LIQUIDA: { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 1": { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 2": { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 2 B": { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 3": { total: 0, lidos: 0, percentual: 0 },
+          "SECA DOCE": { total: 0, lidos: 0, percentual: 0 },
+          "SECA SALGADA": { total: 0, lidos: 0, percentual: 0 },
+          "SECA SALGADA 2": { total: 0, lidos: 0, percentual: 0 },
+        };
+
         dados.presencas.percentualPresenca = dados.presencas.totalItens > 0
           ? (dados.presencas.presencasConfirmadas / dados.presencas.totalItens) * 100 : 0;
 
@@ -2209,32 +2326,101 @@ async function atualizarUserDailyMetrics(loja, dataMetricas, tipoAuditoria) {
           ? (metricasCompletas.etiquetas.itensAtualizados / metricasCompletas.etiquetas.totalItens) * 100 : 0;
         metricasCompletas.etiquetas.percentualDesatualizado = metricasCompletas.etiquetas.totalItens > 0
           ? (metricasCompletas.etiquetas.itensDesatualizado / metricasCompletas.etiquetas.totalItens) * 100 : 0;
+        // Inicializar classesLeitura para etiquetas
+        metricasCompletas.etiquetas.classesLeitura = {
+          "A CLASSIFICAR": { total: 0, lidos: 0, percentual: 0 },
+          "ALTO GIRO": { total: 0, lidos: 0, percentual: 0 },
+          BAZAR: { total: 0, lidos: 0, percentual: 0 },
+          DIVERSOS: { total: 0, lidos: 0, percentual: 0 },
+          DPH: { total: 0, lidos: 0, percentual: 0 },
+          FLV: { total: 0, lidos: 0, percentual: 0 },
+          "LATICINIOS 1": { total: 0, lidos: 0, percentual: 0 },
+          LIQUIDA: { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 1": { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 2": { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 2 B": { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 3": { total: 0, lidos: 0, percentual: 0 },
+          "SECA DOCE": { total: 0, lidos: 0, percentual: 0 },
+          "SECA SALGADA": { total: 0, lidos: 0, percentual: 0 },
+          "SECA SALGADA 2": { total: 0, lidos: 0, percentual: 0 },
+        };
+
         metricasCompletas.rupturas.percentualConclusao = metricasCompletas.rupturas.totalItens > 0
           ? (metricasCompletas.rupturas.itensAtualizados / metricasCompletas.rupturas.totalItens) * 100 : 0;
         metricasCompletas.rupturas.percentualDesatualizado = metricasCompletas.rupturas.totalItens > 0
           ? (metricasCompletas.rupturas.itensDesatualizado / metricasCompletas.rupturas.totalItens) * 100 : 0;
+        // Inicializar classesLeitura para rupturas
+        metricasCompletas.rupturas.classesLeitura = {
+          "A CLASSIFICAR": { total: 0, lidos: 0, percentual: 0 },
+          "ALTO GIRO": { total: 0, lidos: 0, percentual: 0 },
+          BAZAR: { total: 0, lidos: 0, percentual: 0 },
+          DIVERSOS: { total: 0, lidos: 0, percentual: 0 },
+          DPH: { total: 0, lidos: 0, percentual: 0 },
+          FLV: { total: 0, lidos: 0, percentual: 0 },
+          "LATICINIOS 1": { total: 0, lidos: 0, percentual: 0 },
+          LIQUIDA: { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 1": { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 2": { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 2 B": { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 3": { total: 0, lidos: 0, percentual: 0 },
+          "SECA DOCE": { total: 0, lidos: 0, percentual: 0 },
+          "SECA SALGADA": { total: 0, lidos: 0, percentual: 0 },
+          "SECA SALGADA 2": { total: 0, lidos: 0, percentual: 0 },
+        };
+
         metricasCompletas.rupturas.custoMedioRuptura = metricasCompletas.rupturas.totalItens > 0
           ? metricasCompletas.rupturas.custoTotalRuptura / metricasCompletas.rupturas.totalItens : 0;
         metricasCompletas.presencas.percentualConclusao = metricasCompletas.presencas.totalItens > 0
           ? (metricasCompletas.presencas.itensAtualizados / metricasCompletas.presencas.totalItens) * 100 : 0;
         metricasCompletas.presencas.percentualDesatualizado = metricasCompletas.presencas.totalItens > 0
           ? (metricasCompletas.presencas.itensDesatualizado / metricasCompletas.presencas.totalItens) * 100 : 0;
+        // Inicializar classesLeitura para presencas
+        metricasCompletas.presencas.classesLeitura = {
+          "A CLASSIFICAR": { total: 0, lidos: 0, percentual: 0 },
+          "ALTO GIRO": { total: 0, lidos: 0, percentual: 0 },
+          BAZAR: { total: 0, lidos: 0, percentual: 0 },
+          DIVERSOS: { total: 0, lidos: 0, percentual: 0 },
+          DPH: { total: 0, lidos: 0, percentual: 0 },
+          FLV: { total: 0, lidos: 0, percentual: 0 },
+          "LATICINIOS 1": { total: 0, lidos: 0, percentual: 0 },
+          LIQUIDA: { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 1": { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 2": { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 2 B": { total: 0, lidos: 0, percentual: 0 },
+          "PERECIVEL 3": { total: 0, lidos: 0, percentual: 0 },
+          "SECA DOCE": { total: 0, lidos: 0, percentual: 0 },
+          "SECA SALGADA": { total: 0, lidos: 0, percentual: 0 },
+          "SECA SALGADA 2": { total: 0, lidos: 0, percentual: 0 },
+        };
+
         metricasCompletas.presencas.percentualPresenca = metricasCompletas.presencas.totalItens > 0
           ? (metricasCompletas.presencas.presencasConfirmadas / metricasCompletas.presencas.totalItens) * 100 : 0;
+
+        // Calcular métricas por classe para cada tipo de auditoria
+        const etiquetasAuditorias = todasAuditorias.filter(a => a.tipo === 'etiqueta');
+        const rupturasAuditorias = todasAuditorias.filter(a => a.tipo === 'ruptura');
+        const presencasAuditorias = todasAuditorias.filter(a => a.tipo === 'presenca');
+
+        const classesLeituraEtiquetas = calcularMetricasPorClasse(etiquetasAuditorias);
+        const classesLeituraRupturas = calcularMetricasPorClasse(rupturasAuditorias);
+        const classesLeituraPresencas = calcularMetricasPorClasse(presencasAuditorias);
 
         // Agora SEMPRE atualizar todos os tipos com métricas completas + contadores
         userDailyMetrics.metricas.etiquetas = {
           ...metricasCompletas.etiquetas,
+          classesLeitura: classesLeituraEtiquetas,
           contadorClasses,
           contadorLocais,
         };
         userDailyMetrics.metricas.rupturas = {
           ...metricasCompletas.rupturas,
+          classesLeitura: classesLeituraRupturas,
           contadorClasses,
           contadorLocais,
         };
         userDailyMetrics.metricas.presencas = {
           ...metricasCompletas.presencas,
+          classesLeitura: classesLeituraPresencas,
           contadorClasses,
           contadorLocais,
         };

@@ -1,6 +1,85 @@
 // models/LojaDailyMetrics.js - Métricas diárias da loja (período diário)
 import mongoose from "mongoose";
 
+// Schema para contadores de leitura por classe de produto
+const classesLeituraSchema = new mongoose.Schema({
+  "A CLASSIFICAR": {
+    total: { type: Number, default: 0 },  // Total itens da classe
+    lidos: { type: Number, default: 0 },  // Quantidade de itens lidos (atualizados + desatualizado + nao_pertence)
+    percentual: { type: Number, default: 0 }, // Percentual (lidos/total)
+  },
+  "ALTO GIRO": {
+    total: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  BAZAR: {
+    total: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  DIVERSOS: {
+    total: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  DPH: {
+    total: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  FLV: {
+    total: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "LATICINIOS 1": {
+    total: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  LIQUIDA: {
+    total: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "PERECIVEL 1": {
+    total: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "PERECIVEL 2": {
+    total: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "PERECIVEL 2 B": {
+    total: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "PERECIVEL 3": {
+    total: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "SECA DOCE": {
+    total: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "SECA SALGADA": {
+    total: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+  "SECA SALGADA 2": {
+    total: { type: Number, default: 0 },
+    lidos: { type: Number, default: 0 },
+    percentual: { type: Number, default: 0 },
+  },
+});
+
 // Schema para métricas de etiquetas
 const metricasEtiquetasSchema = new mongoose.Schema({
   totalItens: { type: Number, default: 0 }, // Quantidade total de itens da planilha
@@ -16,6 +95,9 @@ const metricasEtiquetasSchema = new mongoose.Schema({
   percentualRestante: { type: Number, default: 0 }, // % restante = 100 - percentualConclusao
   percentualDesatualizado: { type: Number, default: 0 }, // % etiquetas desatualizadas = (itens desatualizados / itens válidos) * 100
   usuariosAtivos: { type: Number, default: 0 }, // Usuários únicos
+
+  // Contadores de leitura por classe de produto
+  classesLeitura: { type: classesLeituraSchema, default: () => ({}) },
 
   // Contadores específicos de etiquetas
   contadorClasses: {
@@ -110,6 +192,9 @@ const metricasRupturasSchema = new mongoose.Schema({
   rupturasCriticas: { type: Number, default: 0 },
   usuariosAtivos: { type: Number, default: 0 },
 
+  // Contadores de leitura por classe de produto
+  classesLeitura: { type: classesLeituraSchema, default: () => ({}) },
+
   // Contadores específicos de rupturas
   contadorClasses: {
     "A CLASSIFICAR": { type: Number, default: 0 },
@@ -202,6 +287,9 @@ const metricasPresencasSchema = new mongoose.Schema({
   presencasConfirmadas: { type: Number, default: 0 },
   percentualPresenca: { type: Number, default: 0 },
   usuariosAtivos: { type: Number, default: 0 },
+
+  // Contadores de leitura por classe de produto
+  classesLeitura: { type: classesLeituraSchema, default: () => ({}) },
 
   // Contadores específicos de presenças
   contadorClasses: {
@@ -586,10 +674,12 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
     // - Atualizados (itens com situação "Atualizado")
     // - Desatualizados (itens lidos mas marcados como desatualizados)
     // - Não lidos com estoque (itens não lidos mas com estoque no sistema)
+    // - Lido não pertence (itens lidos mas que não pertencem à loja, também são válidos)
     this.etiquetas.itensValidos =
       this.etiquetas.itensAtualizados +
       this.etiquetas.itensDesatualizado +
-      this.etiquetas.itensNaolidos;
+      this.etiquetas.itensNaolidos +
+      this.etiquetas.itensNaopertence;
 
     // Calcular percentuais (SEM ARREDONDAMENTO)
     // Percentual de conclusão = (itens lidos / itens válidos) * 100
@@ -690,8 +780,80 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
     }
   }
 
+  // Calcular métricas por classe de produto
+  this.calcularMetricasPorClasse(auditorias, tipo);
+
   // Atualizar totais após modificação
   this.atualizarTotais();
+};
+
+// Método para calcular métricas por classe de produto
+lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias, tipo) {
+  if (!auditorias || auditorias.length === 0) return;
+
+  // Inicializar objeto para armazenar métricas por classe
+  const metricasPorClasse = {
+    "A CLASSIFICAR": { total: 0, lidos: 0 },
+    "ALTO GIRO": { total: 0, lidos: 0 },
+    BAZAR: { total: 0, lidos: 0 },
+    DIVERSOS: { total: 0, lidos: 0 },
+    DPH: { total: 0, lidos: 0 },
+    FLV: { total: 0, lidos: 0 },
+    "LATICINIOS 1": { total: 0, lidos: 0 },
+    LIQUIDA: { total: 0, lidos: 0 },
+    "PERECIVEL 1": { total: 0, lidos: 0 },
+    "PERECIVEL 2": { total: 0, lidos: 0 },
+    "PERECIVEL 2 B": { total: 0, lidos: 0 },
+    "PERECIVEL 3": { total: 0, lidos: 0 },
+    "SECA DOCE": { total: 0, lidos: 0 },
+    "SECA SALGADA": { total: 0, lidos: 0 },
+    "SECA SALGADA 2": { total: 0, lidos: 0 },
+  };
+
+  // Processar cada auditoria
+  for (const auditoria of auditorias) {
+    // Determinar classe do produto
+    const classe = auditoria.ClasseProduto || auditoria.classeProdutoRaiz;
+    if (!classe) continue; // Pular se não tiver classe definida
+
+    // Verificar se a classe está no objeto de métricas
+    if (metricasPorClasse.hasOwnProperty(classe)) {
+      // Incrementar total
+      metricasPorClasse[classe].total++;
+
+      // Verificar se o item foi lido (qualquer situação exceto "Não lido")
+      if (auditoria.situacao && auditoria.situacao !== "Não lido") {
+        // Considerar como "lido" se for uma das situações de leitura
+        // Atualizado, Desatualizado, Lido não pertence são situações onde o item foi lido
+        if (
+          auditoria.situacao === "Atualizado" ||
+          auditoria.situacao === "Desatualizado" ||
+          auditoria.situacao === "Lido não pertence"
+        ) {
+          metricasPorClasse[classe].lidos++;
+        }
+      }
+    }
+  }
+
+  // Calcular percentuais e atualizar o campo correspondente
+  const classesLeitura = {};
+  for (const [classe, valores] of Object.entries(metricasPorClasse)) {
+    classesLeitura[classe] = {
+      total: valores.total,
+      lidos: valores.lidos,
+      percentual: valores.total > 0 ? (valores.lidos / valores.total) * 100 : 0,
+    };
+  }
+
+  // Atualizar os campos na estrutura correta para o tipo de auditoria
+  if (tipo === 'etiquetas') {
+    this.etiquetas.classesLeitura = classesLeitura;
+  } else if (tipo === 'rupturas') {
+    this.rupturas.classesLeitura = classesLeitura;
+  } else if (tipo === 'presencas') {
+    this.presencas.classesLeitura = classesLeitura;
+  }
 };
 
 export default mongoose.model("LojaDailyMetrics", lojaDailyMetricsSchema);

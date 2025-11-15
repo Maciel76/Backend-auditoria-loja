@@ -1409,6 +1409,25 @@ class MetricsCalculationService {
             tipo.percentualRestante = 100 - tipo.percentualConclusao;
           }
 
+          // Inicializar classesLeitura com valores padrão
+          tipo.classesLeitura = {
+            "A CLASSIFICAR": { total: 0, lidos: 0, percentual: 0 },
+            "ALTO GIRO": { total: 0, lidos: 0, percentual: 0 },
+            BAZAR: { total: 0, lidos: 0, percentual: 0 },
+            DIVERSOS: { total: 0, lidos: 0, percentual: 0 },
+            DPH: { total: 0, lidos: 0, percentual: 0 },
+            FLV: { total: 0, lidos: 0, percentual: 0 },
+            "LATICINIOS 1": { total: 0, lidos: 0, percentual: 0 },
+            LIQUIDA: { total: 0, lidos: 0, percentual: 0 },
+            "PERECIVEL 1": { total: 0, lidos: 0, percentual: 0 },
+            "PERECIVEL 2": { total: 0, lidos: 0, percentual: 0 },
+            "PERECIVEL 2 B": { total: 0, lidos: 0, percentual: 0 },
+            "PERECIVEL 3": { total: 0, lidos: 0, percentual: 0 },
+            "SECA DOCE": { total: 0, lidos: 0, percentual: 0 },
+            "SECA SALGADA": { total: 0, lidos: 0, percentual: 0 },
+            "SECA SALGADA 2": { total: 0, lidos: 0, percentual: 0 },
+          };
+
           if (tipo.custoTotalRuptura && tipo.totalItens > 0) {
             tipo.custoMedioRuptura = tipo.custoTotalRuptura / tipo.totalItens;
           }
