@@ -8,90 +8,105 @@ const classesLeituraSchema = new mongoose.Schema({
     itensValidos: { type: Number, default: 0 },  // Itens válidos da classe (excluindo "Sem Estoque")
     lidos: { type: Number, default: 0 },  // Quantidade de itens lidos (atualizados + desatualizado + nao_pertence)
     percentual: { type: Number, default: 0 }, // Percentual (lidos/itensValidos)
+    usuarios: { type: Object, default: {} } // Objeto com usuários e suas leituras por classe
   },
   "ALTO GIRO": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
+    usuarios: { type: Object, default: {} }
   },
   BAZAR: {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
+    usuarios: { type: Object, default: {} }
   },
   DIVERSOS: {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
+    usuarios: { type: Object, default: {} }
   },
   DPH: {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
+    usuarios: { type: Object, default: {} }
   },
   FLV: {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
+    usuarios: { type: Object, default: {} }
   },
   "LATICINIOS 1": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
+    usuarios: { type: Object, default: {} }
   },
   LIQUIDA: {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
+    usuarios: { type: Object, default: {} }
   },
   "PERECIVEL 1": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
+    usuarios: { type: Object, default: {} }
   },
   "PERECIVEL 2": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
+    usuarios: { type: Object, default: {} }
   },
   "PERECIVEL 2 B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
+    usuarios: { type: Object, default: {} }
   },
   "PERECIVEL 3": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
+    usuarios: { type: Object, default: {} }
   },
   "SECA DOCE": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
+    usuarios: { type: Object, default: {} }
   },
   "SECA SALGADA": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
+    usuarios: { type: Object, default: {} }
   },
   "SECA SALGADA 2": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
+    usuarios: { type: Object, default: {} }
   },
 });
 
@@ -102,413 +117,413 @@ const locaisLeituraSchema = new mongoose.Schema({
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} } // Mapa de usuários e suas leituras por local
+    usuarios: { type: Object, default: {} } // Objeto com usuários e suas leituras por local
   },
   "CS01 - CS01": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "F01 - F01": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "F02 - F02": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "FLV - FLV": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G01A - G01A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G01B - G01B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G02A - G02A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G02B - G02B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G03A - G03A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G03B - G03B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G04A - G04A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G04B - G04B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G05A - G05A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G05B - G05B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G06A - G06A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G06B - G06B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G07A - G07A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G07B - G07B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G08A - G08A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G08B - G08B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G09A - G09A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G09B - G09B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G10A - G10A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G10B - G10B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G11A - G11A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G11B - G11B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G12A - G12A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G12B - G12B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G13A - G13A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G13B - G13B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G14A - G14A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G14B - G14B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G15A - G15A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G15B - G15B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G16A - G16A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G16B - G16B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G17A - G17A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G17B - G17B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G18A - G18A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G18B - G18B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G19A - G19A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G19B - G19B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G20A - G20A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G20B - G20B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G21A - G21A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G21B - G21B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G22A - G22A": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "G22B - G22B": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "GELO - GELO": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "I01 - I01": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "PA01 - PA01": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "PAO - PAO": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "PF01 - PF01": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "PF02 - PF02": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "PF03 - PF03": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "PL01 - PL01": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "PL02 - PL02": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
   "SORVETE - SORVETE": {
     total: { type: Number, default: 0 },
     itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
-    usuarios: { type: Map, of: Number, default: {} }
+    usuarios: { type: Object, default: {} }
   },
 });
 
@@ -1237,21 +1252,21 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
 
   // Inicializar objeto para armazenar métricas por classe
   const metricasPorClasse = {
-    "A CLASSIFICAR": { total: 0, itensValidos: 0, lidos: 0 },
-    "ALTO GIRO": { total: 0, itensValidos: 0, lidos: 0 },
-    BAZAR: { total: 0, itensValidos: 0, lidos: 0 },
-    DIVERSOS: { total: 0, itensValidos: 0, lidos: 0 },
-    DPH: { total: 0, itensValidos: 0, lidos: 0 },
-    FLV: { total: 0, itensValidos: 0, lidos: 0 },
-    "LATICINIOS 1": { total: 0, itensValidos: 0, lidos: 0 },
-    LIQUIDA: { total: 0, itensValidos: 0, lidos: 0 },
-    "PERECIVEL 1": { total: 0, itensValidos: 0, lidos: 0 },
-    "PERECIVEL 2": { total: 0, itensValidos: 0, lidos: 0 },
-    "PERECIVEL 2 B": { total: 0, itensValidos: 0, lidos: 0 },
-    "PERECIVEL 3": { total: 0, itensValidos: 0, lidos: 0 },
-    "SECA DOCE": { total: 0, itensValidos: 0, lidos: 0 },
-    "SECA SALGADA": { total: 0, itensValidos: 0, lidos: 0 },
-    "SECA SALGADA 2": { total: 0, itensValidos: 0, lidos: 0 },
+    "A CLASSIFICAR": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "ALTO GIRO": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    BAZAR: { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    DIVERSOS: { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    DPH: { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    FLV: { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "LATICINIOS 1": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    LIQUIDA: { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "PERECIVEL 1": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "PERECIVEL 2": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "PERECIVEL 2 B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "PERECIVEL 3": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "SECA DOCE": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "SECA SALGADA": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "SECA SALGADA 2": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
   };
 
   // Processar cada auditoria
@@ -1259,6 +1274,10 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
     // Determinar classe do produto
     const classe = auditoria.ClasseProduto || auditoria.classeProdutoRaiz;
     if (!classe) continue; // Pular se não tiver classe definida
+
+    // Determinar usuário da auditoria (ID e nome)
+    const usuarioId = auditoria.usuarioId || auditoria.Usuario;
+    const usuarioNome = auditoria.usuarioNome || auditoria.Nome; // Procurar por possíveis campos de nome
 
     // Verificar se a classe está no objeto de métricas
     if (metricasPorClasse.hasOwnProperty(classe)) {
@@ -1288,6 +1307,20 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
       ) {
         metricasPorClasse[classe].lidos++;
       }
+
+      // Incrementar contagem de usuários por classe
+      // Usar o nome do usuário como chave e armazenar a contagem
+      if (usuarioId) { // Apenas se tiver ID de usuário
+        const usuarioChave = usuarioNome || `Usuário ${usuarioId}`; // Usar nome como chave
+
+        if (metricasPorClasse[classe].usuarios[usuarioChave]) {
+          // Se o usuário já existe na classe, apenas incrementar os itens lidos
+          metricasPorClasse[classe].usuarios[usuarioChave]++;
+        } else {
+          // Se for a primeira vez do usuário na classe, adicionar com 1 item lido
+          metricasPorClasse[classe].usuarios[usuarioChave] = 1;
+        }
+      }
     }
   }
 
@@ -1295,11 +1328,13 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
   const classesLeitura = {};
   for (const [classe, valores] of Object.entries(metricasPorClasse)) {
     // Percentual baseado em itensValidos (e não no total)
+    // Os usuários já estão no formato correto: { "Nome do Usuário": quantidade }
     classesLeitura[classe] = {
       total: valores.total,
       itensValidos: valores.itensValidos,
       lidos: valores.lidos,
       percentual: valores.itensValidos > 0 ? (valores.lidos / valores.itensValidos) * 100 : 0,
+      usuarios: valores.usuarios,
     };
   }
 
@@ -1319,65 +1354,65 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
 
   // Inicializar objeto para armazenar métricas por local
   const metricasPorLocal = {
-    "C01 - C01": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "CS01 - CS01": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "F01 - F01": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "F02 - F02": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "FLV - FLV": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G01A - G01A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G01B - G01B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G02A - G02A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G02B - G02B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G03A - G03A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G03B - G03B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G04A - G04A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G04B - G04B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G05A - G05A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G05B - G05B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G06A - G06A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G06B - G06B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G07A - G07A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G07B - G07B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G08A - G08A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G08B - G08B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G09A - G09A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G09B - G09B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G10A - G10A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G10B - G10B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G11A - G11A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G11B - G11B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G12A - G12A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G12B - G12B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G13A - G13A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G13B - G13B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G14A - G14A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G14B - G14B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G15A - G15A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G15B - G15B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G16A - G16A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G16B - G16B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G17A - G17A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G17B - G17B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G18A - G18A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G18B - G18B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G19A - G19A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G19B - G19B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G20A - G20A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G20B - G20B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G21A - G21A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G21B - G21B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G22A - G22A": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "G22B - G22B": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "GELO - GELO": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "I01 - I01": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "PA01 - PA01": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "PAO - PAO": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "PF01 - PF01": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "PF02 - PF02": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "PF03 - PF03": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "PL01 - PL01": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "PL02 - PL02": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
-    "SORVETE - SORVETE": { total: 0, itensValidos: 0, lidos: 0, usuarios: new Map() },
+    "C01 - C01": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "CS01 - CS01": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "F01 - F01": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "F02 - F02": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "FLV - FLV": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G01A - G01A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G01B - G01B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G02A - G02A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G02B - G02B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G03A - G03A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G03B - G03B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G04A - G04A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G04B - G04B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G05A - G05A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G05B - G05B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G06A - G06A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G06B - G06B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G07A - G07A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G07B - G07B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G08A - G08A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G08B - G08B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G09A - G09A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G09B - G09B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G10A - G10A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G10B - G10B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G11A - G11A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G11B - G11B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G12A - G12A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G12B - G12B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G13A - G13A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G13B - G13B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G14A - G14A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G14B - G14B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G15A - G15A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G15B - G15B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G16A - G16A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G16B - G16B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G17A - G17A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G17B - G17B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G18A - G18A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G18B - G18B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G19A - G19A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G19B - G19B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G20A - G20A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G20B - G20B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G21A - G21A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G21B - G21B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G22A - G22A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "G22B - G22B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "GELO - GELO": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "I01 - I01": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "PA01 - PA01": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "PAO - PAO": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "PF01 - PF01": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "PF02 - PF02": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "PF03 - PF03": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "PL01 - PL01": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "PL02 - PL02": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
+    "SORVETE - SORVETE": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
   };
 
   // Processar cada auditoria
@@ -1386,9 +1421,10 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
     const local = auditoria.local;
     if (!local) continue; // Pular se não tiver local definido
 
-    // Determinar usuário da auditoria
-    const usuario = auditoria.usuarioId || auditoria.Usuario;
-    if (!usuario) continue; // Pular se não tiver usuário definido
+    // Determinar usuário da auditoria (ID e nome)
+    const usuarioId = auditoria.usuarioId || auditoria.Usuario;
+    const usuarioNome = auditoria.usuarioNome || auditoria.Nome; // Procurar por possíveis campos de nome
+    if (!usuarioId) continue; // Pular se não tiver ID de usuário definido
 
     // Verificar se o local está no objeto de métricas
     if (metricasPorLocal.hasOwnProperty(local)) {
@@ -1420,10 +1456,15 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
       }
 
       // Incrementar contagem de usuários
-      if (metricasPorLocal[local].usuarios.has(usuario)) {
-        metricasPorLocal[local].usuarios.set(usuario, metricasPorLocal[local].usuarios.get(usuario) + 1);
+      // Usar o nome do usuário como chave e armazenar a contagem
+      const usuarioChave = usuarioNome || `Usuário ${usuarioId}`; // Usar nome como chave
+
+      if (metricasPorLocal[local].usuarios[usuarioChave]) {
+        // Se o usuário já existe no local, apenas incrementar os itens lidos
+        metricasPorLocal[local].usuarios[usuarioChave]++;
       } else {
-        metricasPorLocal[local].usuarios.set(usuario, 1);
+        // Se for a primeira vez do usuário no local, adicionar com 1 item lido
+        metricasPorLocal[local].usuarios[usuarioChave] = 1;
       }
     }
   }
@@ -1432,12 +1473,13 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
   const locaisLeitura = {};
   for (const [local, valores] of Object.entries(metricasPorLocal)) {
     // Percentual baseado em itensValidos (e não no total)
+    // Os usuários já estão no formato correto: { "Nome do Usuário": quantidade }
     locaisLeitura[local] = {
       total: valores.total,
       itensValidos: valores.itensValidos,
       lidos: valores.lidos,
       percentual: valores.itensValidos > 0 ? (valores.lidos / valores.itensValidos) * 100 : 0,
-      usuarios: Object.fromEntries(valores.usuarios), // Converter Map para objeto
+      usuarios: valores.usuarios,
     };
   }
 
