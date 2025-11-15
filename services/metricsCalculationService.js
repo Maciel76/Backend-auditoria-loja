@@ -1380,23 +1380,37 @@ class MetricsCalculationService {
 
         // Calcular valores derivados e percentuais
         Object.values(tiposAuditoria).forEach(tipo => {
-          // Calcular itensValidos: [Atualizado] + [Não lidos com estoque] + [Lido sem estoque]
-          tipo.itensValidos = tipo.itensAtualizados + tipo.itensNaolidos + tipo.itensLidosemestoque;
+          // Calcular itensValidos: [Atualizado] + [Desatualizado] + [Não lidos com estoque] - PARA ETIQUETAS
+          // Para etiquetas: itens válidos são aqueles que foram processados ou poderiam ser processados
+          if (tipo.hasOwnProperty('itensDesatualizado')) {
+            // Para etiquetas: itens atualizados + desatualizados + não lidos com estoque
+            tipo.itensValidos = tipo.itensAtualizados + tipo.itensDesatualizado + tipo.itensNaolidos;
+          } else {
+            // Para outros tipos (rupturas, presencas): itens lidos (já calculado anteriormente)
+            tipo.itensValidos = tipo.itensLidos;
+          }
 
           if (tipo.itensValidos > 0) {
-            tipo.percentualConclusao = Math.round((tipo.itensAtualizados / tipo.itensValidos) * 100);
+            if (tipo.hasOwnProperty('itensDesatualizado')) {
+              // Para etiquetas: percentual = (itens atualizados + itens desatualizados) / itens validos
+              const itensLidosEtiquetas = tipo.itensAtualizados + tipo.itensDesatualizado;
+              tipo.percentualConclusao = (itensLidosEtiquetas / tipo.itensValidos) * 100;
+            } else {
+              // Para outros tipos: percentual = itens atualizados / itens validos
+              tipo.percentualConclusao = (tipo.itensAtualizados / tipo.itensValidos) * 100;
+            }
             tipo.percentualRestante = 100 - tipo.percentualConclusao;
           } else if (tipo.totalItens > 0) {
-            tipo.percentualConclusao = Math.round((tipo.itensAtualizados / tipo.totalItens) * 100);
+            tipo.percentualConclusao = (tipo.itensAtualizados / tipo.totalItens) * 100;
             tipo.percentualRestante = 100 - tipo.percentualConclusao;
           }
 
           if (tipo.custoTotalRuptura && tipo.totalItens > 0) {
-            tipo.custoMedioRuptura = Math.round(tipo.custoTotalRuptura / tipo.totalItens);
+            tipo.custoMedioRuptura = tipo.custoTotalRuptura / tipo.totalItens;
           }
 
           if (tipo.presencasConfirmadas !== undefined && tipo.totalItens > 0) {
-            tipo.percentualPresenca = Math.round((tipo.presencasConfirmadas / tipo.totalItens) * 100);
+            tipo.percentualPresenca = (tipo.presencasConfirmadas / tipo.totalItens) * 100;
           }
 
           // Converter Set para number

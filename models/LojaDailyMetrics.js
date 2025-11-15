@@ -12,8 +12,8 @@ const metricasEtiquetasSchema = new mongoose.Schema({
   itensLidosemestoque: { type: Number, default: 0 }, // Situação: Lido sem estoque
   itensNlidocomestoque: { type: Number, default: 0 }, // Situação: Não lidos com estoque
   itensSemestoque: { type: Number, default: 0 }, // Situação: Sem Estoque
-  percentualConclusao: { type: Number, default: 0 }, // % de conclusão
-  percentualRestante: { type: Number, default: 0 }, // % restante
+  percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensValidos) * 100
+  percentualRestante: { type: Number, default: 0 }, // % restante = 100 - percentualConclusao
   usuariosAtivos: { type: Number, default: 0 }, // Usuários únicos
 
   // Contadores específicos de etiquetas
@@ -102,8 +102,8 @@ const metricasRupturasSchema = new mongoose.Schema({
   totalItens: { type: Number, default: 0 },
   itensLidos: { type: Number, default: 0 },
   itensAtualizados: { type: Number, default: 0 }, // Com Presença e com Estoque
-  percentualConclusao: { type: Number, default: 0 },
-  percentualRestante: { type: Number, default: 0 },
+  percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensLidos) * 100
+  percentualRestante: { type: Number, default: 0 }, // % restante = 100 - percentualConclusao
   custoTotalRuptura: { type: Number, default: 0 },
   rupturasCriticas: { type: Number, default: 0 },
   usuariosAtivos: { type: Number, default: 0 },
@@ -194,8 +194,8 @@ const metricasPresencasSchema = new mongoose.Schema({
   totalItens: { type: Number, default: 0 },
   itensLidos: { type: Number, default: 0 },
   itensAtualizados: { type: Number, default: 0 },
-  percentualConclusao: { type: Number, default: 0 },
-  percentualRestante: { type: Number, default: 0 },
+  percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensLidos) * 100
+  percentualRestante: { type: Number, default: 0 }, // % restante = 100 - percentualConclusao
   presencasConfirmadas: { type: Number, default: 0 },
   percentualPresenca: { type: Number, default: 0 },
   usuariosAtivos: { type: Number, default: 0 },
@@ -512,11 +512,10 @@ lojaDailyMetricsSchema.methods.atualizarTotais = function () {
     this.rupturas.itensAtualizados +
     this.presencas.itensAtualizados;
 
-  // Calcular percentual usando itensValidos como base
+  // Calcular percentual usando itensLidos como base
   if (this.totais.itensLidos > 0) {
-    this.totais.percentualConclusaoGeral = Math.round(
-      (this.totais.itensAtualizados / this.totais.itensLidos) * 100
-    );
+    this.totais.percentualConclusaoGeral =
+      (this.totais.itensAtualizados / this.totais.itensLidos) * 100;
   }
 
   // Calcular usuários ativos únicos (somar em vez de usar max)
@@ -579,17 +578,24 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
       situacaoMap.get("Não lidos com estoque") || 0;
     this.etiquetas.itensSemestoque = situacaoMap.get("Sem Estoque") || 0;
 
-    // Calcular itens válidos
+    // Calcular itens válidos (itens que podem ser processados)
+    // Itens válidos são aqueles que foram:
+    // - Atualizados (itens com situação "Atualizado")
+    // - Desatualizados (itens lidos mas marcados como desatualizados)
+    // - Não lidos com estoque (itens não lidos mas com estoque no sistema)
     this.etiquetas.itensValidos =
       this.etiquetas.itensAtualizados +
-      this.etiquetas.itensNaolidos +
-      this.etiquetas.itensLidosemestoque;
+      this.etiquetas.itensDesatualizado +
+      this.etiquetas.itensNaolidos;
 
-    // Calcular percentuais
+    // Calcular percentuais (SEM ARREDONDAMENTO)
+    // Percentual de conclusão = (itens lidos / itens válidos) * 100
+    // Itens lidos = itens atualizados + itens desatualizados
+    // Percentual restante = 100 - percentualConclusao (garante soma exata de 100%)
     if (this.etiquetas.itensValidos > 0) {
-      this.etiquetas.percentualConclusao = Math.round(
-        (this.etiquetas.itensAtualizados / this.etiquetas.itensValidos) * 100
-      );
+      // Para etiquetas: itens lidos = itens atualizados + itens desatualizados
+      const itensLidosEtiquetas = this.etiquetas.itensAtualizados + this.etiquetas.itensDesatualizado;
+      this.etiquetas.percentualConclusao = (itensLidosEtiquetas / this.etiquetas.itensValidos) * 100;
     }
     this.etiquetas.percentualRestante =
       100 - this.etiquetas.percentualConclusao;
@@ -618,10 +624,12 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
       (a) => a.situacao !== "Não lido"
     ).length;
 
+    // Calcular percentual (SEM ARREDONDAMENTO)
+    // Percentual de conclusão = (itens atualizados / itens lidos) * 100
+    // Percentual restante = 100 - percentualConclusao (garante soma exata de 100%)
     if (this.rupturas.itensLidos > 0) {
-      this.rupturas.percentualConclusao = Math.round(
-        (this.rupturas.itensAtualizados / this.rupturas.itensLidos) * 100
-      );
+      this.rupturas.percentualConclusao =
+        (this.rupturas.itensAtualizados / this.rupturas.itensLidos) * 100;
     }
     this.rupturas.percentualRestante = 100 - this.rupturas.percentualConclusao;
     this.rupturas.usuariosAtivos = usuariosUnicos.size;
@@ -648,10 +656,12 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
     ).length;
     this.presencas.presencasConfirmadas = this.presencas.itensAtualizados;
 
+    // Calcular percentual (SEM ARREDONDAMENTO)
+    // Percentual de conclusão = (itens atualizados / itens lidos) * 100
+    // Percentual restante = 100 - percentualConclusao (garante soma exata de 100%)
     if (this.presencas.itensLidos > 0) {
-      this.presencas.percentualConclusao = Math.round(
-        (this.presencas.itensAtualizados / this.presencas.itensLidos) * 100
-      );
+      this.presencas.percentualConclusao =
+        (this.presencas.itensAtualizados / this.presencas.itensLidos) * 100;
       this.presencas.percentualPresenca = this.presencas.percentualConclusao;
     }
     this.presencas.percentualRestante =

@@ -8,7 +8,7 @@ const metricasEtiquetasSchema = new mongoose.Schema({
   itensDesatualizado: { type: Number, default: 0 },
   itensSemEstoque: { type: Number, default: 0 },
   itensNaopertence: { type: Number, default: 0 },
-  percentualConclusao: { type: Number, default: 0 },
+  percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensLidos) * 100
 
   // Contadores específicos de etiquetas
   contadorClasses: {
@@ -98,7 +98,7 @@ const metricasRupturasSchema = new mongoose.Schema({
   itensDesatualizado: { type: Number, default: 0 },
   itensSemEstoque: { type: Number, default: 0 },
   itensNaopertence: { type: Number, default: 0 },
-  percentualConclusao: { type: Number, default: 0 },
+  percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensLidos) * 100
   custoTotalRuptura: { type: Number, default: 0 },
   custoMedioRuptura: { type: Number, default: 0 },
 
@@ -190,7 +190,7 @@ const metricasPresencasSchema = new mongoose.Schema({
   itensDesatualizado: { type: Number, default: 0 },
   itensSemEstoque: { type: Number, default: 0 },
   itensNaopertence: { type: Number, default: 0 },
-  percentualConclusao: { type: Number, default: 0 },
+  percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensLidos) * 100
   presencasConfirmadas: { type: Number, default: 0 },
   percentualPresenca: { type: Number, default: 0 },
 
@@ -537,11 +537,10 @@ userDailyMetricsSchema.methods.atualizarTotais = function () {
     (this.metricas.presencas?.itensAtualizados || 0);
 
   if (this.metricas.totais.totalItens > 0) {
-    this.metricas.totais.percentualConclusaoGeral = Math.round(
+    this.metricas.totais.percentualConclusaoGeral =
       (this.metricas.totais.itensAtualizados /
         this.metricas.totais.totalItens) *
-        100
-    );
+        100;
   }
 
   this.metricas.totais.pontuacaoTotal = this.calcularPontuacaoTotal();

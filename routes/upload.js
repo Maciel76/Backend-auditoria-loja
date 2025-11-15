@@ -2133,17 +2133,17 @@ async function atualizarUserDailyMetrics(loja, dataMetricas, tipoAuditoria) {
           }
         );
 
-        // Calcular percentuais
+        // Calcular percentuais (SEM ARREDONDAMENTO)
         dados.etiquetas.percentualConclusao = dados.etiquetas.totalItens > 0
-          ? Math.round((dados.etiquetas.itensAtualizados / dados.etiquetas.totalItens) * 100) : 0;
+          ? (dados.etiquetas.itensAtualizados / dados.etiquetas.totalItens) * 100 : 0;
         dados.rupturas.percentualConclusao = dados.rupturas.totalItens > 0
-          ? Math.round((dados.rupturas.itensAtualizados / dados.rupturas.totalItens) * 100) : 0;
+          ? (dados.rupturas.itensAtualizados / dados.rupturas.totalItens) * 100 : 0;
         dados.rupturas.custoMedioRuptura = dados.rupturas.totalItens > 0
           ? dados.rupturas.custoTotalRuptura / dados.rupturas.totalItens : 0;
         dados.presencas.percentualConclusao = dados.presencas.totalItens > 0
-          ? Math.round((dados.presencas.itensAtualizados / dados.presencas.totalItens) * 100) : 0;
+          ? (dados.presencas.itensAtualizados / dados.presencas.totalItens) * 100 : 0;
         dados.presencas.percentualPresenca = dados.presencas.totalItens > 0
-          ? Math.round((dados.presencas.presencasConfirmadas / dados.presencas.totalItens) * 100) : 0;
+          ? (dados.presencas.presencasConfirmadas / dados.presencas.totalItens) * 100 : 0;
 
         // CORREÇÃO: Buscar TODAS as auditorias do usuário nesta data para calcular contadores completos
         const todasAuditorias = auditorias.filter(aud => aud.usuarioId === dados.usuarioId);
@@ -2198,17 +2198,17 @@ async function atualizarUserDailyMetrics(loja, dataMetricas, tipoAuditoria) {
           }
         }
 
-        // Calcular percentuais finais
+        // Calcular percentuais finais (SEM ARREDONDAMENTO)
         metricasCompletas.etiquetas.percentualConclusao = metricasCompletas.etiquetas.totalItens > 0
-          ? Math.round((metricasCompletas.etiquetas.itensAtualizados / metricasCompletas.etiquetas.totalItens) * 100) : 0;
+          ? (metricasCompletas.etiquetas.itensAtualizados / metricasCompletas.etiquetas.totalItens) * 100 : 0;
         metricasCompletas.rupturas.percentualConclusao = metricasCompletas.rupturas.totalItens > 0
-          ? Math.round((metricasCompletas.rupturas.itensAtualizados / metricasCompletas.rupturas.totalItens) * 100) : 0;
+          ? (metricasCompletas.rupturas.itensAtualizados / metricasCompletas.rupturas.totalItens) * 100 : 0;
         metricasCompletas.rupturas.custoMedioRuptura = metricasCompletas.rupturas.totalItens > 0
           ? metricasCompletas.rupturas.custoTotalRuptura / metricasCompletas.rupturas.totalItens : 0;
         metricasCompletas.presencas.percentualConclusao = metricasCompletas.presencas.totalItens > 0
-          ? Math.round((metricasCompletas.presencas.itensAtualizados / metricasCompletas.presencas.totalItens) * 100) : 0;
+          ? (metricasCompletas.presencas.itensAtualizados / metricasCompletas.presencas.totalItens) * 100 : 0;
         metricasCompletas.presencas.percentualPresenca = metricasCompletas.presencas.totalItens > 0
-          ? Math.round((metricasCompletas.presencas.presencasConfirmadas / metricasCompletas.presencas.totalItens) * 100) : 0;
+          ? (metricasCompletas.presencas.presencasConfirmadas / metricasCompletas.presencas.totalItens) * 100 : 0;
 
         // Agora SEMPRE atualizar todos os tipos com métricas completas + contadores
         userDailyMetrics.metricas.etiquetas = {
