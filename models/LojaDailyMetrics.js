@@ -4,77 +4,92 @@ import mongoose from "mongoose";
 // Schema para contadores de leitura por classe de produto
 const classesLeituraSchema = new mongoose.Schema({
   "A CLASSIFICAR": {
-    total: { type: Number, default: 0 },  // Total itens da classe
+    total: { type: Number, default: 0 },  // Total itens da classe (todos)
+    itensValidos: { type: Number, default: 0 },  // Itens válidos da classe (excluindo "Sem Estoque")
     lidos: { type: Number, default: 0 },  // Quantidade de itens lidos (atualizados + desatualizado + nao_pertence)
-    percentual: { type: Number, default: 0 }, // Percentual (lidos/total)
+    percentual: { type: Number, default: 0 }, // Percentual (lidos/itensValidos)
   },
   "ALTO GIRO": {
     total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
   },
   BAZAR: {
     total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
   },
   DIVERSOS: {
     total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
   },
   DPH: {
     total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
   },
   FLV: {
     total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
   },
   "LATICINIOS 1": {
     total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
   },
   LIQUIDA: {
     total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
   },
   "PERECIVEL 1": {
     total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
   },
   "PERECIVEL 2": {
     total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
   },
   "PERECIVEL 2 B": {
     total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
   },
   "PERECIVEL 3": {
     total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
   },
   "SECA DOCE": {
     total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
   },
   "SECA SALGADA": {
     total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
   },
   "SECA SALGADA 2": {
     total: { type: Number, default: 0 },
+    itensValidos: { type: Number, default: 0 },
     lidos: { type: Number, default: 0 },
     percentual: { type: Number, default: 0 },
   },
@@ -793,21 +808,21 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
 
   // Inicializar objeto para armazenar métricas por classe
   const metricasPorClasse = {
-    "A CLASSIFICAR": { total: 0, lidos: 0 },
-    "ALTO GIRO": { total: 0, lidos: 0 },
-    BAZAR: { total: 0, lidos: 0 },
-    DIVERSOS: { total: 0, lidos: 0 },
-    DPH: { total: 0, lidos: 0 },
-    FLV: { total: 0, lidos: 0 },
-    "LATICINIOS 1": { total: 0, lidos: 0 },
-    LIQUIDA: { total: 0, lidos: 0 },
-    "PERECIVEL 1": { total: 0, lidos: 0 },
-    "PERECIVEL 2": { total: 0, lidos: 0 },
-    "PERECIVEL 2 B": { total: 0, lidos: 0 },
-    "PERECIVEL 3": { total: 0, lidos: 0 },
-    "SECA DOCE": { total: 0, lidos: 0 },
-    "SECA SALGADA": { total: 0, lidos: 0 },
-    "SECA SALGADA 2": { total: 0, lidos: 0 },
+    "A CLASSIFICAR": { total: 0, itensValidos: 0, lidos: 0 },
+    "ALTO GIRO": { total: 0, itensValidos: 0, lidos: 0 },
+    BAZAR: { total: 0, itensValidos: 0, lidos: 0 },
+    DIVERSOS: { total: 0, itensValidos: 0, lidos: 0 },
+    DPH: { total: 0, itensValidos: 0, lidos: 0 },
+    FLV: { total: 0, itensValidos: 0, lidos: 0 },
+    "LATICINIOS 1": { total: 0, itensValidos: 0, lidos: 0 },
+    LIQUIDA: { total: 0, itensValidos: 0, lidos: 0 },
+    "PERECIVEL 1": { total: 0, itensValidos: 0, lidos: 0 },
+    "PERECIVEL 2": { total: 0, itensValidos: 0, lidos: 0 },
+    "PERECIVEL 2 B": { total: 0, itensValidos: 0, lidos: 0 },
+    "PERECIVEL 3": { total: 0, itensValidos: 0, lidos: 0 },
+    "SECA DOCE": { total: 0, itensValidos: 0, lidos: 0 },
+    "SECA SALGADA": { total: 0, itensValidos: 0, lidos: 0 },
+    "SECA SALGADA 2": { total: 0, itensValidos: 0, lidos: 0 },
   };
 
   // Processar cada auditoria
@@ -818,20 +833,31 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
 
     // Verificar se a classe está no objeto de métricas
     if (metricasPorClasse.hasOwnProperty(classe)) {
-      // Incrementar total
+      const situacao = auditoria.situacao || auditoria.Situacao;
+
+      // Incrementar total (todos os itens)
       metricasPorClasse[classe].total++;
 
-      // Verificar se o item foi lido (qualquer situação exceto "Não lido")
-      if (auditoria.situacao && auditoria.situacao !== "Não lido") {
-        // Considerar como "lido" se for uma das situações de leitura
-        // Atualizado, Desatualizado, Lido não pertence são situações onde o item foi lido
-        if (
-          auditoria.situacao === "Atualizado" ||
-          auditoria.situacao === "Desatualizado" ||
-          auditoria.situacao === "Lido não pertence"
-        ) {
-          metricasPorClasse[classe].lidos++;
-        }
+      // Incrementar itens válidos (seguindo mesma lógica de etiquetas.itensValidos)
+      // Itens válidos = Atualizado + Desatualizado + Não lidos com estoque + Lido não pertence
+      // EXCLUINDO: "Sem Estoque" e "Lido sem estoque"
+      if (
+        situacao === "Atualizado" ||
+        situacao === "Desatualizado" ||
+        situacao === "Não lidos com estoque" ||
+        situacao === "Lido não pertence"
+      ) {
+        metricasPorClasse[classe].itensValidos++;
+      }
+
+      // Incrementar itens lidos
+      // Itens lidos = Atualizado + Desatualizado + Lido não pertence
+      if (
+        situacao === "Atualizado" ||
+        situacao === "Desatualizado" ||
+        situacao === "Lido não pertence"
+      ) {
+        metricasPorClasse[classe].lidos++;
       }
     }
   }
@@ -839,10 +865,12 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
   // Calcular percentuais e atualizar o campo correspondente
   const classesLeitura = {};
   for (const [classe, valores] of Object.entries(metricasPorClasse)) {
+    // Percentual baseado em itensValidos (e não no total)
     classesLeitura[classe] = {
       total: valores.total,
+      itensValidos: valores.itensValidos,
       lidos: valores.lidos,
-      percentual: valores.total > 0 ? (valores.lidos / valores.total) * 100 : 0,
+      percentual: valores.itensValidos > 0 ? (valores.lidos / valores.itensValidos) * 100 : 0,
     };
   }
 

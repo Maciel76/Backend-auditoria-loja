@@ -3,6 +3,7 @@ import MetricasUsuario from "../models/MetricasUsuario.js";
 import MetricasLoja from "../models/MetricasLoja.js";
 import MetricasAuditoria from "../models/MetricasAuditoria.js";
 import MetricasGlobais from "../models/MetricasGlobais.js";
+import LojaDailyMetrics from "../models/LojaDailyMetrics.js";
 import metricsCalculationService from "../services/metricsCalculationService.js";
 
 // Helper function to access static method
@@ -299,7 +300,407 @@ router.get("/lojas/ranking", async (req, res) => {
   }
 });
 
-// Comparar múltiplas lojas
+// ===== ROTAS DE MÉTRICAS DIÁRIAS DE LOJA (LojaDailyMetrics) =====
+
+// Obter métricas diárias da loja atual
+router.get("/loja-daily", verificarLojaObrigatoria, async (req, res) => {
+  try {
+    const { data = new Date().toISOString().split('T')[0], tipoAuditoria = 'etiquetas' } = req.query;
+
+    // Converter string para Date
+    const dataEspecifica = new Date(data);
+
+    // Ajustar para o início e fim do dia
+    const dataInicio = new Date(dataEspecifica);
+    dataInicio.setHours(0, 0, 0, 0);
+    const dataFim = new Date(dataEspecifica);
+    dataFim.setHours(23, 59, 59, 999);
+
+    // Buscar métricas diárias para a loja e data específica
+    const metricas = await LojaDailyMetrics.findOne({
+      loja: req.loja._id,
+      dataInicio: { $gte: dataInicio, $lt: dataFim },
+    }).populate('loja', 'codigo nome regiao');
+
+    if (!metricas) {
+      return res.json({
+        loja: {
+          codigo: req.loja.codigo,
+          nome: req.loja.nome,
+          regiao: req.loja.regiao,
+        },
+        data: dataEspecifica,
+        tipoAuditoria,
+        metricas: null,
+        mensagem: "Sem dados para exibir. Faça upload de uma planilha para visualizar as métricas."
+      });
+    }
+
+    // Retornar os dados específicos por tipo de auditoria
+    const dadosTipoAuditoria = metricas[tipoAuditoria] || {};
+
+    // Formatar a resposta para o componente MetricasSetor.vue
+    const resposta = {
+      usuarioId: req.usuario?.id || "anonimo", // Poderia vir do middleware
+      loja: req.loja._id,
+      lojaNome: req.loja.nome,
+      metricas: {
+        data: dataEspecifica,
+        etiquetas: metricas.etiquetas,
+        rupturas: metricas.rupturas,
+        presencas: metricas.presencas,
+        totais: metricas.totais,
+      },
+    };
+
+    res.json(resposta);
+
+  } catch (error) {
+    console.error('Erro ao buscar métricas diárias da loja:', error);
+    res.status(500).json({
+      erro: "Falha ao buscar métricas diárias da loja",
+      detalhes: error.message
+    });
+  }
+});
+
+// Obter métricas por classe de produto (dados para MetricasSetor.vue)
+router.get("/loja-daily/classes", verificarLojaObrigatoria, async (req, res) => {
+  try {
+    const { data = new Date().toISOString().split('T')[0], tipoAuditoria = 'etiquetas' } = req.query;
+
+    // Converter string para Date
+    const dataEspecifica = new Date(data);
+
+    // Ajustar para o início e fim do dia
+    const dataInicio = new Date(dataEspecifica);
+    dataInicio.setHours(0, 0, 0, 0);
+    const dataFim = new Date(dataEspecifica);
+    dataFim.setHours(23, 59, 59, 999);
+
+    // Buscar métricas diárias para a loja e data específica
+    const metricas = await LojaDailyMetrics.findOne({
+      loja: req.loja._id,
+      dataInicio: { $gte: dataInicio, $lt: dataFim },
+    });
+
+    if (!metricas) {
+      return res.json({
+        loja: req.loja.nome,
+        data: dataEspecifica,
+        tipoAuditoria,
+        classesLeitura: {},
+        mensagem: "Nenhuma métrica diária encontrada para esta data",
+      });
+    }
+
+    // Retornar apenas os dados de classesLeitura
+    const dadosTipoAuditoria = metricas[tipoAuditoria] || {};
+    const classesLeitura = dadosTipoAuditoria.classesLeitura || {};
+
+    res.json({
+      loja: req.loja.nome,
+      data: dataEspecifica,
+      tipoAuditoria,
+      classesLeitura,
+      resumo: {
+        totalItens: dadosTipoAuditoria.totalItens || 0,
+        itensLidos: dadosTipoAuditoria.itensValidos || dadosTipoAuditoria.itensLidos || 0,
+        percentualConclusao: dadosTipoAuditoria.percentualConclusao || 0,
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar métricas por classe:', error);
+    res.status(500).json({
+      erro: "Falha ao buscar métricas por classe",
+      detalhes: error.message
+    });
+  }
+});
+
+// Obter histórico de métricas diárias da loja
+router.get("/loja-daily/historico", verificarLojaObrigatoria, async (req, res) => {
+  try {
+    const {
+      dataInicio: dataInicioQuery,
+      dataFim: dataFimQuery,
+      limite = 30
+    } = req.query;
+
+    const dataInicio = dataInicioQuery ? new Date(dataInicioQuery) : new Date();
+    const dataFim = dataFimQuery ? new Date(dataFimQuery) : new Date();
+
+    const historico = await LojaDailyMetrics.find({
+      loja: req.loja._id,
+      data: { $gte: dataInicio, $lte: dataFim },
+    })
+    .sort({ data: -1 })
+    .limit(parseInt(limite));
+
+    res.json({
+      loja: req.loja.nome,
+      periodo: {
+        dataInicio: dataInicio,
+        dataFim: dataFim,
+      },
+      historico: historico.map(m => ({
+        data: m.data,
+        etiquetas: m.etiquetas,
+        rupturas: m.rupturas,
+        presencas: m.presencas,
+        totais: m.totais,
+        ranking: m.ranking,
+        ultimaAtualizacao: m.ultimaAtualizacao,
+      })),
+      totalDias: historico.length,
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar histórico de métricas diárias:', error);
+    res.status(500).json({
+      erro: "Falha ao buscar histórico de métricas diárias",
+      detalhes: error.message
+    });
+  }
+});
+
+// Obter ranking diário de lojas (similar ao existente mas com mais detalhes)
+router.get("/lojas-daily-ranking", async (req, res) => {
+  try {
+    const {
+      data: dataQuery,
+      limite = 50,
+      regiao
+    } = req.query;
+
+    const dataEspecifica = dataQuery ? new Date(dataQuery) : new Date();
+    // Ajustar para o início e fim do dia
+    const dataInicio = new Date(dataEspecifica);
+    dataInicio.setHours(0, 0, 0, 0);
+    const dataFim = new Date(dataEspecifica);
+    dataFim.setHours(23, 59, 59, 999);
+
+    // Buscar todas as lojas com métricas diárias para a data específica
+    const ranking = await LojaDailyMetrics.find({
+      dataInicio: { $gte: dataInicio, $lt: dataFim },
+    })
+      .populate("loja", "codigo nome cidade regiao")
+      .sort({ "ranking.pontuacaoTotal": -1 })
+      .limit(parseInt(limite));
+
+    // Filtrar por região se especificado
+    let rankingFiltrado = ranking;
+    if (regiao && regiao !== 'todas') {
+      rankingFiltrado = ranking.filter(loja => loja.loja?.regiao === regiao);
+    }
+
+    const rankingFormatado = rankingFiltrado.map((item, index) => ({
+      posicao: index + 1,
+      loja: {
+        codigo: item.loja?.codigo || 'N/A',
+        nome: item.loja?.nome || 'N/A',
+        cidade: item.loja?.cidade || 'N/A',
+        regiao: item.loja?.regiao || 'N/A',
+      },
+      pontuacao: item.ranking?.pontuacaoTotal || 0,
+      notaQualidade: item.ranking?.notaQualidade || 0,
+      eficienciaOperacional: item.ranking?.eficienciaOperacional || 0,
+
+      // Totais consolidados
+      totalItens: item.totais?.totalItens || 0,
+      percentualConclusao: item.totais?.percentualConclusaoGeral || 0,
+      usuariosAtivos: item.totais?.usuariosAtivos || 0,
+
+      // Dados por tipo - diretamente do modelo
+      etiquetas: item.etiquetas || {},
+      rupturas: item.rupturas || {},
+      presencas: item.presencas || {},
+
+      // Outros dados
+      alertas: item.alertas?.length || 0,
+      locaisComProblemas: item.locaisEstatisticas?.filter(l =>
+        l.prioridadeAtencao === 'alta' || l.prioridadeAtencao === 'critica'
+      ).length || 0,
+      ultimaAtualizacao: item.ultimaAtualizacao,
+    }));
+
+    res.json({
+      data: dataEspecifica,
+      regiao: regiao || 'todas',
+      ranking: rankingFormatado,
+      totalLojas: rankingFormatado.length,
+      resumo: {
+        melhorLoja: rankingFormatado[0] || null,
+        mediaItens: rankingFormatado.length > 0 ? Math.round(rankingFormatado.reduce((acc, l) => acc + l.totalItens, 0) / rankingFormatado.length) : 0,
+        mediaEficiencia: rankingFormatado.length > 0 ? Math.round(rankingFormatado.reduce((acc, l) => acc + l.percentualConclusao, 0) / rankingFormatado.length) : 0,
+        totalUsuariosAtivos: rankingFormatado.reduce((acc, l) => acc + l.usuariosAtivos, 0),
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar ranking LojaDailyMetrics:', error);
+    res.status(500).json({
+      erro: "Falha ao buscar ranking de lojas diárias",
+      detalhes: error.message
+    });
+  }
+});
+
+// Obter ranking de lojas usando LojaDailyMetrics com mais detalhes por classe
+router.get("/lojas-daily-ranking-classes", async (req, res) => {
+  try {
+    const { data: dataQuery, tipoAuditoria = 'etiquetas' } = req.query;
+
+    const dataEspecifica = dataQuery ? new Date(dataQuery) : new Date();
+    // Ajustar para o início e fim do dia
+    const dataInicio = new Date(dataEspecifica);
+    dataInicio.setHours(0, 0, 0, 0);
+    const dataFim = new Date(dataEspecifica);
+    dataFim.setHours(23, 59, 59, 999);
+
+    // Buscar todas as lojas com métricas diárias para a data específica
+    const ranking = await LojaDailyMetrics.find({
+      dataInicio: { $gte: dataInicio, $lt: dataFim },
+    })
+      .populate("loja", "codigo nome cidade regiao")
+      .sort({ "ranking.pontuacaoTotal": -1 });
+
+    const rankingPorClasses = ranking.map((item, index) => {
+      const dadosTipo = item[tipoAuditoria] || {};
+      const classesLeitura = dadosTipo.classesLeitura || {};
+
+      return {
+        posicao: index + 1,
+        loja: {
+          codigo: item.loja?.codigo || 'N/A',
+          nome: item.loja?.nome || 'N/A',
+          cidade: item.loja?.cidade || 'N/A',
+          regiao: item.loja?.regiao || 'N/A',
+        },
+        pontuacao: item.ranking?.pontuacaoTotal || 0,
+        tipoAuditoria: tipoAuditoria,
+        classesLeitura: classesLeitura,
+        totalItens: dadosTipo.totalItens || 0,
+        percentualConclusao: dadosTipo.percentualConclusao || 0,
+        usuariosAtivos: dadosTipo.usuariosAtivos || 0,
+      };
+    });
+
+    res.json({
+      data: dataEspecifica,
+      tipoAuditoria: tipoAuditoria,
+      ranking: rankingPorClasses,
+      totalLojas: rankingPorClasses.length,
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar ranking LojaDailyMetrics por classes:', error);
+    res.status(500).json({
+      erro: "Falha ao buscar ranking de lojas diárias por classes",
+      detalhes: error.message
+    });
+  }
+});
+
+// Função auxiliar para gerar dados fakes (quando não há dados reais)
+function gerarDadosFakes(nomeLoja, tipoAuditoria = 'etiquetas') {
+  const classes = [
+    "A CLASSIFICAR", "ALTO GIRO", "BAZAR", "DIVERSOS", "DPH", "FLV",
+    "LATICINIOS 1", "LIQUIDA", "PERECIVEL 1", "PERECIVEL 2", "PERECIVEL 2 B",
+    "PERECIVEL 3", "SECA DOCE", "SECA SALGADA", "SECA SALGADA 2"
+  ];
+
+  const dadosFake = {
+    usuarioId: "2692473",
+    loja: "68f866ee22514096fd4c3295",
+    lojaNome: nomeLoja,
+    metricas: {
+      data: new Date().toISOString(),
+      etiquetas: {
+        totalItens: 1301,
+        itensValidos: 1200,
+        itensLidos: 1200,
+        itensAtualizados: 1000,
+        itensDesatualizado: 150,
+        itensNaopertence: 50,
+        percentualConclusao: 92,
+        percentualDesatualizado: 12.5,
+        usuariosAtivos: 8,
+        classesLeitura: {},
+        contadorClasses: {},
+      },
+      rupturas: {
+        totalItens: 0,
+        itensLidos: 0,
+        itensAtualizados: 0,
+        percentualConclusao: 0,
+        custoTotalRuptura: 0,
+        usuariosAtivos: 0,
+        classesLeitura: {},
+        contadorClasses: {},
+      },
+      presencas: {
+        totalItens: 0,
+        itensLidos: 0,
+        itensAtualizados: 0,
+        percentualConclusao: 0,
+        presencasConfirmadas: 0,
+        percentualPresenca: 0,
+        usuariosAtivos: 0,
+        classesLeitura: {},
+        contadorClasses: {},
+      },
+      totais: {
+        totalItens: 1301,
+        itensLidos: 1200,
+        itensAtualizados: 1000,
+        percentualConclusaoGeral: 92,
+        usuariosTotais: 15,
+        usuariosAtivos: 8,
+        planilhasProcessadas: 5,
+      },
+    },
+  };
+
+  // Preencher classesLeitura com dados fakes FIXOS (não aleatórios)
+  // Dados baseados em uma planilha real média
+  const dadosFixosPorClasse = {
+    "A CLASSIFICAR": { total: 71, itensValidos: 64, lidos: 58 },
+    "ALTO GIRO": { total: 446, itensValidos: 400, lidos: 350 },
+    "BAZAR": { total: 2643, itensValidos: 2400, lidos: 2100 },
+    "DIVERSOS": { total: 7, itensValidos: 6, lidos: 5 },
+    "DPH": { total: 3376, itensValidos: 3100, lidos: 2800 },
+    "FLV": { total: 62, itensValidos: 56, lidos: 50 },
+    "LATICINIOS 1": { total: 432, itensValidos: 390, lidos: 340 },
+    "LIQUIDA": { total: 1249, itensValidos: 1150, lidos: 1000 },
+    "PERECIVEL 1": { total: 611, itensValidos: 550, lidos: 480 },
+    "PERECIVEL 2": { total: 823, itensValidos: 750, lidos: 650 },
+    "PERECIVEL 2 B": { total: 42, itensValidos: 38, lidos: 33 },
+    "PERECIVEL 3": { total: 154, itensValidos: 140, lidos: 120 },
+    "SECA DOCE": { total: 2719, itensValidos: 2500, lidos: 2200 },
+    "SECA SALGADA": { total: 879, itensValidos: 800, lidos: 700 },
+    "SECA SALGADA 2": { total: 284, itensValidos: 260, lidos: 230 },
+  };
+
+  for (const classe of classes) {
+    const dados = dadosFixosPorClasse[classe] || { total: 100, itensValidos: 90, lidos: 75 };
+    const percentual = dados.itensValidos > 0 ? (dados.lidos / dados.itensValidos) * 100 : 0;
+
+    dadosFake.metricas[tipoAuditoria].classesLeitura[classe] = {
+      total: dados.total,
+      itensValidos: dados.itensValidos,
+      lidos: dados.lidos,
+      percentual: Math.round(percentual * 100) / 100,
+    };
+
+    dadosFake.metricas[tipoAuditoria].contadorClasses[classe] = dados.lidos;
+  }
+
+  return dadosFake;
+}
+
+// Obter ranking geral de lojas (apenas para usuários com acesso global)
 router.post("/lojas/comparar", async (req, res) => {
   try {
     const { lojasCodigos, periodo = "mensal", data } = req.body;
