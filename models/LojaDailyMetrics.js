@@ -732,13 +732,14 @@ const metricasRupturasSchema = new mongoose.Schema({
 // Schema para métricas de presenças
 const metricasPresencasSchema = new mongoose.Schema({
   totalItens: { type: Number, default: 0 },
-  itensLidos: { type: Number, default: 0 },
-  itensAtualizados: { type: Number, default: 0 },
-  percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensLidos) * 100
+  itensValidos: { type: Number, default: 0 }, // [Sem Presença e Com Estoque] + [Com Presença e Com Estoque]
+  itensNaoLidos: { type: Number, default: 0 }, // [Sem Presença e Com Estoque]
+  itensAtualizados: { type: Number, default: 0 }, // [Com Presença e Com Estoque]
+  percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensValidos) * 100
   percentualRestante: { type: Number, default: 0 }, // % restante = 100 - percentualConclusao
-  percentualDesatualizado: { type: Number, default: 0 }, // % presencas desatualizadas (não aplicável na maioria dos casos)
-  presencasConfirmadas: { type: Number, default: 0 },
-  percentualPresenca: { type: Number, default: 0 },
+  custoRuptura: { type: Number, default: 0 }, // Valor total da ruptura dos itens [Sem Presença e Com Estoque]
+  rupturaSemPresenca: { type: Number, default: 0 }, // Valor total da ruptura dos itens com situação original [Sem Presença e Com Estoque]
+  presencasConfirmadas: { type: Number, default: 0 }, // [Com Presença e Com Estoque] + [Com Presença e sem Estoque] + [Lido não pertence]
   usuariosAtivos: { type: Number, default: 0 },
 
   // Contadores de leitura por classe de produto
@@ -1048,11 +1049,11 @@ lojaDailyMetricsSchema.methods.atualizarTotais = function () {
     this.rupturas.totalItens +
     this.presencas.totalItens;
 
-  // Usar itensValidos para etiquetas e itensLidos para outros
+  // Usar itensValidos para etiquetas e presencas, e itensLidos para rupturas
   this.totais.itensLidos =
     this.etiquetas.itensValidos +
     this.rupturas.itensLidos +
-    this.presencas.itensLidos;
+    this.presencas.itensValidos;
 
   this.totais.itensAtualizados =
     this.etiquetas.itensAtualizados +
@@ -1204,19 +1205,75 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
 
   if (tipo === "presencas") {
     this.presencas.totalItens = auditorias.length;
-    this.presencas.itensAtualizados = situacaoMap.get("Confirmado") || 0;
-    this.presencas.itensLidos = auditorias.filter(
-      (a) => a.situacao !== "Não lido"
-    ).length;
-    this.presencas.presencasConfirmadas = this.presencas.itensAtualizados;
+
+    // Calcular itens válidos: itens que podem ser processados
+    // Baseado na lógica de presença, itens válidos seriam:
+    // - itens com situação "Atualizado" (tem presença e tem estoque)
+    // - itens com situação "Com problema" (não tem presença mas tem estoque - ausência de produto)
+    this.presencas.itensValidos = (situacaoMap.get("Atualizado") || 0) +
+                                  (situacaoMap.get("Com problema") || 0);
+
+    // Calcular itens não lidos: itens com situação "Com problema" (ausência de produto)
+    this.presencas.itensNaoLidos = situacaoMap.get("Com problema") || 0;
+
+    // Calcular itens atualizados: itens com situação "Atualizado" (com presença e com estoque)
+    this.presencas.itensAtualizados = situacaoMap.get("Atualizado") || 0;
+
+    // Calcular presencas confirmadas: quantidade de itens com as situações:
+    // [Com Presença e Com Estoque] + [Com Presença e sem Estoque] + [Lido não pertence]
+    // [Com Presença e Com Estoque] → normalizado para "Atualizado"
+    // [Lido não pertence] → já está normalizado como "Lido não pertence"
+    // [Com Presença e sem Estoque] → pode não estar normalizado, então vamos checar o valor original ou o valor normalizado
+    // Para esta situação específica, vamos contar:
+    // - Itens com situação "Atualizado" (eram "Com Presença e Com Estoque")
+    // - Itens com situação "Lido não pertence"
+    // - Itens que poderiam ter sido originalmente "Com Presença e sem Estoque"
+
+    // Contando itens com situação normalizada "Atualizado" e "Lido não pertence"
+    const itensAtualizado = situacaoMap.get("Atualizado") || 0;
+    const itensLidoNaoPertence = situacaoMap.get("Lido não pertence") || 0;
+
+    // Para "Com Presença e sem Estoque", vamos procurar por possíveis valores normalizados ou originais
+    // Pode ser que não esteja normalizado e permaneça com o nome original
+    // A situação pode não estar normalizada e permanecer como "Com Presença e sem Estoque"
+    const itensComPresencaSemEstoque = situacaoMap.get("Com Presença e sem Estoque") || 0;
+
+    // Fazendo uma soma mais precisa das presenças confirmadas
+    this.presencas.presencasConfirmadas = itensAtualizado + itensLidoNaoPertence + itensComPresencaSemEstoque;
+
+    // Calcular custo de ruptura: soma do campo custoRuptura para itens de presença com situação "Com problema" (ausência de produto)
+    // A situação "Com problema" vem da normalização de "Sem Presença e Com Estoque"
+    const itensRuptura = auditorias.filter(a => a.situacao === "Com problema" && a.tipo === "presenca");
+
+    // Somar os valores de custoRuptura para esses itens
+    let custoTotalRuptura = 0;
+    for (const item of itensRuptura) {
+      const valor = item.custoRuptura || 0;
+      if (valor > 0) {
+        custoTotalRuptura += valor;
+      }
+    }
+    this.presencas.custoRuptura = custoTotalRuptura;
+
+    // Novo campo: rupturaSemPresenca - calcula o custo de ruptura especificamente para itens com situação original "Sem Presença e Com Estoque"
+    // A abordagem é identificar itens com situação normalizada "Com problema" que tinham originalmente "sem presença e com estoque"
+    // Vamos tentar uma abordagem mais direta para evitar duplicatas ou somas incorretas
+    let rupturaSemPresencaTotal = 0;
+    const itensRupturaSemPresenca = auditorias.filter(a => a.situacao === "Com problema" && a.tipo === "presenca");
+    for (const item of itensRupturaSemPresenca) {
+      const valor = item.custoRuptura || 0;
+      if (valor > 0) {
+        // Adicionando um log para debug caso seja necessário
+        rupturaSemPresencaTotal += valor;
+      }
+    }
+    this.presencas.rupturaSemPresenca = rupturaSemPresencaTotal;
 
     // Calcular percentual (SEM ARREDONDAMENTO)
-    // Percentual de conclusão = (itens atualizados / itens lidos) * 100
-    // Percentual restante = 100 - percentualConclusao (garante soma exata de 100%)
-    if (this.presencas.itensLidos > 0) {
+    // Percentual de conclusão = (itensAtualizados / itensValidos) * 100
+    if (this.presencas.itensValidos > 0) {
       this.presencas.percentualConclusao =
-        (this.presencas.itensAtualizados / this.presencas.itensLidos) * 100;
-      this.presencas.percentualPresenca = this.presencas.percentualConclusao;
+        (this.presencas.itensAtualizados / this.presencas.itensValidos) * 100;
     }
     this.presencas.percentualRestante =
       100 - this.presencas.percentualConclusao;
