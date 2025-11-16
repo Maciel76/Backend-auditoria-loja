@@ -633,13 +633,11 @@ const metricasEtiquetasSchema = new mongoose.Schema({
 // Schema para métricas de rupturas
 const metricasRupturasSchema = new mongoose.Schema({
   totalItens: { type: Number, default: 0 },
-  itensLidos: { type: Number, default: 0 },
-  itensAtualizados: { type: Number, default: 0 }, // Com Presença e com Estoque
-  percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensLidos) * 100
+  itensLidos: { type: Number, default: 0 }, // Quantidade de itens com situação "Com Presença e com Estoque"
+  itensNaoLidos: { type: Number, default: 0 }, // Quantidade de itens com situação "Sem Presença e Com Estoque" - substitui itensAtualizados
+  percentualConclusao: { type: Number, default: 0 }, // % de conclusão em relação a totalItens e itensLidos (continuação da auditoria de presença)
   percentualRestante: { type: Number, default: 0 }, // % restante = 100 - percentualConclusao
-  percentualDesatualizado: { type: Number, default: 0 }, // % rupturas desatualizadas (não aplicável na maioria dos casos)
-  custoTotalRuptura: { type: Number, default: 0 },
-  rupturasCriticas: { type: Number, default: 0 },
+  custoTotalRuptura: { type: Number, default: 0 }, // Valor do Custo da Ruptura dos itens com situação "Sem Presença e Com Estoque"
   usuariosAtivos: { type: Number, default: 0 },
 
   // Contadores de leitura por classe de produto
@@ -1057,7 +1055,7 @@ lojaDailyMetricsSchema.methods.atualizarTotais = function () {
 
   this.totais.itensAtualizados =
     this.etiquetas.itensAtualizados +
-    this.rupturas.itensAtualizados +
+    this.rupturas.itensLidos +  // Em rupturas, itensLidos são itens que foram encontrados (com presença e com estoque)
     this.presencas.itensAtualizados;
 
   // Calcular percentual usando itensLidos como base
@@ -1173,18 +1171,27 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
   // Implementar lógica similar para rupturas e presenças
   if (tipo === "rupturas") {
     this.rupturas.totalItens = auditorias.length;
-    this.rupturas.itensAtualizados =
-      situacaoMap.get("Com Presença e com Estoque") || 0;
-    this.rupturas.itensLidos = auditorias.filter(
-      (a) => a.situacao !== "Não lido"
-    ).length;
+
+    // itensLidos: quantidade de itens com situação "Com Presença e com Estoque"
+    // Após normalização, essa situação se torna "Atualizado"
+    this.rupturas.itensLidos = situacaoMap.get("Atualizado") || 0;
+
+    // itensNaoLidos: quantidade de itens com situação "Sem Presença e Com Estoque"
+    // Após normalização, essa situação se torna "Com problema"
+    this.rupturas.itensNaoLidos = situacaoMap.get("Com problema") || 0;
+
+    // custoTotalRuptura: soma do campo custoRuptura para itens com situação original "Sem Presença e Com Estoque"
+    // Após normalização, são os itens com situação "Com problema"
+    this.rupturas.custoTotalRuptura = auditorias
+      .filter(a => a.situacao === "Com problema" && a.tipo === "ruptura")
+      .reduce((total, a) => total + (a.custoRuptura || 0), 0);
 
     // Calcular percentual (SEM ARREDONDAMENTO)
-    // Percentual de conclusão = (itens atualizados / itens lidos) * 100
-    // Percentual restante = 100 - percentualConclusao (garante soma exata de 100%)
-    if (this.rupturas.itensLidos > 0) {
+    // Percentual de conclusão em relação a totalItens e itensLidos (continuação da auditoria de presença)
+    // A fórmula pode variar, mas basearemos no total de itens lidos em relação ao total
+    if (this.rupturas.totalItens > 0) {
       this.rupturas.percentualConclusao =
-        (this.rupturas.itensAtualizados / this.rupturas.itensLidos) * 100;
+        (this.rupturas.itensLidos / this.rupturas.totalItens) * 100;
     }
     this.rupturas.percentualRestante = 100 - this.rupturas.percentualConclusao;
     this.rupturas.usuariosAtivos = usuariosUnicos.size;
