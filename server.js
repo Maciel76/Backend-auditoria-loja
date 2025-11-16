@@ -16,6 +16,7 @@ import sugestoesRouter from "./routes/sugestoes.js";
 import avisosRouter from "./routes/avisos.js";
 import votacoesRouter from "./routes/votacoes.js";
 import articlesRouter from "./routes/articles.js";
+import achievementsRouter from "./routes/achievements.js";
 import "./utils/planilhaHelpers.js";
 
 const app = express();
@@ -162,6 +163,14 @@ try {
   console.log("✅ Rotas de artigos carregadas");
 } catch (error) {
   console.log("❌ Erro nas rotas de artigos:", error.message);
+}
+
+// ⚠️ ADICIONAR APENAS ESTA LINHA (não modificar nada mais!)
+try {
+  app.use("/api/achievements", achievementsRouter);
+  console.log("✅ Rotas de conquistas carregadas");
+} catch (error) {
+  console.log("❌ Erro nas rotas de conquistas:", error.message);
 }
 
 // Rota de sincronização removida - agora usa modelos unificados

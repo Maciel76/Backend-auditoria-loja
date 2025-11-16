@@ -13,6 +13,7 @@ import metricsCalculationService from "../services/metricsCalculationService.js"
 import UserDailyMetrics from "../models/UserDailyMetrics.js";
 import MetricasUsuario from "../models/MetricasUsuario.js";
 import Loja from "../models/Loja.js";
+import achievementRulesService from "../services/achievementRulesService.js";
 
 // Helper function to access obterPeriodo
 const obterPeriodo = (periodo, data) => {
@@ -402,6 +403,7 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
       totalItens: jsonData.length,
       totalProcessados: totalItensProcessados,
       totalUsuarios: usuariosMap.size,
+      usuariosEnvolvidos: Array.from(usuariosMap.keys()),
       tipo: "etiqueta",
       loja: loja,
     };
@@ -687,6 +689,7 @@ async function processarRuptura(file, dataAuditoria, loja) {
       totalItens: jsonData.length,
       totalProcessados: dadosProcessados.length,
       totalUsuarios: usuariosMap.size,
+      usuariosEnvolvidos: Array.from(usuariosMap.keys()),
       tipo: "ruptura",
       loja: loja,
       dataAuditoria: dataAuditoriaFinal,
@@ -985,6 +988,7 @@ async function processarPresenca(file, dataAuditoria, loja) {
       totalItens: jsonData.length,
       totalProcessados: dadosProcessados.length,
       totalUsuarios: usuariosMap.size,
+      usuariosEnvolvidos: Array.from(usuariosMap.keys()),
       tipo: "presenca",
       loja: loja,
       dataAuditoria: dataAuditoriaFinal,
@@ -1200,6 +1204,50 @@ router.post(
           debugUrl: `/api/debug/verificar-metricas (header x-loja: ${loja.codigo})`,
         },
       };
+
+      // Atualizar conquistas para os usuários envolvidos na planilha
+      try {
+        console.log(`🏆 Atualizando conquistas para ${resultado.totalUsuarios} usuários após upload da loja ${loja.codigo}`);
+
+        // Obter os IDs dos usuários envolvidos na planilha processada
+        const usuariosIds = resultado.usuariosEnvolvidos || [];
+
+        for (const usuarioId of usuariosIds) {
+          try {
+            const achievementResult = await achievementRulesService.evaluateUserAchievements(usuarioId, loja.codigo, resultado.dataAuditoria || dataAuditoria);
+            console.log(`✅ Conquistas atualizadas para usuário ${usuarioId} na loja ${loja.codigo}`);
+
+            // Atualizar também o modelo MetricasUsuario com os dados de conquistas
+            try {
+              const { UserAchievement } = await import("../models/UserAchievement.js");
+              const userAchievementDoc = await UserAchievement.findOne({ userId: usuarioId, loja: loja.codigo });
+              if (userAchievementDoc) {
+                // Encontrar e atualizar o documento correspondente em MetricasUsuario
+                const metricaUsuario = await MetricasUsuario.findOne({
+                  usuarioId: usuarioId,
+                  loja: loja._id,
+                  periodo: "periodo_completo"
+                });
+
+                if (metricaUsuario) {
+                  metricaUsuario.atualizarAchievements(userAchievementDoc);
+                  await metricaUsuario.save();
+                  console.log(`✅ Métricas de usuário ${usuarioId} atualizadas com conquistas`);
+                }
+              }
+            } catch (errorMetricas) {
+              console.error(`❌ Erro ao atualizar MetricasUsuario com conquistas para usuário ${usuarioId}:`, errorMetricas.message);
+            }
+
+          } catch (error) {
+            console.error(`❌ Erro ao atualizar conquistas para usuário ${usuarioId}:`, error.message);
+          }
+        }
+
+        console.log(`🏆 Conquistas atualizadas para ${usuariosIds.length} usuários após upload da loja ${loja.codigo}`);
+      } catch (errorAchievements) {
+        console.error(`❌ Erro no processamento de conquistas após upload:`, errorAchievements.message);
+      }
 
       res.json(finalResult);
     } catch (error) {
