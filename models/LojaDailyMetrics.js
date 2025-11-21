@@ -1370,6 +1370,7 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
   };
 
   // Processar cada auditoria
+  let contadorDebug = 0;
   for (const auditoria of auditorias) {
     // Determinar classe do produto
     const classe = auditoria.ClasseProduto || auditoria.classeProdutoRaiz;
@@ -1382,6 +1383,16 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
     // Verificar se a classe está no objeto de métricas
     if (metricasPorClasse.hasOwnProperty(classe)) {
       const situacao = auditoria.situacao || auditoria.Situacao;
+
+      // Log de debug para as primeiras auditorias
+      if (contadorDebug < 5 && (tipo === 'rupturas' || tipo === 'presencas')) {
+        console.log(`🔍 [${tipo}] Processando auditoria ${contadorDebug + 1}:`, {
+          classe: classe,
+          situacao: situacao,
+          codigo: auditoria.codigo
+        });
+        contadorDebug++;
+      }
 
       // Incrementar total (todos os itens)
       metricasPorClasse[classe].total++;
@@ -1446,13 +1457,25 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
   // Calcular percentuais e atualizar o campo correspondente
   const classesLeitura = {};
   for (const [classe, valores] of Object.entries(metricasPorClasse)) {
-    // Percentual baseado em itensValidos (e não no total)
-    // Os usuários já estão no formato correto: { "Nome do Usuário": quantidade }
+    // CORRIGIDO: Durante o processamento, o que chamamos de "lidos" na verdade são os itensValidos
+    // e o que chamamos de "itensValidos" são os lidos. Vamos inverter para salvar corretamente.
+    const percentual = valores.lidos > 0 ? (valores.itensValidos / valores.lidos) * 100 : 0;
+
+    // Log de debug para classes com percentual > 100%
+    if (percentual > 100) {
+      console.log(`⚠️ [${tipo}] ERRO: Percentual > 100% na classe ${classe}:`, {
+        total: valores.total,
+        itensValidos_interno: valores.itensValidos,
+        lidos_interno: valores.lidos,
+        percentual: percentual
+      });
+    }
+
     classesLeitura[classe] = {
       total: valores.total,
-      itensValidos: valores.itensValidos,
-      lidos: valores.lidos,
-      percentual: valores.itensValidos > 0 ? (valores.lidos / valores.itensValidos) * 100 : 0,
+      itensValidos: valores.lidos,  // CORRIGIDO: lidos (interno) vai para itensValidos (salvo)
+      lidos: valores.itensValidos,  // CORRIGIDO: itensValidos (interno) vai para lidos (salvo)
+      percentual: percentual,
       usuarios: valores.usuarios,
     };
   }
@@ -1615,13 +1638,15 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
   // Calcular percentuais e atualizar o campo correspondente
   const locaisLeitura = {};
   for (const [local, valores] of Object.entries(metricasPorLocal)) {
-    // Percentual baseado em itensValidos (e não no total)
-    // Os usuários já estão no formato correto: { "Nome do Usuário": quantidade }
+    // CORRIGIDO: Durante o processamento, o que chamamos de "lidos" na verdade são os itensValidos
+    // e o que chamamos de "itensValidos" são os lidos. Vamos inverter para salvar corretamente.
+    const percentual = valores.lidos > 0 ? (valores.itensValidos / valores.lidos) * 100 : 0;
+
     locaisLeitura[local] = {
       total: valores.total,
-      itensValidos: valores.itensValidos,
-      lidos: valores.lidos,
-      percentual: valores.itensValidos > 0 ? (valores.lidos / valores.itensValidos) * 100 : 0,
+      itensValidos: valores.lidos,  // CORRIGIDO: lidos (interno) vai para itensValidos (salvo)
+      lidos: valores.itensValidos,  // CORRIGIDO: itensValidos (interno) vai para lidos (salvo)
+      percentual: percentual,
       usuarios: valores.usuarios,
     };
   }

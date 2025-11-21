@@ -460,6 +460,9 @@ async function processarRuptura(file, dataAuditoria, loja) {
         local,
         usuario,
         situacao: normalizarSituacao(situacao),
+        classeProdutoRaiz: String(item["Classe de Produto Raiz"] || "").trim(),
+        classeProduto: String(item["Classe de Produto"] || "").trim(),
+        setor: String(item["Setor"] || "").trim(),
         situacaoAuditoria: String(
           item["Situação atual da auditoria"] || ""
         ).trim(),
@@ -498,6 +501,18 @@ async function processarRuptura(file, dataAuditoria, loja) {
       };
 
       dadosProcessados.push(dadosItem);
+
+      // Log para debug - verificar se classe está sendo capturada
+      if (index < 3) {
+        console.log(`📋 [RUPTURA] Exemplo de item processado (linha ${index + 2}):`, {
+          codigo: dadosItem.codigo,
+          produto: dadosItem.produto,
+          classeProdutoRaiz: dadosItem.classeProdutoRaiz,
+          classeProduto: dadosItem.classeProduto,
+          local: dadosItem.local,
+          setor: dadosItem.setor,
+        });
+      }
 
       // Mapear usuários
       if (usuario && usuario !== "Usuário não identificado") {
@@ -568,6 +583,16 @@ async function processarRuptura(file, dataAuditoria, loja) {
       console.log(
         `💾 ${dadosProcessados.length} rupturas salvas para loja ${loja.codigo}`
       );
+
+      // Verificar se as classes foram salvas corretamente
+      const classesEncontradas = new Set();
+      const locaisEncontrados = new Set();
+      auditoriasBatch.forEach(aud => {
+        if (aud.ClasseProduto) classesEncontradas.add(aud.ClasseProduto);
+        if (aud.local) locaisEncontrados.add(aud.local);
+      });
+      console.log(`📊 [RUPTURA] Classes encontradas: ${Array.from(classesEncontradas).join(', ')}`);
+      console.log(`📍 [RUPTURA] Locais encontrados: ${Array.from(locaisEncontrados).join(', ')}`);
     }
 
     // Processar usuários no modelo User unificado
@@ -2318,8 +2343,6 @@ async function atualizarUserDailyMetrics(loja, dataMetricas, tipoAuditoria) {
 
         // CORREÇÃO: Buscar TODAS as auditorias do usuário nesta data para calcular contadores completos
         const todasAuditorias = auditorias.filter(aud => aud.usuarioId === dados.usuarioId);
-        const contadorClasses = userDailyMetrics.calcularContadorClassesProduto(todasAuditorias);
-        const contadorLocais = userDailyMetrics.calcularContadorLocais(todasAuditorias);
 
         // Garantir que as métricas existam
         if (!userDailyMetrics.metricas) {
@@ -2453,24 +2476,34 @@ async function atualizarUserDailyMetrics(loja, dataMetricas, tipoAuditoria) {
         const classesLeituraRupturas = calcularMetricasPorClasse(rupturasAuditorias);
         const classesLeituraPresencas = calcularMetricasPorClasse(presencasAuditorias);
 
+        // Calcular contadores específicos por tipo de auditoria
+        const contadorClassesEtiquetas = userDailyMetrics.calcularContadorClassesProduto(etiquetasAuditorias);
+        const contadorLocaisEtiquetas = userDailyMetrics.calcularContadorLocais(etiquetasAuditorias);
+
+        const contadorClassesRupturas = userDailyMetrics.calcularContadorClassesProduto(rupturasAuditorias);
+        const contadorLocaisRupturas = userDailyMetrics.calcularContadorLocais(rupturasAuditorias);
+
+        const contadorClassesPresencas = userDailyMetrics.calcularContadorClassesProduto(presencasAuditorias);
+        const contadorLocaisPresencas = userDailyMetrics.calcularContadorLocais(presencasAuditorias);
+
         // Agora SEMPRE atualizar todos os tipos com métricas completas + contadores
         userDailyMetrics.metricas.etiquetas = {
           ...metricasCompletas.etiquetas,
           classesLeitura: classesLeituraEtiquetas,
-          contadorClasses,
-          contadorLocais,
+          contadorClasses: contadorClassesEtiquetas,
+          contadorLocais: contadorLocaisEtiquetas,
         };
         userDailyMetrics.metricas.rupturas = {
           ...metricasCompletas.rupturas,
           classesLeitura: classesLeituraRupturas,
-          contadorClasses,
-          contadorLocais,
+          contadorClasses: contadorClassesRupturas,
+          contadorLocais: contadorLocaisRupturas,
         };
         userDailyMetrics.metricas.presencas = {
           ...metricasCompletas.presencas,
           classesLeitura: classesLeituraPresencas,
-          contadorClasses,
-          contadorLocais,
+          contadorClasses: contadorClassesPresencas,
+          contadorLocais: contadorLocaisPresencas,
         };
 
         // Atualizar data das métricas
