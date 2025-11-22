@@ -17,6 +17,8 @@ import avisosRouter from "./routes/avisos.js";
 import votacoesRouter from "./routes/votacoes.js";
 import articlesRouter from "./routes/articles.js";
 import achievementsRouter from "./routes/achievements.js";
+import metricasUsuariosRoutes from "./routes/metricasUsuarios.js";
+import metricasLojasRoutes from "./routes/metricasLojas.js";
 import "./utils/planilhaHelpers.js";
 
 const app = express();
@@ -171,6 +173,20 @@ try {
   console.log("✅ Rotas de conquistas carregadas");
 } catch (error) {
   console.log("❌ Erro nas rotas de conquistas:", error.message);
+}
+
+try {
+  app.use("/", metricasUsuariosRoutes);
+  console.log("✅ Rotas de métricas de usuários carregadas");
+} catch (error) {
+  console.log("❌ Erro nas rotas de métricas de usuários:", error.message);
+}
+
+try {
+  app.use("/", metricasLojasRoutes);
+  console.log("✅ Rotas de métricas de lojas carregadas");
+} catch (error) {
+  console.log("❌ Erro nas rotas de métricas de lojas:", error.message);
 }
 
 // Rota de sincronização removida - agora usa modelos unificados
