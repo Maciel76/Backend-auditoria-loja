@@ -1,48 +1,57 @@
 import express from 'express';
-import MetricasUsuario from '../models/MetricasUsuario.js';
+import metricasUsuariosService from '../services/metricasUsuariosService.js';
 import Loja from '../models/Loja.js';
 
 const router = express.Router();
 
-// Endpoint para obter métricas de usuários de uma loja específica
+/**
+ * GET /metricas/usuarios
+ * Obtém métricas de usuários com filtros opcionais
+ * Query params:
+ *   - todos: 'true' para buscar de todas as lojas
+ *   - dataAuditoria: filtro por data (formato: YYYY-MM-DD)
+ * Headers:
+ *   - x-loja: código da loja (obrigatório se todos !== 'true')
+ */
 router.get('/metricas/usuarios', async (req, res) => {
   try {
     const lojaCodigo = req.headers['x-loja'];
     const { dataAuditoria, todos } = req.query;
 
+    // Validação: se não for "todos", precisa do código da loja
     if (!lojaCodigo && todos !== 'true') {
       return res.status(400).json({
-        erro: "Código da loja é obrigatório"
+        erro: "Código da loja é obrigatório ou use ?todos=true"
       });
     }
 
-    // Consulta base
-    const query = {};
+    let metricas;
 
-    if (lojaCodigo && todos !== 'true') {
-      // Primeiro, precisamos encontrar o ID da loja com base no código
+    if (todos === 'true') {
+      // Buscar métricas de todas as lojas
+      const filtros = {};
+      if (dataAuditoria) {
+        filtros.dataInicio = dataAuditoria;
+        filtros.dataFim = dataAuditoria;
+      }
+
+      metricas = await metricasUsuariosService.obterTodasMetricas(filtros);
+
+    } else {
+      // Buscar métricas de uma loja específica
       const loja = await Loja.findOne({ codigo: lojaCodigo });
       if (!loja) {
         return res.status(404).json({ erro: "Loja não encontrada" });
       }
-      query.loja = loja._id;
-    }
 
-    // Se houver filtro de data
-    if (dataAuditoria) {
-      // Para dataAuditoria, ajustamos os critérios de acordo com o modelo
-      const dataInicio = new Date(dataAuditoria);
-      const dataFim = new Date(dataInicio);
-      dataFim.setDate(dataFim.getDate() + 1);
-      
-      query.dataInicio = { $gte: dataInicio };
-      query.dataFim = { $lte: dataFim };
-    }
+      const filtros = {};
+      if (dataAuditoria) {
+        filtros.dataInicio = dataAuditoria;
+        filtros.dataFim = dataAuditoria;
+      }
 
-    // Buscar métricas de usuários com populate da loja
-    const metricas = await MetricasUsuario.find(query)
-      .populate('loja', 'nome codigo endereco imagem')
-      .sort({ 'totaisAcumulados.itensLidosTotal': -1, 'ranking.posicaoGeral': 1 });
+      metricas = await metricasUsuariosService.obterMetricasLoja(loja._id, filtros);
+    }
 
     // Filtrar apenas usuários válidos com dados úteis
     const usuariosValidos = metricas.filter(metrica => {
@@ -69,7 +78,7 @@ router.get('/metricas/usuarios', async (req, res) => {
           .substring(0, 2) : '??',
       contador: metrica.totaisAcumulados?.itensLidosTotal || metrica.totais?.itensAtualizados || 0,
       totalAuditorias: metrica.contadoresAuditorias?.totalGeral || 0,
-      loja: metrica.loja?.codigo || metrica.lojaCodigo || lojaCodigo,
+      loja: metrica.loja?.codigo || lojaCodigo || 'N/A',
       lojaCompleta: metrica.loja?.nome || metrica.lojaNome || 'Nome da Loja',
       foto: metrica.foto || null,
       ultimaAuditoria: metrica.ultimaAtualizacao,
@@ -88,21 +97,26 @@ router.get('/metricas/usuarios', async (req, res) => {
         etiquetas: metrica.contadoresAuditorias?.totalEtiquetas || 0,
         rupturas: metrica.contadoresAuditorias?.totalRupturas || 0,
         presencas: metrica.contadoresAuditorias?.totalPresencas || 0
+      },
+      metricas: {
+        etiquetas: metrica.etiquetas,
+        rupturas: metrica.rupturas,
+        presencas: metrica.presencas
       }
     }));
 
     const totalColaboradoresGeral = usuarios.length;
 
     // Obter estatísticas
-    const mediaItensPorUsuario = usuarios.length > 0 
+    const mediaItensPorUsuario = usuarios.length > 0
       ? Math.round(usuarios.reduce((sum, u) => sum + u.contador, 0) / usuarios.length)
       : 0;
 
     // Encontrar melhor colaborador
-    const melhorColaborador = usuarios.length > 0 
-      ? usuarios.reduce((prev, current) => 
+    const melhorColaborador = usuarios.length > 0
+      ? usuarios.reduce((prev, current) =>
           (prev.desempenho?.pontuacaoTotal || 0) > (current.desempenho?.pontuacaoTotal || 0) ? prev : current
-        ) 
+        )
       : null;
 
     res.json({
@@ -118,7 +132,7 @@ router.get('/metricas/usuarios', async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Erro ao buscar métricas de usuários:", error);
+    console.error("❌ [MetricasUsuarios] Erro ao buscar métricas de usuários:", error);
     res.status(500).json({
       erro: "Erro interno do servidor",
       detalhes: error.message
@@ -126,31 +140,128 @@ router.get('/metricas/usuarios', async (req, res) => {
   }
 });
 
-// Endpoint para obter datas de auditoria disponíveis para uma loja
-router.get('/datas-auditoria', async (req, res) => {
+/**
+ * GET /metricas/usuarios/:usuarioId
+ * Obtém métricas de um usuário específico em uma loja
+ * Headers:
+ *   - x-loja: código da loja (obrigatório)
+ */
+router.get('/metricas/usuarios/:usuarioId', async (req, res) => {
   try {
     const lojaCodigo = req.headers['x-loja'];
+    const { usuarioId } = req.params;
 
     if (!lojaCodigo) {
-      return res.status(400).json({ 
-        erro: "Código da loja é obrigatório" 
-      });
+      return res.status(400).json({ erro: "Código da loja é obrigatório" });
     }
 
-    // Buscar documentos MetricasUsuario para a loja e extrair datas únicas
-    // Primeiro, precisamos encontrar o ID da loja com base no código
+    // Buscar a loja
     const loja = await Loja.findOne({ codigo: lojaCodigo });
     if (!loja) {
       return res.status(404).json({ erro: "Loja não encontrada" });
     }
 
-    const metricas = await MetricasUsuario.find({
-      loja: loja._id
-    })
-    .select('dataInicio ultimaAtualizacao')
-    .sort({ dataInicio: -1 });
+    // Buscar métricas do usuário
+    const metricas = await metricasUsuariosService.obterMetricasUsuario(loja._id, usuarioId);
 
-    // Converter datas para o formato esperado pelo frontend
+    if (!metricas) {
+      return res.status(404).json({ erro: "Métricas não encontradas para este usuário" });
+    }
+
+    // Formatar resposta
+    const usuario = {
+      id: metricas.usuarioId,
+      nome: metricas.usuarioNome,
+      loja: {
+        codigo: metricas.loja?.codigo,
+        nome: metricas.loja?.nome || metricas.lojaNome,
+        endereco: metricas.loja?.endereco,
+        imagem: metricas.loja?.imagem
+      },
+      periodo: {
+        dataInicio: metricas.dataInicio,
+        dataFim: metricas.dataFim
+      },
+      metricas: {
+        etiquetas: metricas.etiquetas,
+        rupturas: metricas.rupturas,
+        presencas: metricas.presencas
+      },
+      totais: metricas.totais,
+      totaisAcumulados: metricas.totaisAcumulados,
+      contadores: metricas.contadoresAuditorias,
+      ranking: metricas.ranking,
+      tendencias: metricas.tendencias,
+      historicoRanking: metricas.historicoRanking,
+      achievements: metricas.achievements,
+      ContadorClassesProduto: metricas.ContadorClassesProduto,
+      ContadorLocais: metricas.ContadorLocais,
+      ultimaAtualizacao: metricas.ultimaAtualizacao
+    };
+
+    res.json(usuario);
+
+  } catch (error) {
+    console.error("❌ [MetricasUsuarios] Erro ao buscar métricas do usuário:", error);
+    res.status(500).json({
+      erro: "Erro interno do servidor",
+      detalhes: error.message
+    });
+  }
+});
+
+/**
+ * POST /metricas/usuarios/calcular
+ * Recalcula métricas de todos os usuários (período completo)
+ * Endpoint administrativo para recalcular métricas
+ */
+router.post('/metricas/usuarios/calcular', async (req, res) => {
+  try {
+    console.log('🔄 [MetricasUsuarios] Iniciando recálculo de métricas...');
+
+    const resultado = await metricasUsuariosService.calcularMetricasUsuarios();
+
+    res.json({
+      sucesso: true,
+      mensagem: "Métricas de usuários recalculadas com sucesso",
+      ...resultado
+    });
+
+  } catch (error) {
+    console.error("❌ [MetricasUsuarios] Erro ao recalcular métricas:", error);
+    res.status(500).json({
+      erro: "Erro ao recalcular métricas",
+      detalhes: error.message
+    });
+  }
+});
+
+/**
+ * GET /datas-auditoria
+ * Obtém datas de auditoria disponíveis para uma loja
+ * Headers:
+ *   - x-loja: código da loja (obrigatório)
+ */
+router.get('/datas-auditoria', async (req, res) => {
+  try {
+    const lojaCodigo = req.headers['x-loja'];
+
+    if (!lojaCodigo) {
+      return res.status(400).json({
+        erro: "Código da loja é obrigatório"
+      });
+    }
+
+    // Buscar a loja
+    const loja = await Loja.findOne({ codigo: lojaCodigo });
+    if (!loja) {
+      return res.status(404).json({ erro: "Loja não encontrada" });
+    }
+
+    // Buscar métricas da loja
+    const metricas = await metricasUsuariosService.obterMetricasLoja(loja._id);
+
+    // Extrair datas únicas
     const datasUnicas = [...new Set(
       metricas.map(m => new Date(m.dataInicio).toISOString().split('T')[0])
     )];
@@ -162,12 +273,12 @@ router.get('/datas-auditoria', async (req, res) => {
         dataFormatada: dataObj.toLocaleDateString('pt-BR'),
         timestamp: dataObj.getTime()
       };
-    });
+    }).sort((a, b) => b.timestamp - a.timestamp); // Mais recentes primeiro
 
     res.json(datasFormatadas);
 
   } catch (error) {
-    console.error("Erro ao buscar datas de auditoria:", error);
+    console.error("❌ [MetricasUsuarios] Erro ao buscar datas de auditoria:", error);
     res.status(500).json({
       erro: "Erro interno do servidor",
       detalhes: error.message

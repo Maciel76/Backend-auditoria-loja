@@ -6,6 +6,7 @@ import MetricasGlobais from "../models/MetricasGlobais.js";
 import Auditoria from "../models/Auditoria.js";
 import Loja from "../models/Loja.js";
 import User from "../models/User.js";
+import metricasUsuariosService from "./metricasUsuariosService.js";
 
 class MetricsCalculationService {
   constructor() {
@@ -29,9 +30,9 @@ class MetricsCalculationService {
         await this.calcularMetricasAuditorias(periodo, dataInicio, dataFim);
         await this.calcularMetricasGlobais(periodo, dataInicio, dataFim);
       } else {
-        // Para períodos mensais ou outros, calcular MetricasUsuario como período completo
-        const periodoMetricas = "periodo_completo";
-        await this.calcularMetricasUsuarios(periodoMetricas, dataInicio, dataFim);
+        // Para períodos mensais ou outros, usar o serviço dedicado de MetricasUsuario
+        console.log(`📊 Delegando cálculo de MetricasUsuario para metricasUsuariosService`);
+        await metricasUsuariosService.calcularMetricasUsuarios(dataInicio, dataFim);
         await this.calcularMetricasLojas(periodo, dataInicio, dataFim);
         await this.calcularMetricasAuditorias(periodo, dataInicio, dataFim);
         await this.calcularMetricasGlobais(periodo, dataInicio, dataFim);
@@ -52,8 +53,16 @@ class MetricsCalculationService {
     }
   }
 
-  // Calcular métricas de usuários
+  // DEPRECADO: Este método foi movido para metricasUsuariosService.js
+  // Use metricasUsuariosService.calcularMetricasUsuarios() ao invés deste
   async calcularMetricasUsuarios(periodo, dataInicio, dataFim) {
+    console.log(`⚠️ [DEPRECADO] Redirecionando para metricasUsuariosService...`);
+    return await metricasUsuariosService.calcularMetricasUsuarios(dataInicio, dataFim);
+  }
+
+  // MÉTODO ANTIGO COMENTADO - Mantido apenas para referência
+  /*
+  async calcularMetricasUsuarios_OLD(periodo, dataInicio, dataFim) {
     console.log(`📊 Calculando métricas de usuários...`);
 
     // CORREÇÃO: Buscar TODAS as auditorias para cálculo de período completo
@@ -556,6 +565,7 @@ class MetricsCalculationService {
 
     console.log(`✅ Métricas de ${usuariosMap.size} usuários calculadas`);
   }
+  */
 
   // Calcular métricas de lojas
   async calcularMetricasLojas(periodo, dataInicio, dataFim) {
@@ -1673,8 +1683,16 @@ class MetricsCalculationService {
     return { dataInicio, dataFim };
   }
 
-  // Atualizar o método de ranking
+  // DEPRECADO: Este método foi movido para metricasUsuariosService.atualizarRankings()
+  // Mantido aqui apenas para compatibilidade
   async atualizarRankingUsuarios(periodo, dataInicio, dataFim) {
+    console.log(`⚠️ [DEPRECADO] Redirecionando para metricasUsuariosService.atualizarRankings()...`);
+    return await metricasUsuariosService.atualizarRankings();
+  }
+
+  // MÉTODO ANTIGO COMENTADO
+  /*
+  async atualizarRankingUsuarios_OLD(periodo, dataInicio, dataFim) {
     const lojas = await Loja.find({ ativa: true });
 
     for (const loja of lojas) {
@@ -1720,6 +1738,7 @@ class MetricsCalculationService {
       await todosUsuarios[i].save();
     }
   }
+  */
 
   async atualizarRankingLojas(periodo, dataInicio, dataFim) {
     const lojas = await MetricasLoja.find({
@@ -1935,7 +1954,15 @@ class MetricsCalculationService {
     });
   }
 
+  // DEPRECADO: Este método não é mais necessário pois a lógica foi movida para metricasUsuariosService.js
+  // Mantido apenas para compatibilidade com código legado
   async obterPeriodoAnteriorUsuario(lojaId, usuarioId, periodo, dataInicio) {
+    console.log(`⚠️ [DEPRECADO] Método obterPeriodoAnteriorUsuario não é mais usado`);
+    return null;
+  }
+
+  /* MÉTODO ANTIGO COMENTADO
+  async obterPeriodoAnteriorUsuario_OLD(lojaId, usuarioId, periodo, dataInicio) {
     let dataInicioAnterior;
 
     switch (periodo) {
@@ -1962,6 +1989,7 @@ class MetricsCalculationService {
       dataInicio: dataInicioAnterior,
     });
   }
+  */
 
   // Métodos auxiliares para cálculos específicos
   async calcularLocaisMaisMovimentados(auditorias) {
