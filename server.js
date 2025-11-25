@@ -19,6 +19,7 @@ import articlesRouter from "./routes/articles.js";
 import achievementsRouter from "./routes/achievements.js";
 import metricasUsuariosRoutes from "./routes/metricasUsuarios.js";
 import metricasLojasRoutes from "./routes/metricasLojas.js";
+import lojaDailyMetricsRoutes from "./routes/lojaDailyMetrics.js";
 import "./utils/planilhaHelpers.js";
 
 const app = express();
@@ -88,7 +89,6 @@ try {
 } catch (error) {
   console.log("❌ Erro nas rotas de estatísticas:", error.message);
 }
-
 
 try {
   app.use("/", rankingRouter);
@@ -188,6 +188,7 @@ try {
 } catch (error) {
   console.log("❌ Erro nas rotas de métricas de lojas:", error.message);
 }
+app.use("/api/loja-daily-metrics", lojaDailyMetricsRoutes);
 
 // Rota de sincronização removida - agora usa modelos unificados
 
@@ -198,18 +199,40 @@ app.listen(PORT, () => {
   console.log(`📍 URL: http://localhost:${PORT}`);
   console.log(`\n📋 ENDPOINTS PRINCIPAIS:`);
   console.log(`   🧪 Teste básico: http://localhost:${PORT}/test`);
-  console.log(`   📊 Lista completa de endpoints: http://localhost:${PORT}/api/endpoints`);
-  console.log(`   🔍 Verificar métricas: http://localhost:${PORT}/api/debug/verificar-metricas (header x-loja necessário)`);
-  console.log(`   📈 Dashboard executivo: http://localhost:${PORT}/api/metricas/dashboard`);
+  console.log(
+    `   📊 Lista completa de endpoints: http://localhost:${PORT}/api/endpoints`
+  );
+  console.log(
+    `   🔍 Verificar métricas: http://localhost:${PORT}/api/debug/verificar-metricas (header x-loja necessário)`
+  );
+  console.log(
+    `   📈 Dashboard executivo: http://localhost:${PORT}/api/metricas/dashboard`
+  );
   console.log(`\n💡 COMO TESTAR O SISTEMA DE MÉTRICAS:`);
-  console.log(`   0. Testar serviço: http://localhost:${PORT}/api/debug/testar-servico`);
+  console.log(
+    `   0. Testar serviço: http://localhost:${PORT}/api/debug/testar-servico`
+  );
   console.log(`   1. Faça upload: POST /upload com header 'x-loja: 001'`);
-  console.log(`   2. Verifique métricas: http://localhost:${PORT}/api/debug/verificar-metricas (header x-loja: 001)`);
-  console.log(`   3. Veja dashboard: http://localhost:${PORT}/api/metricas/dashboard`);
+  console.log(
+    `   2. Verifique métricas: http://localhost:${PORT}/api/debug/verificar-metricas (header x-loja: 001)`
+  );
+  console.log(
+    `   3. Veja dashboard: http://localhost:${PORT}/api/metricas/dashboard`
+  );
   console.log(`\n🔧 ENDPOINTS DE DEBUG:`);
-  console.log(`   🧪 Testar serviço: http://localhost:${PORT}/api/debug/testar-servico`);
-  console.log(`   🔍 Verificar métricas: http://localhost:${PORT}/api/debug/verificar-metricas`);
-  console.log(`   🔄 Calcular agora: POST http://localhost:${PORT}/api/debug/calcular-agora`);
-  console.log(`   🔌 Testar conexões: http://localhost:${PORT}/api/debug/testar-conexoes`);
-  console.log(`\n📚 Documentação completa: http://localhost:${PORT}/api/endpoints\n`);
+  console.log(
+    `   🧪 Testar serviço: http://localhost:${PORT}/api/debug/testar-servico`
+  );
+  console.log(
+    `   🔍 Verificar métricas: http://localhost:${PORT}/api/debug/verificar-metricas`
+  );
+  console.log(
+    `   🔄 Calcular agora: POST http://localhost:${PORT}/api/debug/calcular-agora`
+  );
+  console.log(
+    `   🔌 Testar conexões: http://localhost:${PORT}/api/debug/testar-conexoes`
+  );
+  console.log(
+    `\n📚 Documentação completa: http://localhost:${PORT}/api/endpoints\n`
+  );
 });

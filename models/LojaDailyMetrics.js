@@ -1086,6 +1086,9 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
 ) {
   if (!auditorias || auditorias.length === 0) return;
 
+  // Adicionando logs de debug para identificar o problema
+  console.log(`📊 Processando ${auditorias.length} auditorias do tipo: ${tipo}`);
+
   const situacaoMap = new Map();
   const usuariosUnicos = new Set();
   const classesMap = new Map();
@@ -1110,6 +1113,12 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
       locaisMap.set(local, (locaisMap.get(local) || 0) + 1);
     }
   });
+
+  // Log para verificar os dados mapeados
+  console.log(`📋 Situações encontradas para ${tipo}:`, Object.fromEntries(situacaoMap));
+  console.log(`👥 Usuários únicos: ${usuariosUnicos.size}`);
+  console.log(`📊 Classes encontradas:`, Object.fromEntries(classesMap));
+  console.log(`📍 Locais encontrados:`, Object.fromEntries(locaisMap));
 
   if (tipo === "etiquetas") {
     this.etiquetas.totalItens = auditorias.length;
@@ -1170,7 +1179,15 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
 
   // Implementar lógica similar para rupturas e presenças
   if (tipo === "rupturas") {
+    console.log(`🔄 Processando dados de ruptura...`);
     this.rupturas.totalItens = auditorias.length;
+
+    // Calcular itens válidos: itens que podem ser processados
+    // Baseado na lógica de ruptura, itens válidos seriam:
+    // - itens com situação "Atualizado" (tem presença e tem estoque)
+    // - itens com situação "Com problema" (não tem presença mas tem estoque - ausência de produto)
+    this.rupturas.itensValidos = (situacaoMap.get("Atualizado") || 0) +
+                                 (situacaoMap.get("Com problema") || 0);
 
     // itensLidos: quantidade de itens com situação "Com Presença e com Estoque"
     // Após normalização, essa situação se torna "Atualizado"
@@ -1180,20 +1197,34 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
     // Após normalização, essa situação se torna "Com problema"
     this.rupturas.itensNaoLidos = situacaoMap.get("Com problema") || 0;
 
-    // custoTotalRuptura: soma do campo custoRuptura para itens com situação original "Sem Presença e Com Estoque"
-    // Após normalização, são os itens com situação "Com problema"
-    this.rupturas.custoTotalRuptura = auditorias
-      .filter(a => a.situacao === "Com problema" && a.tipo === "ruptura")
-      .reduce((total, a) => total + (a.custoRuptura || 0), 0);
+    // custoTotalRuptura: soma do campo custoRuptura para itens com situação "Com problema"
+    // A situação "Com problema" vem da normalização de "Sem Presença e Com Estoque"
+    const itensRuptura = auditorias.filter(a => a.situacao === "Com problema");
 
-    // Calcular percentual (SEM ARREDONDAMENTO)
-    // Percentual de conclusão em relação a totalItens e itensLidos (continuação da auditoria de presença)
-    // A fórmula pode variar, mas basearemos no total de itens lidos em relação ao total
-    if (this.rupturas.totalItens > 0) {
-      this.rupturas.percentualConclusao =
-        (this.rupturas.itensLidos / this.rupturas.totalItens) * 100;
+    // Somar os valores de custoRuptura para esses itens
+    let custoTotalRuptura = 0;
+    for (const item of itensRuptura) {
+      const valor = item.custoRuptura || 0;
+      if (valor > 0) {
+        custoTotalRuptura += valor;
+      }
     }
-    this.rupturas.percentualRestante = 100 - this.rupturas.percentualConclusao;
+    this.rupturas.custoTotalRuptura = custoTotalRuptura;
+
+    console.log(`📈 Dados de ruptura antes do cálculo: totalItens=${this.rupturas.totalItens}, itensValidos=${this.rupturas.itensValidos}, itensLidos=${this.rupturas.itensLidos}, itensNaoLidos=${this.rupturas.itensNaoLidos}, custoTotalRuptura=${this.rupturas.custoTotalRuptura}`);
+
+    // Calcular percentuais (SEM ARREDONDAMENTO)
+    // Percentual de conclusão = (itensLidos / itensValidos) * 100
+    if (this.rupturas.itensValidos > 0) {
+      this.rupturas.percentualConclusao =
+        (this.rupturas.itensLidos / this.rupturas.itensValidos) * 100;
+      this.rupturas.percentualRestante =
+        100 - this.rupturas.percentualConclusao;
+    } else {
+      this.rupturas.percentualConclusao = 0;
+      this.rupturas.percentualRestante = 100;
+    }
+
     this.rupturas.usuariosAtivos = usuariosUnicos.size;
 
     // Atualizar contadores
@@ -1208,6 +1239,8 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
         this.rupturas.contadorLocais[local] = count;
       }
     }
+
+    console.log(`📋 Contadores de classes atualizados para ruptura:`, this.rupturas.contadorClasses);
   }
 
   if (tipo === "presencas") {
@@ -1300,6 +1333,7 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
     }
   }
 
+  console.log(`🔍 Iniciando cálculo de métricas por classe e local para ${tipo}`);
   // Calcular métricas por classe de produto
   this.calcularMetricasPorClasse(auditorias, tipo);
 
@@ -1308,6 +1342,8 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
 
   // Atualizar totais após modificação
   this.atualizarTotais();
+
+  console.log(`✅ Processamento de ${tipo} concluído. Totais atualizados.`);
 };
 
 // Método para calcular métricas por classe de produto
@@ -1362,14 +1398,33 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
         metricasPorClasse[classe].itensValidos++;
       }
 
-      // Incrementar itens lidos
-      // Itens lidos = Atualizado + Desatualizado + Lido não pertence
-      if (
-        situacao === "Atualizado" ||
-        situacao === "Desatualizado" ||
-        situacao === "Lido não pertence"
-      ) {
-        metricasPorClasse[classe].lidos++;
+      // Incrementar itens lidos - definição varia por tipo de auditoria
+      if (tipo === 'etiquetas') {
+        // Para etiquetas: itens lidos = "Atualizado" + "Desatualizado" + "Lido não pertence"
+        if (
+          situacao === "Atualizado" ||
+          situacao === "Desatualizado" ||
+          situacao === "Lido não pertence"
+        ) {
+          metricasPorClasse[classe].lidos++;
+        }
+      } else if (tipo === 'rupturas') {
+        // Para rupturas: itens lidos = "Atualizado" + "Com problema" (itens verificados independentemente do resultado)
+        if (
+          situacao === "Atualizado" ||
+          situacao === "Com problema"
+        ) {
+          metricasPorClasse[classe].lidos++;
+        }
+      } else if (tipo === 'presencas') {
+        // Para presencas: itens lidos = "Atualizado" + "Com problema" + "Lido não pertence"
+        if (
+          situacao === "Atualizado" ||
+          situacao === "Com problema" ||
+          situacao === "Lido não pertence"
+        ) {
+          metricasPorClasse[classe].lidos++;
+        }
       }
 
       // Incrementar contagem de usuários por classe
@@ -1404,11 +1459,16 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
 
   // Atualizar os campos na estrutura correta para o tipo de auditoria
   if (tipo === 'etiquetas') {
-    this.etiquetas.classesLeitura = classesLeitura;
+    // Garantir que o objeto esteja completamente atualizado
+    this.etiquetas.classesLeitura = JSON.parse(JSON.stringify(classesLeitura));
   } else if (tipo === 'rupturas') {
-    this.rupturas.classesLeitura = classesLeitura;
+    // Garantir que o objeto esteja completamente atualizado
+    console.log(`📊 Atualizando classesLeitura para rupturas:`, JSON.stringify(classesLeitura, null, 2));
+    this.rupturas.classesLeitura = JSON.parse(JSON.stringify(classesLeitura));
+    console.log(`✅ classesLeitura para rupturas atualizadas. Total de classes: ${Object.keys(this.rupturas.classesLeitura).length}`);
   } else if (tipo === 'presencas') {
-    this.presencas.classesLeitura = classesLeitura;
+    // Garantir que o objeto esteja completamente atualizado
+    this.presencas.classesLeitura = JSON.parse(JSON.stringify(classesLeitura));
   }
 };
 
@@ -1509,14 +1569,33 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
         metricasPorLocal[local].itensValidos++;
       }
 
-      // Incrementar itens lidos
-      // Itens lidos = Atualizado + Desatualizado + Lido não pertence
-      if (
-        situacao === "Atualizado" ||
-        situacao === "Desatualizado" ||
-        situacao === "Lido não pertence"
-      ) {
-        metricasPorLocal[local].lidos++;
+      // Incrementar itens lidos - definição varia por tipo de auditoria
+      if (tipo === 'etiquetas') {
+        // Para etiquetas: itens lidos = "Atualizado" + "Desatualizado" + "Lido não pertence"
+        if (
+          situacao === "Atualizado" ||
+          situacao === "Desatualizado" ||
+          situacao === "Lido não pertence"
+        ) {
+          metricasPorLocal[local].lidos++;
+        }
+      } else if (tipo === 'rupturas') {
+        // Para rupturas: itens lidos = "Atualizado" + "Com problema" (itens verificados independentemente do resultado)
+        if (
+          situacao === "Atualizado" ||
+          situacao === "Com problema"
+        ) {
+          metricasPorLocal[local].lidos++;
+        }
+      } else if (tipo === 'presencas') {
+        // Para presencas: itens lidos = "Atualizado" + "Com problema" + "Lido não pertence"
+        if (
+          situacao === "Atualizado" ||
+          situacao === "Com problema" ||
+          situacao === "Lido não pertence"
+        ) {
+          metricasPorLocal[local].lidos++;
+        }
       }
 
       // Incrementar contagem de usuários
@@ -1549,11 +1628,16 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
 
   // Atualizar os campos na estrutura correta para o tipo de auditoria
   if (tipo === 'etiquetas') {
-    this.etiquetas.locaisLeitura = locaisLeitura;
+    // Garantir que o objeto esteja completamente atualizado
+    this.etiquetas.locaisLeitura = JSON.parse(JSON.stringify(locaisLeitura));
   } else if (tipo === 'rupturas') {
-    this.rupturas.locaisLeitura = locaisLeitura;
+    // Garantir que o objeto esteja completamente atualizado
+    console.log(`📍 Atualizando locaisLeitura para rupturas:`, JSON.stringify(locaisLeitura, null, 2));
+    this.rupturas.locaisLeitura = JSON.parse(JSON.stringify(locaisLeitura));
+    console.log(`✅ locaisLeitura para rupturas atualizadas. Total de locais: ${Object.keys(this.rupturas.locaisLeitura).length}`);
   } else if (tipo === 'presencas') {
-    this.presencas.locaisLeitura = locaisLeitura;
+    // Garantir que o objeto esteja completamente atualizado
+    this.presencas.locaisLeitura = JSON.parse(JSON.stringify(locaisLeitura));
   }
 };
 

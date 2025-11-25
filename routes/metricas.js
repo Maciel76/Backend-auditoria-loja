@@ -1235,22 +1235,35 @@ router.get(
       dataFim.setHours(23, 59, 59, 999);
 
       // Buscar métricas diárias para a loja e data específica
-      const metricas = await LojaDailyMetrics.findOne({
+      let metricas = await LojaDailyMetrics.findOne({
         loja: req.loja._id,
         dataInicio: { $gte: dataInicio, $lt: dataFim },
       }).populate("loja", "codigo nome regiao");
 
+      // Se não encontrar para a data específica, buscar a mais recente
       if (!metricas) {
-        return res.json({
-          loja: req.loja.nome,
-          data: dataEspecifica,
-          mensagem: "Nenhuma métrica diária encontrada para esta data",
-          // Retornar estrutura vazia para manter compatibilidade com frontend
-          etiquetas: { locaisLeitura: {}, resumo: {} },
-          rupturas: { locaisLeitura: {}, resumo: {} },
-          presencas: { locaisLeitura: {}, resumo: {} },
-          totais: {},
-        });
+        console.log(`⚠️ Nenhuma métrica encontrada para ${data}, buscando mais recente...`);
+
+        metricas = await LojaDailyMetrics.findOne({
+          loja: req.loja._id,
+        })
+          .sort({ dataInicio: -1 })  // Ordena pela data mais recente
+          .populate("loja", "codigo nome regiao");
+
+        if (!metricas) {
+          return res.json({
+            loja: req.loja.nome,
+            data: dataEspecifica,
+            mensagem: "Nenhuma métrica diária encontrada para esta loja",
+            // Retornar estrutura vazia para manter compatibilidade com frontend
+            etiquetas: { locaisLeitura: {}, resumo: {} },
+            rupturas: { locaisLeitura: {}, resumo: {} },
+            presencas: { locaisLeitura: {}, resumo: {} },
+            totais: {},
+          });
+        }
+
+        console.log(`✅ Usando dados de ${metricas.dataInicio.toISOString().split('T')[0]}`);
       }
 
       // Função para enriquecer dados dos locais com informações específicas
@@ -1537,21 +1550,34 @@ router.get(
       dataFim.setHours(23, 59, 59, 999);
 
       // Buscar métricas diárias para a loja e data específica
-      const metricas = await LojaDailyMetrics.findOne({
+      let metricas = await LojaDailyMetrics.findOne({
         loja: req.loja._id,
         dataInicio: { $gte: dataInicio, $lt: dataFim },
       }).populate("loja", "codigo nome regiao");
 
+      // Se não encontrar para a data específica, buscar a mais recente
       if (!metricas) {
-        return res.json({
-          loja: req.loja.nome,
-          data: dataEspecifica,
-          mensagem: "Nenhuma métrica diária encontrada para esta data",
-          etiquetas: { classesLeitura: {}, resumo: {} },
-          rupturas: { classesLeitura: {}, resumo: {} },
-          presencas: { classesLeitura: {}, resumo: {} },
-          totais: {},
-        });
+        console.log(`⚠️ Nenhuma métrica encontrada para ${data}, buscando mais recente...`);
+
+        metricas = await LojaDailyMetrics.findOne({
+          loja: req.loja._id,
+        })
+          .sort({ dataInicio: -1 })  // Ordena pela data mais recente
+          .populate("loja", "codigo nome regiao");
+
+        if (!metricas) {
+          return res.json({
+            loja: req.loja.nome,
+            data: dataEspecifica,
+            mensagem: "Nenhuma métrica diária encontrada para esta loja",
+            etiquetas: { classesLeitura: {}, resumo: {} },
+            rupturas: { classesLeitura: {}, resumo: {} },
+            presencas: { classesLeitura: {}, resumo: {} },
+            totais: {},
+          });
+        }
+
+        console.log(`✅ Usando dados de ${metricas.dataInicio.toISOString().split('T')[0]}`);
       }
 
       // Preparar resposta com TODAS as auditorias e suas classesLeitura

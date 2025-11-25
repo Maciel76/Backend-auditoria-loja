@@ -1,0 +1,52 @@
+
+> backend@1.0.0 start
+> node server.js
+
+✅ Rotas de loja carregadas
+✅ Rotas de upload carregadas
+✅ Rotas de relatórios carregadas
+✅ Rotas de setores carregadas
+✅ Rotas de estatísticas carregadas
+✅ Rotas de ranking carregadas
+✅ Rotas de ranking presença carregadas
+✅ Rotas de ranking ruptura carregadas
+✅ Rotas avançadas carregadas
+✅ Rotas de métricas carregadas
+✅ Rotas de debug carregadas
+✅ Lista de endpoints carregada
+✅ Rotas de sugestões carregadas
+✅ Rotas de avisos carregadas
+✅ Rotas de votações carregadas
+✅ Rotas de artigos carregadas
+✅ Rotas de conquistas carregadas
+✅ Rotas de métricas de usuários carregadas
+✅ Rotas de métricas de lojas carregadas
+(node:13497) [MONGOOSE] Warning: Duplicate schema index on {"lojaNome":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13497) [MONGOOSE] Warning: Duplicate schema index on {"loja":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(node:13497) [MONGOOSE] Warning: Duplicate schema index on {"loja":1,"usuarioId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+
+🚀 SERVIDOR DE AUDITORIAS COM MÉTRICAS RODANDO
+📍 URL: http://localhost:3000
+
+📋 ENDPOINTS PRINCIPAIS:
+   🧪 Teste básico: http://localhost:3000/test
+   📊 Lista completa de endpoints: http://localhost:3000/api/endpoints
+   🔍 Verificar métricas: http://localhost:3000/api/debug/verificar-metricas (header x-loja necessário)
+   📈 Dashboard executivo: http://localhost:3000/api/metricas/dashboard
+
+💡 COMO TESTAR O SISTEMA DE MÉTRICAS:
+   0. Testar serviço: http://localhost:3000/api/debug/testar-servico
+   1. Faça upload: POST /upload com header 'x-loja: 001'
+   2. Verifique métricas: http://localhost:3000/api/debug/verificar-metricas (header x-loja: 001)
+   3. Veja dashboard: http://localhost:3000/api/metricas/dashboard
+
+🔧 ENDPOINTS DE DEBUG:
+   🧪 Testar serviço: http://localhost:3000/api/debug/testar-servico
+   🔍 Verificar métricas: http://localhost:3000/api/debug/verificar-metricas
+   🔄 Calcular agora: POST http://localhost:3000/api/debug/calcular-agora
+   🔌 Testar conexões: http://localhost:3000/api/debug/testar-conexoes
+
+📚 Documentação completa: http://localhost:3000/api/endpoints
+
+✅ Conectado ao MongoDB Local
