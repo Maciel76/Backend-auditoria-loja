@@ -576,6 +576,311 @@ class MetricasUsuariosService {
       throw error;
     }
   }
+
+  /**
+   * ✨ NOVO: Atualiza métricas de forma INCREMENTAL
+   * Processa apenas as novas auditorias e SOMA nas métricas existentes
+   * @param {Array} novasAuditorias - Array de IDs das auditorias recém-inseridas
+   * @param {Object} loja - Objeto da loja
+   */
+  async atualizarMetricasIncrementalmente(novasAuditorias, loja) {
+    try {
+      console.log(`⚡ [MetricasUsuarios-Incremental] Atualizando métricas para ${novasAuditorias.length} novas auditorias`);
+
+      if (!novasAuditorias || novasAuditorias.length === 0) {
+        console.log(`⚠️ [MetricasUsuarios-Incremental] Nenhuma auditoria para processar`);
+        return { success: true, totalUsuarios: 0 };
+      }
+
+      // 1. Buscar apenas as novas auditorias
+      const auditorias = await Auditoria.find({
+        _id: { $in: novasAuditorias }
+      }).populate('loja', 'codigo nome regiao');
+
+      console.log(`📦 [MetricasUsuarios-Incremental] Processando ${auditorias.length} auditorias novas`);
+
+      // 2. Agrupar as novas auditorias por usuário
+      const usuariosAfetados = this.agruparPorUsuarioELoja(auditorias);
+
+      console.log(`👥 [MetricasUsuarios-Incremental] ${usuariosAfetados.size} usuários afetados`);
+
+      // 3. Para cada usuário afetado, atualizar métricas incrementalmente
+      let salvosComSucesso = 0;
+      for (const [chave, dadosNovos] of usuariosAfetados) {
+        try {
+          await this.atualizarMetricasUsuarioIncremental(dadosNovos, loja);
+          salvosComSucesso++;
+        } catch (error) {
+          console.error(`❌ [MetricasUsuarios-Incremental] Erro ao atualizar ${dadosNovos.usuarioNome}:`, error.message);
+        }
+      }
+
+      // 4. Atualizar rankings apenas da loja afetada
+      await this.atualizarRankingsLoja(loja._id);
+
+      console.log(`✅ [MetricasUsuarios-Incremental] ${salvosComSucesso}/${usuariosAfetados.size} usuários atualizados`);
+
+      return {
+        success: true,
+        totalUsuarios: salvosComSucesso,
+        totalAuditorias: auditorias.length
+      };
+
+    } catch (error) {
+      console.error(`❌ [MetricasUsuarios-Incremental] Erro ao atualizar métricas:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Atualiza as métricas de um usuário específico de forma incremental
+   * SOMA os novos valores nos valores existentes ao invés de recalcular tudo
+   */
+  async atualizarMetricasUsuarioIncremental(dadosNovos, loja) {
+    const lojaId = loja._id;
+
+    // 1. Buscar métricas existentes do usuário
+    let metricasUsuario = await MetricasUsuario.findOne({
+      loja: lojaId,
+      usuarioId: dadosNovos.usuarioId,
+      periodo: "periodo_completo",
+    });
+
+    const agora = new Date();
+
+    // 2. Se não existe, criar novo registro
+    if (!metricasUsuario) {
+      console.log(`📝 [Incremental] Criando novo registro para ${dadosNovos.usuarioNome}`);
+
+      // Buscar totais da loja para calcular percentuais
+      const totaisDaLoja = await this.calcularTotaisPorLojaRapido(lojaId);
+
+      metricasUsuario = new MetricasUsuario({
+        loja: lojaId,
+        usuarioId: dadosNovos.usuarioId,
+        usuarioNome: dadosNovos.usuarioNome,
+        lojaNome: loja.nome,
+        periodo: "periodo_completo",
+        dataInicio: agora,
+        dataFim: agora,
+        versaoCalculo: this.versaoCalculo,
+        etiquetas: this.calcularMetricasComPercentual(dadosNovos.etiquetas, totaisDaLoja.etiquetas, 'etiqueta'),
+        rupturas: this.calcularMetricasComPercentual(dadosNovos.rupturas, totaisDaLoja.rupturas, 'ruptura'),
+        presencas: this.calcularMetricasComPercentual(dadosNovos.presencas, totaisDaLoja.presencas, 'presenca'),
+        ContadorClassesProduto: Object.fromEntries(dadosNovos.ContadorClassesProduto),
+        ContadorLocais: Object.fromEntries(dadosNovos.ContadorLocais),
+      });
+    } else {
+      // 3. INCREMENTAL: SOMAR novos valores nos existentes
+      console.log(`➕ [Incremental] Somando novos dados para ${dadosNovos.usuarioNome}`);
+
+      // Somar métricas de etiquetas
+      metricasUsuario.etiquetas.totalItens += dadosNovos.etiquetas.totalItens;
+      metricasUsuario.etiquetas.itensLidos += dadosNovos.etiquetas.itensLidos;
+      metricasUsuario.etiquetas.itensAtualizados += dadosNovos.etiquetas.itensAtualizados;
+      metricasUsuario.etiquetas.itensDesatualizado += dadosNovos.etiquetas.itensDesatualizado;
+      metricasUsuario.etiquetas.itensSemEstoque += dadosNovos.etiquetas.itensSemEstoque;
+      metricasUsuario.etiquetas.itensNaopertence += dadosNovos.etiquetas.itensNaopertence;
+
+      // Somar métricas de rupturas
+      metricasUsuario.rupturas.totalItens += dadosNovos.rupturas.totalItens;
+      metricasUsuario.rupturas.itensLidos += dadosNovos.rupturas.itensLidos;
+      metricasUsuario.rupturas.itensAtualizados += dadosNovos.rupturas.itensAtualizados;
+      metricasUsuario.rupturas.itensDesatualizado += dadosNovos.rupturas.itensDesatualizado;
+      metricasUsuario.rupturas.itensSemEstoque += dadosNovos.rupturas.itensSemEstoque;
+      metricasUsuario.rupturas.itensNaopertence += dadosNovos.rupturas.itensNaopertence;
+      metricasUsuario.rupturas.custoTotalRuptura = (metricasUsuario.rupturas.custoTotalRuptura || 0) + (dadosNovos.rupturas.custoTotal || 0);
+
+      // Somar métricas de presenças
+      metricasUsuario.presencas.totalItens += dadosNovos.presencas.totalItens;
+      metricasUsuario.presencas.itensLidos += dadosNovos.presencas.itensLidos;
+      metricasUsuario.presencas.itensAtualizados += dadosNovos.presencas.itensAtualizados;
+      metricasUsuario.presencas.itensDesatualizado += dadosNovos.presencas.itensDesatualizado;
+      metricasUsuario.presencas.itensSemEstoque += dadosNovos.presencas.itensSemEstoque;
+      metricasUsuario.presencas.itensNaopertence += dadosNovos.presencas.itensNaopertence;
+      metricasUsuario.presencas.presencasConfirmadas = (metricasUsuario.presencas.presencasConfirmadas || 0) + (dadosNovos.presencas.presencasConfirmadas || 0);
+
+      // Somar contadores de classes de produto
+      const classesProdutoExistentes = new Map(Object.entries(metricasUsuario.ContadorClassesProduto || {}));
+      for (const [classe, count] of dadosNovos.ContadorClassesProduto) {
+        classesProdutoExistentes.set(classe, (classesProdutoExistentes.get(classe) || 0) + count);
+      }
+      metricasUsuario.ContadorClassesProduto = Object.fromEntries(classesProdutoExistentes);
+
+      // Somar contadores de locais
+      const locaisExistentes = new Map(Object.entries(metricasUsuario.ContadorLocais || {}));
+      for (const [local, count] of dadosNovos.ContadorLocais) {
+        locaisExistentes.set(local, (locaisExistentes.get(local) || 0) + count);
+      }
+      metricasUsuario.ContadorLocais = Object.fromEntries(locaisExistentes);
+
+      // Atualizar datas
+      metricasUsuario.usuarioNome = dadosNovos.usuarioNome;
+      metricasUsuario.lojaNome = loja.nome;
+      metricasUsuario.dataFim = agora;
+
+      // Recalcular percentuais com os novos totais
+      const totaisDaLoja = await this.calcularTotaisPorLojaRapido(lojaId);
+
+      metricasUsuario.etiquetas.percentualConclusao = totaisDaLoja.etiquetas.itensLidos > 0
+        ? Math.round((metricasUsuario.etiquetas.itensLidos / totaisDaLoja.etiquetas.itensLidos) * 100)
+        : 0;
+
+      metricasUsuario.rupturas.percentualConclusao = totaisDaLoja.rupturas.itensLidos > 0
+        ? Math.round((metricasUsuario.rupturas.itensLidos / totaisDaLoja.rupturas.itensLidos) * 100)
+        : 0;
+      metricasUsuario.rupturas.custoMedioRuptura = metricasUsuario.rupturas.totalItens > 0
+        ? metricasUsuario.rupturas.custoTotalRuptura / metricasUsuario.rupturas.totalItens
+        : 0;
+
+      metricasUsuario.presencas.percentualConclusao = totaisDaLoja.presencas.itensLidos > 0
+        ? Math.round((metricasUsuario.presencas.itensLidos / totaisDaLoja.presencas.itensLidos) * 100)
+        : 0;
+      metricasUsuario.presencas.percentualPresenca = metricasUsuario.presencas.totalItens > 0
+        ? Math.round((metricasUsuario.presencas.presencasConfirmadas / metricasUsuario.presencas.totalItens) * 100)
+        : 0;
+    }
+
+    // 4. Recalcular contadores de auditorias (usa aggregate, então precisa buscar tudo do usuário)
+    const contadores = await this.calcularContadoresAuditorias(lojaId, dadosNovos.usuarioId);
+    metricasUsuario.contadoresAuditorias = contadores;
+
+    // 5. Calcular totais acumulados a partir das métricas atualizadas
+    metricasUsuario.totaisAcumulados = {
+      itensLidosEtiquetas: metricasUsuario.etiquetas.itensLidos,
+      itensLidosRupturas: metricasUsuario.rupturas.itensLidos,
+      itensLidosPresencas: metricasUsuario.presencas.itensLidos,
+      itensLidosTotal:
+        metricasUsuario.etiquetas.itensLidos +
+        metricasUsuario.rupturas.itensLidos +
+        metricasUsuario.presencas.itensLidos,
+    };
+
+    // 6. Calcular tendências
+    const tendencias = await this.calcularTendencias(lojaId, dadosNovos.usuarioId, {
+      etiquetas: metricasUsuario.etiquetas,
+      rupturas: metricasUsuario.rupturas,
+      presencas: metricasUsuario.presencas,
+    });
+    metricasUsuario.tendencias = tendencias;
+
+    // 7. Calcular totais e pontuação
+    metricasUsuario.atualizarTotais();
+
+    // 8. Salvar
+    await metricasUsuario.save();
+
+    console.log(`✅ [Incremental] ${dadosNovos.usuarioNome}: ${metricasUsuario.totaisAcumulados.itensLidosTotal} itens lidos (total)`);
+  }
+
+  /**
+   * Calcula totais da loja de forma rápida usando aggregate
+   */
+  async calcularTotaisPorLojaRapido(lojaId) {
+    const resultado = await Auditoria.aggregate([
+      { $match: { loja: lojaId, situacao: { $ne: "Não lido" } } },
+      {
+        $group: {
+          _id: "$tipo",
+          itensLidos: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const totais = {
+      etiquetas: { itensLidos: 1 },
+      rupturas: { itensLidos: 1 },
+      presencas: { itensLidos: 1 }
+    };
+
+    resultado.forEach(item => {
+      if (item._id === "etiqueta") totais.etiquetas.itensLidos = item.itensLidos;
+      if (item._id === "ruptura") totais.rupturas.itensLidos = item.itensLidos;
+      if (item._id === "presenca") totais.presencas.itensLidos = item.itensLidos;
+    });
+
+    return totais;
+  }
+
+  /**
+   * Calcula métricas com percentual
+   */
+  calcularMetricasComPercentual(metricas, totaisDaLoja, tipo) {
+    const resultado = { ...metricas };
+
+    resultado.percentualConclusao = totaisDaLoja.itensLidos > 0
+      ? Math.round((metricas.itensLidos / totaisDaLoja.itensLidos) * 100)
+      : 0;
+
+    if (tipo === 'ruptura') {
+      resultado.custoTotalRuptura = metricas.custoTotal || 0;
+      resultado.custoMedioRuptura = metricas.totalItens > 0
+        ? (metricas.custoTotal || 0) / metricas.totalItens
+        : 0;
+    }
+
+    if (tipo === 'presenca') {
+      resultado.percentualPresenca = metricas.totalItens > 0
+        ? Math.round(((metricas.presencasConfirmadas || 0) / metricas.totalItens) * 100)
+        : 0;
+    }
+
+    return resultado;
+  }
+
+  /**
+   * Atualiza rankings apenas de uma loja específica
+   */
+  async atualizarRankingsLoja(lojaId) {
+    try {
+      console.log(`🏆 [MetricasUsuarios-Incremental] Atualizando rankings da loja...`);
+
+      // Ranking da loja
+      const metricasLoja = await MetricasUsuario.find({
+        loja: lojaId,
+        periodo: "periodo_completo"
+      }).sort({ "totais.pontuacaoTotal": -1 });
+
+      // Atualizar posição na loja
+      for (let i = 0; i < metricasLoja.length; i++) {
+        metricasLoja[i].ranking.posicaoLoja = i + 1;
+        await metricasLoja[i].save();
+      }
+
+      // Ranking geral (todas as lojas) - necessário recalcular
+      const todasMetricas = await MetricasUsuario.find({
+        periodo: "periodo_completo"
+      }).sort({ "totais.pontuacaoTotal": -1 });
+
+      for (let i = 0; i < todasMetricas.length; i++) {
+        todasMetricas[i].ranking.posicaoGeral = i + 1;
+
+        // Atualizar histórico apenas se mudou
+        const posicao = i + 1;
+        if (posicao <= 10) {
+          const campo = `posicao${posicao}`;
+          // Só incrementar se for um usuário da loja atual (para evitar incrementar toda vez)
+          if (todasMetricas[i].loja.toString() === lojaId.toString()) {
+            todasMetricas[i].historicoRanking[campo] =
+              (todasMetricas[i].historicoRanking[campo] || 0) + 1;
+          }
+        }
+
+        // Atualizar melhor posição
+        if (!todasMetricas[i].historicoRanking.melhorPosicao ||
+            posicao < todasMetricas[i].historicoRanking.melhorPosicao) {
+          todasMetricas[i].historicoRanking.melhorPosicao = posicao;
+        }
+
+        await todasMetricas[i].save();
+      }
+
+      console.log(`✅ [MetricasUsuarios-Incremental] Rankings atualizados`);
+    } catch (error) {
+      console.error(`❌ [MetricasUsuarios-Incremental] Erro ao atualizar rankings:`, error);
+      throw error;
+    }
+  }
 }
 
 // Exportar instância única

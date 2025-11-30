@@ -10,6 +10,7 @@ import Auditoria from "../models/Auditoria.js";
 import { verificarLojaObrigatoria, getFiltroLoja } from "../middleware/loja.js";
 import { processarParaAuditoria } from "../services/processador-auditoria.js";
 import metricsCalculationService from "../services/metricsCalculationService.js";
+import metricasUsuariosService from "../services/metricasUsuariosService.js";
 import UserDailyMetrics from "../models/UserDailyMetrics.js";
 import MetricasUsuario from "../models/MetricasUsuario.js";
 import Loja from "../models/Loja.js";
@@ -265,9 +266,10 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
       } na data ${dataAuditoria.toLocaleDateString()}`
     );
 
-    // Salvar auditorias
+    // Salvar auditorias e capturar IDs
+    let auditoriasInseridas = [];
     if (setoresBatch.length > 0) {
-      await Auditoria.insertMany(setoresBatch);
+      auditoriasInseridas = await Auditoria.insertMany(setoresBatch);
       console.log(
         `💾 ${setoresBatch.length} auditorias salvos para loja ${loja.codigo}`
       );
@@ -406,6 +408,8 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
       usuariosEnvolvidos: Array.from(usuariosMap.keys()),
       tipo: "etiqueta",
       loja: loja,
+      dataAuditoria: dataAuditoria,
+      auditoriasIds: auditoriasInseridas.map(a => a._id), // IDs para cálculo incremental
     };
 
     return resultado;
@@ -579,7 +583,7 @@ async function processarRuptura(file, dataAuditoria, loja) {
         metadata: item.metadata,
       }));
 
-      await Auditoria.insertMany(auditoriasBatch);
+      const auditoriasInseridas = await Auditoria.insertMany(auditoriasBatch);
       console.log(
         `💾 ${dadosProcessados.length} rupturas salvas para loja ${loja.codigo}`
       );
@@ -593,6 +597,11 @@ async function processarRuptura(file, dataAuditoria, loja) {
       });
       console.log(`📊 [RUPTURA] Classes encontradas: ${Array.from(classesEncontradas).join(', ')}`);
       console.log(`📍 [RUPTURA] Locais encontrados: ${Array.from(locaisEncontrados).join(', ')}`);
+
+      // Salvar IDs para retorno
+      var auditoriasIdsRuptura = auditoriasInseridas.map(a => a._id);
+    } else {
+      var auditoriasIdsRuptura = [];
     }
 
     // Processar usuários no modelo User unificado
@@ -718,6 +727,7 @@ async function processarRuptura(file, dataAuditoria, loja) {
       tipo: "ruptura",
       loja: loja,
       dataAuditoria: dataAuditoriaFinal,
+      auditoriasIds: auditoriasIdsRuptura, // IDs para cálculo incremental
     };
   } catch (error) {
     console.error("❌ Erro ao processar ruptura:", error);
@@ -886,10 +896,15 @@ async function processarPresenca(file, dataAuditoria, loja) {
         metadata: item.metadata,
       }));
 
-      await Auditoria.insertMany(auditoriasBatch);
+      const auditoriasInseridas = await Auditoria.insertMany(auditoriasBatch);
       console.log(
         `💾 ${dadosProcessados.length} presenças salvas para loja ${loja.codigo}`
       );
+
+      // Salvar IDs para retorno
+      var auditoriasIdsPresenca = auditoriasInseridas.map(a => a._id);
+    } else {
+      var auditoriasIdsPresenca = [];
     }
 
     // Processar usuários no modelo User unificado
@@ -1017,6 +1032,7 @@ async function processarPresenca(file, dataAuditoria, loja) {
       tipo: "presenca",
       loja: loja,
       dataAuditoria: dataAuditoriaFinal,
+      auditoriasIds: auditoriasIdsPresenca, // IDs para cálculo incremental
     };
   } catch (error) {
     console.error("❌ Erro ao processar presença:", error);
@@ -1168,18 +1184,35 @@ router.post(
           }
         }
 
-        // Calcular métricas mensais
+        // ⚡ CÁLCULO INCREMENTAL: Atualizar apenas as novas métricas
         metricsStatus.mensal.attempted = true;
-        const resultadoMensal =
-          await metricsCalculationService.calcularTodasMetricas(
-            "mensal",
-            dataMetricas
+        try {
+          if (resultado.auditoriasIds && resultado.auditoriasIds.length > 0) {
+            console.log(
+              `⚡ Usando cálculo INCREMENTAL para ${resultado.auditoriasIds.length} auditorias`
+            );
+            const resultadoIncremental =
+              await metricasUsuariosService.atualizarMetricasIncrementalmente(
+                resultado.auditoriasIds,
+                loja
+              );
+            metricsStatus.mensal.success = resultadoIncremental.success;
+            console.log(
+              `📊 Métricas atualizadas incrementalmente:`,
+              resultadoIncremental.success ? "✅ Sucesso" : "❌ Falha"
+            );
+          } else {
+            console.log(`⚠️ Nenhuma auditoria nova para calcular métricas`);
+            metricsStatus.mensal.success = true;
+          }
+        } catch (errorIncremental) {
+          console.error(
+            `❌ Erro no cálculo incremental:`,
+            errorIncremental.message
           );
-        metricsStatus.mensal.success = resultadoMensal.success;
-        console.log(
-          `📊 Métricas mensais calculadas:`,
-          resultadoMensal.success ? "✅ Sucesso" : "❌ Falha"
-        );
+          metricsStatus.mensal.error = errorIncremental.message;
+          metricsStatus.mensal.success = false;
+        }
 
         console.log(
           `✅ Processamento de métricas concluído para loja ${loja.codigo}`
