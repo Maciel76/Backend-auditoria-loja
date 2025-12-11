@@ -42,18 +42,16 @@ router.get("/", async (req, res) => {
       totalItens > 0 ? ((totalItensLidos / totalItens) * 100).toFixed(2) : 0;
 
     // Buscar desempenho por colaborador
+    // Como não temos mais histórico de auditorias por data, buscamos todos os usuários da loja
     const usuarios = await User.find({
-      "auditorias.data": {
-        $gte: dataInicio,
-        $lte: dataFim,
-      },
+      loja: req.loja._id, // Filtrar pela loja
     });
 
     const colaboradores = usuarios
       .map((user) => {
-        const itensPeriodo = user.auditorias
-          .filter((aud) => aud.data >= dataInicio && aud.data <= dataFim)
-          .reduce((sum, aud) => sum + aud.contador, 0);
+        // Não temos mais histórico de auditorias por data no modelo de usuário
+        // Usaremos o contador total como proxy
+        const itensPeriodo = user.contadorTotal;
 
         return {
           id: user.id,

@@ -1457,24 +1457,23 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
   // Calcular percentuais e atualizar o campo correspondente
   const classesLeitura = {};
   for (const [classe, valores] of Object.entries(metricasPorClasse)) {
-    // CORRIGIDO: Durante o processamento, o que chamamos de "lidos" na verdade são os itensValidos
-    // e o que chamamos de "itensValidos" são os lidos. Vamos inverter para salvar corretamente.
-    const percentual = valores.lidos > 0 ? (valores.itensValidos / valores.lidos) * 100 : 0;
+    // A fórmula correta para o percentual é (lidos / itensValidos)
+    const percentual = valores.itensValidos > 0 ? (valores.lidos / valores.itensValidos) * 100 : 0;
 
     // Log de debug para classes com percentual > 100%
     if (percentual > 100) {
-      console.log(`⚠️ [${tipo}] ERRO: Percentual > 100% na classe ${classe}:`, {
+      console.log(`⚠️ [${tipo}] AVISO: Percentual > 100% na classe ${classe}:`, {
         total: valores.total,
-        itensValidos_interno: valores.itensValidos,
-        lidos_interno: valores.lidos,
+        itensValidos: valores.itensValidos,
+        lidos: valores.lidos,
         percentual: percentual
       });
     }
 
     classesLeitura[classe] = {
       total: valores.total,
-      itensValidos: valores.lidos,  // CORRIGIDO: lidos (interno) vai para itensValidos (salvo)
-      lidos: valores.itensValidos,  // CORRIGIDO: itensValidos (interno) vai para lidos (salvo)
+      itensValidos: valores.itensValidos,
+      lidos: valores.lidos,
       percentual: percentual,
       usuarios: valores.usuarios,
     };
@@ -1564,21 +1563,23 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
 
   // Processar cada auditoria
   for (const auditoria of auditorias) {
-    // Determinar local do produto
-    const local = auditoria.local;
-    if (!local) continue; // Pular se não tiver local definido
+    const localValue = auditoria.local;
+    if (!localValue) continue; // Pular se não tiver local definido
+
+    // Construir a chave no formato esperado pelo schema (ex: "G01A - G01A")
+    const localKey = `${localValue} - ${localValue}`;
 
     // Determinar usuário da auditoria (ID e nome)
     const usuarioId = auditoria.usuarioId || auditoria.Usuario;
     const usuarioNome = auditoria.usuarioNome || auditoria.Nome; // Procurar por possíveis campos de nome
     if (!usuarioId) continue; // Pular se não tiver ID de usuário definido
 
-    // Verificar se o local está no objeto de métricas
-    if (metricasPorLocal.hasOwnProperty(local)) {
+    // Verificar se o local (com a chave formatada) está no objeto de métricas
+    if (metricasPorLocal.hasOwnProperty(localKey)) {
       const situacao = auditoria.situacao || auditoria.Situacao;
 
       // Incrementar total (todos os itens)
-      metricasPorLocal[local].total++;
+      metricasPorLocal[localKey].total++;
 
       // Incrementar itens válidos (seguindo mesma lógica de etiquetas.itensValidos)
       // Itens válidos = Atualizado + Desatualizado + Não lidos com estoque + Lido não pertence
@@ -1589,7 +1590,7 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
         situacao === "Não lidos com estoque" ||
         situacao === "Lido não pertence"
       ) {
-        metricasPorLocal[local].itensValidos++;
+        metricasPorLocal[localKey].itensValidos++;
       }
 
       // Incrementar itens lidos - definição varia por tipo de auditoria
@@ -1600,7 +1601,7 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
           situacao === "Desatualizado" ||
           situacao === "Lido não pertence"
         ) {
-          metricasPorLocal[local].lidos++;
+          metricasPorLocal[localKey].lidos++;
         }
       } else if (tipo === 'rupturas') {
         // Para rupturas: itens lidos = "Atualizado" + "Com problema" (itens verificados independentemente do resultado)
@@ -1608,7 +1609,7 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
           situacao === "Atualizado" ||
           situacao === "Com problema"
         ) {
-          metricasPorLocal[local].lidos++;
+          metricasPorLocal[localKey].lidos++;
         }
       } else if (tipo === 'presencas') {
         // Para presencas: itens lidos = "Atualizado" + "Com problema" + "Lido não pertence"
@@ -1617,7 +1618,7 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
           situacao === "Com problema" ||
           situacao === "Lido não pertence"
         ) {
-          metricasPorLocal[local].lidos++;
+          metricasPorLocal[localKey].lidos++;
         }
       }
 
@@ -1625,12 +1626,12 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
       // Usar o nome do usuário como chave e armazenar a contagem
       const usuarioChave = usuarioNome || `Usuário ${usuarioId}`; // Usar nome como chave
 
-      if (metricasPorLocal[local].usuarios[usuarioChave]) {
+      if (metricasPorLocal[localKey].usuarios[usuarioChave]) {
         // Se o usuário já existe no local, apenas incrementar os itens lidos
-        metricasPorLocal[local].usuarios[usuarioChave]++;
+        metricasPorLocal[localKey].usuarios[usuarioChave]++;
       } else {
         // Se for a primeira vez do usuário no local, adicionar com 1 item lido
-        metricasPorLocal[local].usuarios[usuarioChave] = 1;
+        metricasPorLocal[localKey].usuarios[usuarioChave] = 1;
       }
     }
   }
@@ -1638,14 +1639,15 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
   // Calcular percentuais e atualizar o campo correspondente
   const locaisLeitura = {};
   for (const [local, valores] of Object.entries(metricasPorLocal)) {
-    // CORRIGIDO: Durante o processamento, o que chamamos de "lidos" na verdade são os itensValidos
-    // e o que chamamos de "itensValidos" são os lidos. Vamos inverter para salvar corretamente.
-    const percentual = valores.lidos > 0 ? (valores.itensValidos / valores.lidos) * 100 : 0;
+    // A fórmula correta para o percentual é (lidos / itensValidos)
+    const percentual = valores.itensValidos > 0 ? (valores.lidos / valores.itensValidos) * 100 : 0;
+
+    console.log(`[DIAGNÓSTICO CÁLCULO LOCAL] tipo: ${tipo}, local: ${local}, lidos: ${valores.lidos}, itensValidos: ${valores.itensValidos}, percentual: ${percentual}`);
 
     locaisLeitura[local] = {
       total: valores.total,
-      itensValidos: valores.lidos,  // CORRIGIDO: lidos (interno) vai para itensValidos (salvo)
-      lidos: valores.itensValidos,  // CORRIGIDO: itensValidos (interno) vai para lidos (salvo)
+      itensValidos: valores.itensValidos,
+      lidos: valores.lidos,
       percentual: percentual,
       usuarios: valores.usuarios,
     };

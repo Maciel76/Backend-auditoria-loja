@@ -1587,6 +1587,7 @@ router.get(
 
         etiquetas: {
           classesLeitura: metricas.etiquetas?.classesLeitura || {},
+          locaisLeitura: metricas.etiquetas?.locaisLeitura || {},
           resumo: {
             totalItens: metricas.etiquetas?.totalItens || 0,
             itensValidos: metricas.etiquetas?.itensValidos || 0,
@@ -1599,6 +1600,7 @@ router.get(
 
         rupturas: {
           classesLeitura: metricas.rupturas?.classesLeitura || {},
+          locaisLeitura: metricas.rupturas?.locaisLeitura || {},
           resumo: {
             totalItens: metricas.rupturas?.totalItens || 0,
             itensLidos: metricas.rupturas?.itensLidos || 0,
@@ -1609,6 +1611,7 @@ router.get(
 
         presencas: {
           classesLeitura: metricas.presencas?.classesLeitura || {},
+          locaisLeitura: metricas.presencas?.locaisLeitura || {},
           resumo: {
             totalItens: metricas.presencas?.totalItens || 0,
             itensValidos: metricas.presencas?.itensValidos || 0,
@@ -1627,9 +1630,9 @@ router.get(
       console.log(
         `✅ Endpoint classes-completas: Retornando dados para loja ${req.loja.nome}`
       );
-      console.log(`   - Etiquetas: ${Object.keys(resposta.etiquetas.classesLeitura).length} classes`);
-      console.log(`   - Rupturas: ${Object.keys(resposta.rupturas.classesLeitura).length} classes`);
-      console.log(`   - Presenças: ${Object.keys(resposta.presencas.classesLeitura).length} classes`);
+      console.log(`   - Etiquetas: ${Object.keys(resposta.etiquetas.classesLeitura).length} classes, ${Object.keys(resposta.etiquetas.locaisLeitura).length} locais`);
+      console.log(`   - Rupturas: ${Object.keys(resposta.rupturas.classesLeitura).length} classes, ${Object.keys(resposta.rupturas.locaisLeitura).length} locais`);
+      console.log(`   - Presenças: ${Object.keys(resposta.presencas.classesLeitura).length} classes, ${Object.keys(resposta.presencas.locaisLeitura).length} locais`);
 
       res.json(resposta);
     } catch (error) {
@@ -1641,5 +1644,54 @@ router.get(
     }
   }
 );
+
+// ROTA DE DEBUG TEMPORÁRIA PARA FORÇAR RECÁLCULO
+router.get("/force-recalc-today", async (req, res) => {
+  try {
+    const lojaCodigo = req.headers["x-loja"];
+    if (!lojaCodigo) {
+      return res.status(400).json({
+        message: "Header 'x-loja' não fornecido. Por favor, selecione uma loja no frontend.",
+      });
+    }
+    
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const amanha = new Date(hoje);
+    amanha.setDate(amanha.getDate() + 1);
+
+    const regexLojaNome = new RegExp(`^Loja ${lojaCodigo} -`, "i");
+
+    // Passo 1: Buscar os valores distintos de 'local' para diagnóstico
+    console.log(`[DEBUG] Buscando valores distintos de 'local' para a loja ${lojaCodigo} em ${hoje.toISOString().split('T')[0]}`);
+    const distinctLocais = await Auditoria.distinct('local', {
+      lojaNome: regexLojaNome,
+      tipo: "etiqueta", // Filtrar por um tipo para ser mais rápido
+      data: { $gte: hoje, $lt: amanha }
+    });
+    console.log(`[DEBUG] Valores distintos de 'local' encontrados:`, distinctLocais);
+
+    // Passo 2: Forçar o recálculo
+    console.log("🔄 [DEBUG] Forçando recálculo manual para o período 'diario'...");
+    const resultado = await metricsCalculationService.calcularTodasMetricas(
+      "diario",
+      new Date()
+    );
+    console.log("✅ [DEBUG] Recálculo concluído com sucesso.");
+
+    // Passo 3: Retornar o resultado do diagnóstico e do recálculo
+    res.status(200).json({
+      message: "Recálculo diário forçado com sucesso!",
+      diagnostico_locais_encontrados: distinctLocais,
+      resultado_calculo: resultado,
+    });
+  } catch (error) {
+    console.error("❌ [DEBUG] Erro ao forçar o recálculo:", error);
+    res.status(500).json({
+      message: "Erro ao forçar o recálculo.",
+      error: error.message,
+    });
+  }
+});
 
 export default router;

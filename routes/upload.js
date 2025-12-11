@@ -307,60 +307,24 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
         );
 
         console.log(`👤 Usuário processado: ${usuario.nome} (${usuario.id})`);
-        const wasCreated =
-          !usuario.auditorias || usuario.auditorias.length === 0;
+        const wasCreated = usuario.contadorTotal === 0;
 
-        // Encontrar ou criar auditoria para a data atual
-        const auditoriaIndex = usuario.auditorias.findIndex(
-          (a) => a.data.toDateString() === dataAuditoria.toDateString()
-        );
-
-        if (auditoriaIndex === -1) {
-          usuario.auditorias.push({
-            data: dataAuditoria,
-            contador: 0,
-            detalhes: [],
-          });
-        }
-
-        const auditoria =
-          usuario.auditorias[
-            auditoriaIndex === -1
-              ? usuario.auditorias.length - 1
-              : auditoriaIndex
-          ];
-
-        // Limpar detalhes existentes e processar novos itens
-        auditoria.detalhes = [];
-        auditoria.contador = 0;
-
+        // Calcular contador total baseado nos itens processados
+        let itensAtualizados = 0;
         for (const item of itens) {
-          const detalhe = {
-            codigo: codigoKey ? String(item[codigoKey] || "") : "",
-            produto: produtoKey ? String(item[produtoKey] || "") : "",
-            local: localKey ? String(item[localKey] || "") : "",
-            situacao: situacaoKey ? String(item[situacaoKey] || "") : "",
-            estoque: estoqueKey ? String(item[estoqueKey] || "0") : "0",
-            tipoAuditoria: "etiqueta",
-            loja: loja._id,
-          };
-
-          auditoria.detalhes.push(detalhe);
-
-          if (detalhe.situacao === "Atualizado") {
-            auditoria.contador++;
+          const situacao = situacaoKey ? String(item[situacaoKey] || "") : "";
+          // Contar apenas itens "Atualizado" (case-insensitive)
+          if (situacao === "Atualizado") {
+            itensAtualizados++;
           }
         }
 
-        // Atualizar contador total
-        usuario.contadorTotal = usuario.auditorias.reduce(
-          (total, aud) => total + aud.contador,
-          0
-        );
+        // Atualizar contador total do usuário
+        usuario.contadorTotal += itensAtualizados;
 
         await usuario.save();
         console.log(
-          `👤 Usuário processado: ${nome} (${auditoria.contador} itens)`
+          `👤 Usuário processado: ${nome} (${itensAtualizados} itens)`
         );
       } catch (error) {
         console.error(`❌ Erro ao processar usuário ${usuarioStr}:`, error);
@@ -637,50 +601,17 @@ async function processarRuptura(file, dataAuditoria, loja) {
 
         console.log(`👤 Usuário processado: ${usuario.nome} (${usuario.id})`);
 
-        const auditoriaIndex = usuario.auditorias.findIndex(
-          (a) => a.data.toDateString() === dataAuditoriaFinal.toDateString()
-        );
-
-        if (auditoriaIndex === -1) {
-          usuario.auditorias.push({
-            data: dataAuditoriaFinal,
-            contador: 0,
-            detalhes: [],
-          });
-        }
-
-        const auditoria =
-          usuario.auditorias[
-            auditoriaIndex === -1
-              ? usuario.auditorias.length - 1
-              : auditoriaIndex
-          ];
-
-        auditoria.detalhes = [];
-        auditoria.contador = 0;
-
+        // Calcular contador total baseado nos itens processados
+        let itensAtualizados = 0;
         for (const item of itens) {
-          const detalhe = {
-            codigo: String(item["Código"] || ""),
-            produto: String(item["Produto"] || ""),
-            local: String(item["Local"] || ""),
-            situacao: String(item["Situação"] || ""),
-            estoque: String(item["Estoque atual"] || "0"),
-            tipoAuditoria: "ruptura",
-            loja: loja._id,
-          };
-
-          auditoria.detalhes.push(detalhe);
-
-          if (detalhe.situacao === "Atualizado") {
-            auditoria.contador++;
+          const situacao = String(item["Situação"] || "");
+          if (situacao === "Atualizado") {
+            itensAtualizados++;
           }
         }
 
-        usuario.contadorTotal = usuario.auditorias.reduce(
-          (total, aud) => total + aud.contador,
-          0
-        );
+        // Atualizar contador total do usuário
+        usuario.contadorTotal += itensAtualizados;
 
         await usuario.save();
       } catch (userError) {
@@ -942,50 +873,17 @@ async function processarPresenca(file, dataAuditoria, loja) {
           `👤 Usuário processado para presença: ${usuario.nome} (${usuario.id})`
         );
 
-        const auditoriaIndex = usuario.auditorias.findIndex(
-          (a) => a.data.toDateString() === dataAuditoriaFinal.toDateString()
-        );
-
-        if (auditoriaIndex === -1) {
-          usuario.auditorias.push({
-            data: dataAuditoriaFinal,
-            contador: 0,
-            detalhes: [],
-          });
-        }
-
-        const auditoria =
-          usuario.auditorias[
-            auditoriaIndex === -1
-              ? usuario.auditorias.length - 1
-              : auditoriaIndex
-          ];
-
-        auditoria.detalhes = [];
-        auditoria.contador = 0;
-
+        // Calcular contador total baseado nos itens processados
+        let itensAtualizados = 0;
         for (const item of itens) {
-          const detalhe = {
-            codigo: String(item["Código"] || ""),
-            produto: String(item["Produto"] || ""),
-            local: String(item["Local"] || ""),
-            situacao: String(item["Situação"] || ""),
-            estoque: String(item["Estoque atual"] || "0"),
-            tipoAuditoria: "presenca",
-            loja: loja._id,
-          };
-
-          auditoria.detalhes.push(detalhe);
-
-          if (detalhe.situacao === "Atualizado") {
-            auditoria.contador++;
+          const situacao = String(item["Situação"] || "");
+          if (situacao === "Atualizado") {
+            itensAtualizados++;
           }
         }
 
-        usuario.contadorTotal = usuario.auditorias.reduce(
-          (total, aud) => total + aud.contador,
-          0
-        );
+        // Atualizar contador total do usuário
+        usuario.contadorTotal += itensAtualizados;
 
         await usuario.save();
       } catch (userError) {
@@ -1344,11 +1242,8 @@ router.get("/usuarios", verificarLojaObrigatoria, async (req, res) => {
           .substring(0, 2),
         loja: u.loja?.codigo || req.loja.codigo,
         lojaCompleta: u.loja?.nome || req.loja.nome,
-        totalAuditorias: u.auditorias?.length || 0,
-        ultimaAuditoria:
-          u.auditorias?.length > 0
-            ? u.auditorias[u.auditorias.length - 1].data
-            : null,
+        totalAuditorias: 0, // Não mais rastreado no modelo
+        ultimaAuditoria: null, // Não mais rastreado no modelo
       }))
     );
   } catch (error) {
@@ -1403,32 +1298,9 @@ router.get("/dados-planilha", verificarLojaObrigatoria, async (req, res) => {
     // Buscar dados baseado no tipo de auditoria
     switch (planilhaRecente.tipoAuditoria) {
       case "etiqueta":
-        const usuarios = await User.find({
-          "auditorias.data": planilhaRecente.dataAuditoria,
-          loja: req.loja._id,
-        });
-
-        usuarios.forEach((usuario) => {
-          usuario.auditorias.forEach((auditoria) => {
-            if (
-              auditoria.data.toDateString() ===
-              planilhaRecente.dataAuditoria.toDateString()
-            ) {
-              auditoria.detalhes.forEach((detalhe) => {
-                dadosPlanilha.push({
-                  Código: detalhe.codigo,
-                  Produto: detalhe.produto,
-                  Local: detalhe.local,
-                  Usuario: `${usuario.id} (${usuario.nome})`,
-                  Situacao: detalhe.situacao,
-                  "Estoque atual": detalhe.estoque,
-                  "Última compra": new Date().toLocaleDateString("pt-BR"),
-                  Loja: req.loja.codigo,
-                });
-              });
-            }
-          });
-        });
+        // Dados não mais armazenados em usuario.auditorias
+        // Esta funcionalidade foi descontinuada com a remoção do campo auditorias
+        // Os detalhes estão agora armazenados na coleção Auditoria
         break;
 
       case "ruptura":
@@ -1739,20 +1611,13 @@ router.get("/ranking-usuarios", verificarLojaObrigatoria, async (req, res) => {
 
     const ranking = usuarios.map((usuario, index) => {
       let contadorPeriodo = usuario.contadorTotal;
-      let auditoriasNoPeriodo = usuario.auditorias.length;
+      let auditoriasNoPeriodo = 0; // Não mais rastreado
 
       if (dataInicio || dataFim) {
-        const auditoriasFiltradas = usuario.auditorias.filter((aud) => {
-          if (dataInicio && aud.data < new Date(dataInicio)) return false;
-          if (dataFim && aud.data > new Date(dataFim)) return false;
-          return true;
-        });
-
-        contadorPeriodo = auditoriasFiltradas.reduce(
-          (sum, aud) => sum + aud.contador,
-          0
-        );
-        auditoriasNoPeriodo = auditoriasFiltradas.length;
+        // Não temos mais histórico por data, então usamos o contador total
+        contadorPeriodo = usuario.contadorTotal;
+      } else {
+        contadorPeriodo = usuario.contadorTotal;
       }
 
       return {
@@ -1761,18 +1626,15 @@ router.get("/ranking-usuarios", verificarLojaObrigatoria, async (req, res) => {
         nome: usuario.nome,
         contadorPeriodo,
         contadorTotal: usuario.contadorTotal,
-        auditoriasNoPeriodo,
-        totalAuditorias: usuario.auditorias.length,
+        auditoriasNoPeriodo: 0, // Não mais rastreado
+        totalAuditorias: 0, // Não mais rastreado
         iniciais: usuario.nome
           .split(" ")
           .map((n) => n[0])
           .join("")
           .substring(0, 2)
           .toUpperCase(),
-        ultimaAuditoria:
-          usuario.auditorias.length > 0
-            ? usuario.auditorias[usuario.auditorias.length - 1].data
-            : null,
+        ultimaAuditoria: null, // Não mais rastreado
       };
     });
 
@@ -1831,12 +1693,9 @@ router.get("/usuarios/:id", verificarLojaObrigatoria, async (req, res) => {
         .substring(0, 2),
       loja: usuario.loja?.codigo || req.loja.codigo,
       lojaCompleta: usuario.loja?.nome || req.loja.nome,
-      totalAuditorias: usuario.auditorias?.length || 0,
-      ultimaAuditoria:
-        usuario.auditorias?.length > 0
-          ? usuario.auditorias[usuario.auditorias.length - 1].data
-          : null,
-      auditorias: usuario.auditorias || [],
+      totalAuditorias: 0, // Não mais rastreado no modelo
+      ultimaAuditoria: null, // Não mais rastreado no modelo
+      auditorias: [], // Não mais rastreado no modelo
       foto: usuario.foto,
     });
   } catch (error) {

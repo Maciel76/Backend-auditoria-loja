@@ -291,60 +291,22 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
             id,
             nome,
             contadorTotal: 0,
-            auditorias: [],
             loja: loja._id,
           });
         }
 
-        // Encontrar ou criar auditoria para a data atual
-        const auditoriaIndex = usuario.auditorias.findIndex(
-          (a) => a.data.toDateString() === dataAuditoria.toDateString()
-        );
-
-        if (auditoriaIndex === -1) {
-          usuario.auditorias.push({
-            data: dataAuditoria,
-            contador: 0,
-            detalhes: [],
-          });
-        }
-
-        const auditoria =
-          usuario.auditorias[
-            auditoriaIndex === -1
-              ? usuario.auditorias.length - 1
-              : auditoriaIndex
-          ];
-
-        // Limpar detalhes existentes e processar novos itens
-        auditoria.detalhes = [];
-        auditoria.contador = 0;
-
+        // Calcular contador total baseado nos itens processados
+        let itensAtualizados = 0;
         for (const item of itens) {
-          const detalhe = {
-            codigo: codigoKey ? String(item[codigoKey] || "").trim() : "",
-            produto: produtoKey ? String(item[produtoKey] || "").trim() : "",
-            local: localKey ? String(item[localKey] || "").trim() : "",
-            situacao: situacaoKey ? String(item[situacaoKey] || "").trim() : "",
-            estoque: estoqueKey ? String(item[estoqueKey] || "0").trim() : "0",
-            tipoAuditoria: "etiqueta",
-            loja: loja._id,
-            linhaOriginal: item._linhaOriginal,
-          };
-
-          auditoria.detalhes.push(detalhe);
-
+          const situacao = situacaoKey ? String(item[situacaoKey] || "").trim() : "";
           // Contar apenas itens "Atualizado" (case-insensitive)
-          if (detalhe.situacao.toLowerCase() === "atualizado") {
-            auditoria.contador++;
+          if (situacao.toLowerCase() === "atualizado") {
+            itensAtualizados++;
           }
         }
 
-        // Atualizar contador total
-        usuario.contadorTotal = usuario.auditorias.reduce(
-          (total, aud) => total + aud.contador,
-          0
-        );
+        // Atualizar contador total do usuário
+        usuario.contadorTotal += itensAtualizados;
 
         await usuario.save();
         usuariosProcessados++;
@@ -636,11 +598,8 @@ router.get("/usuarios", verificarLojaObrigatoria, async (req, res) => {
           .substring(0, 2)
           .toUpperCase(),
         loja: req.loja.codigo,
-        ultimaAuditoria:
-          u.auditorias.length > 0
-            ? u.auditorias[u.auditorias.length - 1].data
-            : null,
-        totalAuditorias: u.auditorias.length,
+        ultimaAuditoria: null, // Não mais rastreado
+        totalAuditorias: 0, // Não mais rastreado
       })),
       paginacao: {
         paginaAtual: parseInt(page),
@@ -839,21 +798,12 @@ router.get("/planilha/:id", verificarLojaObrigatoria, async (req, res) => {
     // Calcular estatísticas dos usuários para esta data
     const usuariosEstatisticas = usuarios
       .map((usuario) => {
-        const auditoriaDoDia = usuario.auditorias.find(
-          (aud) =>
-            aud.data.toDateString() === planilha.dataAuditoria.toDateString()
-        );
-
         return {
           id: usuario.id,
           nome: usuario.nome,
-          itensAuditados: auditoriaDoDia?.detalhes.length || 0,
-          itensAtualizados: auditoriaDoDia?.contador || 0,
-          percentualAtualizacao: auditoriaDoDia?.detalhes.length
-            ? Math.round(
-                (auditoriaDoDia.contador / auditoriaDoDia.detalhes.length) * 100
-              )
-            : 0,
+          itensAuditados: 0, // Não mais rastreados em auditorias
+          itensAtualizados: usuario.contadorTotal || 0,
+          percentualAtualizacao: 0, // Não mais calculado
         };
       })
       .sort((a, b) => b.itensAtualizados - a.itensAtualizados);
@@ -914,21 +864,15 @@ router.get("/ranking-usuarios", verificarLojaObrigatoria, async (req, res) => {
 
     const ranking = usuarios.map((usuario, index) => {
       let contadorPeriodo = usuario.contadorTotal;
-      let auditoriasNoPeriodo = usuario.auditorias.length;
+      let auditoriasNoPeriodo = 0; // Não mais aplicável
 
       // Se há filtro de data, calcular apenas para o período
+      // Como não temos mais o histórico de auditorias por data, usaremos o contador total
       if (dataInicio || dataFim) {
-        const auditoriasFiltradas = usuario.auditorias.filter((aud) => {
-          if (dataInicio && aud.data < new Date(dataInicio)) return false;
-          if (dataFim && aud.data > new Date(dataFim)) return false;
-          return true;
-        });
-
-        contadorPeriodo = auditoriasFiltradas.reduce(
-          (sum, aud) => sum + aud.contador,
-          0
-        );
-        auditoriasNoPeriodo = auditoriasFiltradas.length;
+        // Sem dados históricos de auditorias, retornamos o contador total
+        contadorPeriodo = usuario.contadorTotal;
+      } else {
+        contadorPeriodo = usuario.contadorTotal;
       }
 
       return {
@@ -937,18 +881,15 @@ router.get("/ranking-usuarios", verificarLojaObrigatoria, async (req, res) => {
         nome: usuario.nome,
         contadorPeriodo,
         contadorTotal: usuario.contadorTotal,
-        auditoriasNoPeriodo,
-        totalAuditorias: usuario.auditorias.length,
+        auditoriasNoPeriodo: 0, // Não mais aplicável
+        totalAuditorias: 0, // Não mais aplicável
         iniciais: usuario.nome
           .split(" ")
           .map((n) => n[0])
           .join("")
           .substring(0, 2)
           .toUpperCase(),
-        ultimaAuditoria:
-          usuario.auditorias.length > 0
-            ? usuario.auditorias[usuario.auditorias.length - 1].data
-            : null,
+        ultimaAuditoria: null, // Não mais rastreado
       };
     });
 
@@ -1019,20 +960,8 @@ router.delete("/limpeza", verificarLojaObrigatoria, async (req, res) => {
     let auditoriasRemovidasCount = 0;
 
     for (const usuario of usuarios) {
-      const auditoriasAntigas = usuario.auditorias.filter(
-        (aud) => aud.data < dataCorte
-      );
-      auditoriasRemovidasCount += auditoriasAntigas.length;
-
-      usuario.auditorias = usuario.auditorias.filter(
-        (aud) => aud.data >= dataCorte
-      );
-
-      // Recalcular contador total
-      usuario.contadorTotal = usuario.auditorias.reduce(
-        (total, aud) => total + aud.contador,
-        0
-      );
+      // Como não temos mais o campo auditorias, não há auditorias antigas para remover
+      // Apenas mantemos o contador total existente
 
       await usuario.save();
     }

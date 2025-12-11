@@ -18,31 +18,14 @@ router.get("/api/ranking", async (req, res) => {
 
         if (periodo === "hoje") {
           const hoje = new Date();
-          hoje.setHours(0, 0, 0, 0);
-          const amanha = new Date(hoje);
-          amanha.setDate(amanha.getDate() + 1);
-
-          contador = usuario.auditorias
-            .filter(
-              (auditoria) => auditoria.data >= hoje && auditoria.data < amanha
-            )
-            .reduce((total, auditoria) => total + auditoria.contador, 0);
+          // Não temos mais histórico por data, usar contadorTotal
+          contador = usuario.contadorTotal;
         } else if (periodo === "semana") {
-          const hoje = new Date();
-          const inicioSemana = new Date(hoje);
-          inicioSemana.setDate(hoje.getDate() - hoje.getDay());
-          inicioSemana.setHours(0, 0, 0, 0);
-
-          contador = usuario.auditorias
-            .filter((auditoria) => auditoria.data >= inicioSemana)
-            .reduce((total, auditoria) => total + auditoria.contador, 0);
+          // Não temos mais histórico por data, usar contadorTotal
+          contador = usuario.contadorTotal;
         } else if (periodo === "mes") {
-          const hoje = new Date();
-          const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-
-          contador = usuario.auditorias
-            .filter((auditoria) => auditoria.data >= inicioMes)
-            .reduce((total, auditoria) => total + auditoria.contador, 0);
+          // Não temos mais histórico por data, usar contadorTotal
+          contador = usuario.contadorTotal;
         } else {
           // Todos os períodos - usar contadorTotal
           contador = usuario.contadorTotal;

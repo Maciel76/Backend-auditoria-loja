@@ -377,9 +377,9 @@ class MetricasUsuariosService {
     };
 
     auditoriasPorTipo.forEach((item) => {
-      if (item._id === "etiqueta") contadores.totalEtiquetas = item.auditorias;
-      if (item._id === "ruptura") contadores.totalRupturas = item.auditorias;
-      if (item._id === "presenca") contadores.totalPresencas = item.auditorias;
+      if (item._id === "etiqueta") contadores.totalEtiquetas = item.count;
+      if (item._id === "ruptura") contadores.totalRupturas = item.count;
+      if (item._id === "presenca") contadores.totalPresencas = item.count;
     });
 
     contadores.totalGeral =
