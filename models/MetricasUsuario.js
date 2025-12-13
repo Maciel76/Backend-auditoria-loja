@@ -46,37 +46,212 @@ const metricasUsuarioSchema = new mongoose.Schema(
 
     // Métricas por tipo de auditoria
     etiquetas: {
-      totalItens: { type: Number, default: 0 },
-      itensLidos: { type: Number, default: 0 },
-      itensAtualizados: { type: Number, default: 0 },
-      itensDesatualizado: { type: Number, default: 0 },
-      itensSemEstoque: { type: Number, default: 0 },
-      itensNaopertence: { type: Number, default: 0 },
-      percentualConclusao: { type: Number, default: 0 }, // % em relação ao total da loja
+      totalItens: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensLidos: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensAtualizados: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensDesatualizado: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensSemEstoque: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensNaopertence: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      percentualConclusao: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      }, // % em relação ao total da loja
     },
 
     rupturas: {
-      totalItens: { type: Number, default: 0 },
-      itensLidos: { type: Number, default: 0 },
-      itensAtualizados: { type: Number, default: 0 },
-      itensDesatualizado: { type: Number, default: 0 },
-      itensSemEstoque: { type: Number, default: 0 },
-      itensNaopertence: { type: Number, default: 0 },
-      percentualConclusao: { type: Number, default: 0 }, // % em relação ao total da loja
-      custoTotalRuptura: { type: Number, default: 0 },
-      custoMedioRuptura: { type: Number, default: 0 },
+      totalItens: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensLidos: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensAtualizados: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensDesatualizado: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensSemEstoque: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensNaopertence: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      percentualConclusao: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      }, // % em relação ao total da loja
+      custoTotalRuptura: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      custoMedioRuptura: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
     },
 
     presencas: {
-      totalItens: { type: Number, default: 0 },
-      itensLidos: { type: Number, default: 0 },
-      itensAtualizados: { type: Number, default: 0 },
-      itensDesatualizado: { type: Number, default: 0 },
-      itensSemEstoque: { type: Number, default: 0 },
-      itensNaopertence: { type: Number, default: 0 },
-      percentualConclusao: { type: Number, default: 0 }, // % em relação ao total da loja
-      presencasConfirmadas: { type: Number, default: 0 },
-      percentualPresenca: { type: Number, default: 0 },
+      totalItens: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensLidos: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensAtualizados: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensDesatualizado: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensSemEstoque: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensNaopertence: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      percentualConclusao: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      }, // % em relação ao total da loja
+      presencasConfirmadas: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      percentualPresenca: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
     },
 
     // NOVOS CAMPOS ADICIONADOS
@@ -172,79 +347,380 @@ const metricasUsuarioSchema = new mongoose.Schema(
 
     // Métricas consolidadas
     totais: {
-      totalItens: { type: Number, default: 0 },
-      itensLidos: { type: Number, default: 0 },
-      itensAtualizados: { type: Number, default: 0 },
-      percentualConclusaoGeral: { type: Number, default: 0 },
-      pontuacaoTotal: { type: Number, default: 0 },
+      totalItens: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensLidos: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensAtualizados: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      percentualConclusaoGeral: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      pontuacaoTotal: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
     },
 
     // Desempenho e ranking
     ranking: {
-      posicaoLoja: { type: Number, default: 0 },
-      posicaoGeral: { type: Number, default: 0 },
-      pontosPorItem: { type: Number, default: 0 },
-      bonusConsistencia: { type: Number, default: 0 },
+      posicaoLoja: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      posicaoGeral: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      pontosPorItem: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      bonusConsistencia: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
     },
 
     // Análise temporal
     tendencias: {
-      melhoriaPercentual: { type: Number, default: 0 },
-      diasAtivos: { type: Number, default: 0 },
-      mediaItensPerDia: { type: Number, default: 0 },
-      regularidade: { type: Number, default: 0 },
+      melhoriaPercentual: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      diasAtivos: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      mediaItensPerDia: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      regularidade: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
     },
 
     // Contadores de auditorias por tipo
     contadoresAuditorias: {
-      totalEtiquetas: { type: Number, default: 0 },
-      totalRupturas: { type: Number, default: 0 },
-      totalPresencas: { type: Number, default: 0 },
-      totalGeral: { type: Number, default: 0 },
+      totalEtiquetas: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      totalRupturas: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      totalPresencas: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      totalGeral: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
     },
 
     // Totais acumulados de itens lidos
     totaisAcumulados: {
-      itensLidosEtiquetas: { type: Number, default: 0 },
-      itensLidosRupturas: { type: Number, default: 0 },
-      itensLidosPresencas: { type: Number, default: 0 },
-      itensLidosTotal: { type: Number, default: 0 },
+      itensLidosEtiquetas: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensLidosRupturas: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensLidosPresencas: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      itensLidosTotal: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
     },
 
     // Histórico de posições no ranking
     historicoRanking: {
-      posicao1: { type: Number, default: 0 },
-      posicao2: { type: Number, default: 0 },
-      posicao3: { type: Number, default: 0 },
-      posicao4: { type: Number, default: 0 },
-      posicao5: { type: Number, default: 0 },
-      posicao6: { type: Number, default: 0 },
-      posicao7: { type: Number, default: 0 },
-      posicao8: { type: Number, default: 0 },
-      posicao9: { type: Number, default: 0 },
-      posicao10: { type: Number, default: 0 },
-      ACIMA10: { type: Number, default: 0 }, // NOVO CAMPO
-      totalTop10: { type: Number, default: 0 },
-      melhorPosicao: { type: Number, default: null },
+      posicao1: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      posicao2: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      posicao3: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      posicao4: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      posicao5: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      posicao6: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      posicao7: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      posicao8: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      posicao9: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      posicao10: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      ACIMA10: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        } // NOVO CAMPO
+      },
+      totalTop10: {
+        type: Number,
+        default: 0,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+      },
+      melhorPosicao: {
+        type: Number,
+        default: null,
+        set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? null : numValue;
+        }
+      },
     },
 
     // Dados de conquistas e gamificação
     achievements: {
       xp: {
-        total: { type: Number, default: 0 },
-        fromAchievements: { type: Number, default: 0 },
-        fromActivities: { type: Number, default: 0 },
+        total: {
+          type: Number,
+          default: 0,
+          set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+        },
+        fromAchievements: {
+          type: Number,
+          default: 0,
+          set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+        },
+        fromActivities: {
+          type: Number,
+          default: 0,
+          set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+        },
       },
       level: {
-        current: { type: Number, default: 1 },
+        current: {
+          type: Number,
+          default: 1,
+          set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 1 : numValue;
+        }
+        },
         title: { type: String, default: "Novato" },
-        xpForNextLevel: { type: Number, default: 100 },
-        progressPercentage: { type: Number, default: 0 },
+        xpForNextLevel: {
+          type: Number,
+          default: 100,
+          set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 100 : numValue;
+        }
+        },
+        progressPercentage: {
+          type: Number,
+          default: 0,
+          set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+        },
       },
       stats: {
-        totalUnlockedAchievements: { type: Number, default: 0 },
-        totalAudits: { type: Number, default: 0 },
-        totalItems: { type: Number, default: 0 },
+        totalUnlockedAchievements: {
+          type: Number,
+          default: 0,
+          set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+        },
+        totalAudits: {
+          type: Number,
+          default: 0,
+          set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+        },
+        totalItems: {
+          type: Number,
+          default: 0,
+          set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+        },
         lastActivityAt: { type: Date },
       },
       achievements: {
@@ -252,9 +728,32 @@ const metricasUsuarioSchema = new mongoose.Schema(
           achievementId: { type: String, required: true },
           unlocked: { type: Boolean, default: false },
           progress: {
-            current: { type: Number, default: 0 },
-            target: { type: Number, required: true },
-            percentage: { type: Number, default: 0, min: 0, max: 100 },
+            current: {
+              type: Number,
+              default: 0,
+              set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+            },
+            target: {
+              type: Number,
+              required: true,
+              set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+            },
+            percentage: {
+              type: Number,
+              default: 0,
+              min: 0,
+              max: 100,
+              set: function(value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        }
+            },
           },
           unlockedAt: { type: Date },
           unlockedBy: { type: String }, // ID da ação que desbloqueou
@@ -672,5 +1171,120 @@ metricasUsuarioSchema.methods.getLevelTitle = function(level) {
 
   return "Auditor de Estoque";
 };
+
+// Middleware to ensure numeric fields are always numbers
+metricasUsuarioSchema.pre('save', function(next) {
+  // Ensure contadoresAuditorias fields are numbers
+  if (this.contadoresAuditorias) {
+    this.contadoresAuditorias.totalEtiquetas = Number(this.contadoresAuditorias.totalEtiquetas) || 0;
+    this.contadoresAuditorias.totalRupturas = Number(this.contadoresAuditorias.totalRupturas) || 0;
+    this.contadoresAuditorias.totalPresencas = Number(this.contadoresAuditorias.totalPresencas) || 0;
+    this.contadoresAuditorias.totalGeral = Number(this.contadoresAuditorias.totalGeral) || 0;
+  }
+
+  // Ensure totais fields are numbers
+  if (this.totais) {
+    this.totais.totalItens = Number(this.totais.totalItens) || 0;
+    this.totais.itensLidos = Number(this.totais.itensLidos) || 0;
+    this.totais.itensAtualizados = Number(this.totais.itensAtualizados) || 0;
+    this.totais.percentualConclusaoGeral = Number(this.totais.percentualConclusaoGeral) || 0;
+    this.totais.pontuacaoTotal = Number(this.totais.pontuacaoTotal) || 0;
+  }
+
+  // Ensure other numeric fields are numbers
+  if (this.tendencias) {
+    this.tendencias.melhoriaPercentual = Number(this.tendencias.melhoriaPercentual) || 0;
+    this.tendencias.diasAtivos = Number(this.tendencias.diasAtivos) || 0;
+    this.tendencias.mediaItensPerDia = Number(this.tendencias.mediaItensPerDia) || 0;
+    this.tendencias.regularidade = Number(this.tendencias.regularidade) || 0;
+  }
+
+  if (this.ranking) {
+    this.ranking.posicaoLoja = Number(this.ranking.posicaoLoja) || 0;
+    this.ranking.posicaoGeral = Number(this.ranking.posicaoGeral) || 0;
+    this.ranking.pontosPorItem = Number(this.ranking.pontosPorItem) || 0;
+    this.ranking.bonusConsistencia = Number(this.ranking.bonusConsistencia) || 0;
+  }
+
+  if (this.historicoRanking) {
+    this.historicoRanking.posicao1 = Number(this.historicoRanking.posicao1) || 0;
+    this.historicoRanking.posicao2 = Number(this.historicoRanking.posicao2) || 0;
+    this.historicoRanking.posicao3 = Number(this.historicoRanking.posicao3) || 0;
+    this.historicoRanking.posicao4 = Number(this.historicoRanking.posicao4) || 0;
+    this.historicoRanking.posicao5 = Number(this.historicoRanking.posicao5) || 0;
+    this.historicoRanking.posicao6 = Number(this.historicoRanking.posicao6) || 0;
+    this.historicoRanking.posicao7 = Number(this.historicoRanking.posicao7) || 0;
+    this.historicoRanking.posicao8 = Number(this.historicoRanking.posicao8) || 0;
+    this.historicoRanking.posicao9 = Number(this.historicoRanking.posicao9) || 0;
+    this.historicoRanking.posicao10 = Number(this.historicoRanking.posicao10) || 0;
+    this.historicoRanking.ACIMA10 = Number(this.historicoRanking.ACIMA10) || 0;
+    this.historicoRanking.totalTop10 = Number(this.historicoRanking.totalTop10) || 0;
+    this.historicoRanking.melhorPosicao = Number(this.historicoRanking.melhorPosicao) || null;
+  }
+
+  if (this.totaisAcumulados) {
+    this.totaisAcumulados.itensLidosEtiquetas = Number(this.totaisAcumulados.itensLidosEtiquetas) || 0;
+    this.totaisAcumulados.itensLidosRupturas = Number(this.totaisAcumulados.itensLidosRupturas) || 0;
+    this.totaisAcumulados.itensLidosPresencas = Number(this.totaisAcumulados.itensLidosPresencas) || 0;
+    this.totaisAcumulados.itensLidosTotal = Number(this.totaisAcumulados.itensLidosTotal) || 0;
+  }
+
+  // Ensure achievement XP and level fields are numbers
+  if (this.achievements && this.achievements.xp) {
+    this.achievements.xp.total = Number(this.achievements.xp.total) || 0;
+    this.achievements.xp.fromAchievements = Number(this.achievements.xp.fromAchievements) || 0;
+    this.achievements.xp.fromActivities = Number(this.achievements.xp.fromActivities) || 0;
+  }
+
+  if (this.achievements && this.achievements.level) {
+    this.achievements.level.current = Number(this.achievements.level.current) || 1;
+    this.achievements.level.xpForNextLevel = Number(this.achievements.level.xpForNextLevel) || 100;
+    this.achievements.level.progressPercentage = Number(this.achievements.level.progressPercentage) || 0;
+  }
+
+  // Ensure stat fields are numbers
+  if (this.achievements && this.achievements.stats) {
+    this.achievements.stats.totalUnlockedAchievements = Number(this.achievements.stats.totalUnlockedAchievements) || 0;
+    this.achievements.stats.totalAudits = Number(this.achievements.stats.totalAudits) || 0;
+    this.achievements.stats.totalItems = Number(this.achievements.stats.totalItems) || 0;
+  }
+
+  // Ensure tipo-specific metrics are numbers
+  if (this.etiquetas) {
+    this.etiquetas.totalItens = Number(this.etiquetas.totalItens) || 0;
+    this.etiquetas.itensLidos = Number(this.etiquetas.itensLidos) || 0;
+    this.etiquetas.itensAtualizados = Number(this.etiquetas.itensAtualizados) || 0;
+    this.etiquetas.itensDesatualizado = Number(this.etiquetas.itensDesatualizado) || 0;
+    this.etiquetas.itensSemEstoque = Number(this.etiquetas.itensSemEstoque) || 0;
+    this.etiquetas.itensNaopertence = Number(this.etiquetas.itensNaopertence) || 0;
+    this.etiquetas.percentualConclusao = Number(this.etiquetas.percentualConclusao) || 0;
+  }
+
+  if (this.rupturas) {
+    this.rupturas.totalItens = Number(this.rupturas.totalItens) || 0;
+    this.rupturas.itensLidos = Number(this.rupturas.itensLidos) || 0;
+    this.rupturas.itensAtualizados = Number(this.rupturas.itensAtualizados) || 0;
+    this.rupturas.itensDesatualizado = Number(this.rupturas.itensDesatualizado) || 0;
+    this.rupturas.itensSemEstoque = Number(this.rupturas.itensSemEstoque) || 0;
+    this.rupturas.itensNaopertence = Number(this.rupturas.itensNaopertence) || 0;
+    this.rupturas.percentualConclusao = Number(this.rupturas.percentualConclusao) || 0;
+    this.rupturas.custoTotalRuptura = Number(this.rupturas.custoTotalRuptura) || 0;
+    this.rupturas.custoMedioRuptura = Number(this.rupturas.custoMedioRuptura) || 0;
+  }
+
+  if (this.presencas) {
+    this.presencas.totalItens = Number(this.presencas.totalItens) || 0;
+    this.presencas.itensLidos = Number(this.presencas.itensLidos) || 0;
+    this.presencas.itensAtualizados = Number(this.presencas.itensAtualizados) || 0;
+    this.presencas.itensDesatualizado = Number(this.presencas.itensDesatualizado) || 0;
+    this.presencas.itensSemEstoque = Number(this.presencas.itensSemEstoque) || 0;
+    this.presencas.itensNaopertence = Number(this.presencas.itensNaopertence) || 0;
+    this.presencas.percentualConclusao = Number(this.presencas.percentualConclusao) || 0;
+    this.presencas.presencasConfirmadas = Number(this.presencas.presencasConfirmadas) || 0;
+    this.presencas.percentualPresenca = Number(this.presencas.percentualPresenca) || 0;
+  }
+
+  next();
+});
 
 export default mongoose.model("MetricasUsuario", metricasUsuarioSchema);

@@ -377,15 +377,16 @@ class MetricasUsuariosService {
     };
 
     auditoriasPorTipo.forEach((item) => {
-      if (item._id === "etiqueta") contadores.totalEtiquetas = item.count;
-      if (item._id === "ruptura") contadores.totalRupturas = item.count;
-      if (item._id === "presenca") contadores.totalPresencas = item.count;
+      if (item._id === "etiqueta") contadores.totalEtiquetas = Number(item.auditorias) || 0;
+      if (item._id === "ruptura") contadores.totalRupturas = Number(item.auditorias) || 0;
+      if (item._id === "presenca") contadores.totalPresencas = Number(item.auditorias) || 0;
     });
 
-    contadores.totalGeral =
-      contadores.totalEtiquetas +
-      contadores.totalRupturas +
-      contadores.totalPresencas;
+    contadores.totalGeral = Number(
+      (contadores.totalEtiquetas || 0) +
+      (contadores.totalRupturas || 0) +
+      (contadores.totalPresencas || 0)
+    );
 
     return contadores;
   }
