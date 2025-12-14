@@ -1397,16 +1397,41 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
       // Incrementar total (todos os itens)
       metricasPorClasse[classe].total++;
 
-      // Incrementar itens válidos (seguindo mesma lógica de etiquetas.itensValidos)
-      // Itens válidos = Atualizado + Desatualizado + Não lidos com estoque + Lido não pertence
-      // EXCLUINDO: "Sem Estoque" e "Lido sem estoque"
-      if (
-        situacao === "Atualizado" ||
-        situacao === "Desatualizado" ||
-        situacao === "Não lidos com estoque" ||
-        situacao === "Lido não pertence"
-      ) {
-        metricasPorClasse[classe].itensValidos++;
+      // Incrementar itens válidos (seguindo lógica específica por tipo de auditoria)
+      if (tipo === 'etiquetas') {
+        // Para etiquetas: itens válidos = Atualizado + Desatualizado + Não lidos com estoque + Lido não pertence
+        // EXCLUINDO: "Sem Estoque" e "Lido sem estoque"
+        if (
+          situacao === "Atualizado" ||
+          situacao === "Desatualizado" ||
+          situacao === "Não lidos com estoque" ||
+          situacao === "Lido não pertence"
+        ) {
+          metricasPorClasse[classe].itensValidos++;
+        }
+      } else if (tipo === 'rupturas') {
+        // Para rupturas: itens válidos = "Atualizado" (com presença e com estoque) + "Com problema" (sem presença mas com estoque)
+        // Ambos representam itens que podem ser processados no contexto de ruptura
+        if (
+          situacao === "Atualizado" ||
+          situacao === "Com problema"
+        ) {
+          metricasPorClasse[classe].itensValidos++;
+        }
+      } else if (tipo === 'presencas') {
+        // Para presenças: itens válidos devem incluir todos os itens que podem ter presença confirmada ou ausente
+        // Para presença: itens válidos = "Atualizado" (com presença e estoque) +
+        // "Com problema" (sem presença mas com estoque) +
+        // "Lido não pertence" (lido mas não pertence) +
+        // "Não lidos com estoque" (não lidos mas com estoque)
+        if (
+          situacao === "Atualizado" ||
+          situacao === "Com problema" ||
+          situacao === "Lido não pertence" ||
+          situacao === "Não lidos com estoque"
+        ) {
+          metricasPorClasse[classe].itensValidos++;
+        }
       }
 
       // Incrementar itens lidos - definição varia por tipo de auditoria
@@ -1420,11 +1445,8 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
           metricasPorClasse[classe].lidos++;
         }
       } else if (tipo === 'rupturas') {
-        // Para rupturas: itens lidos = "Atualizado" + "Com problema" (itens verificados independentemente do resultado)
-        if (
-          situacao === "Atualizado" ||
-          situacao === "Com problema"
-        ) {
+        // Para rupturas: itens lidos = "Atualizado" (itens com presença e com estoque confirmados)
+        if (situacao === "Atualizado") {
           metricasPorClasse[classe].lidos++;
         }
       } else if (tipo === 'presencas') {
@@ -1441,9 +1463,9 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
         }
       }
 
-      // Incrementar contagem de usuários por classe
-      // Usar o nome do usuário como chave e armazenar a contagem
+      // Incrementar contagem de usuários por classe (somente se tiver ID de usuário)
       if (usuarioId) { // Apenas se tiver ID de usuário
+        // Usar o nome do usuário como chave e armazenar a contagem
         const usuarioChave = usuarioNome || `Usuário ${usuarioId}`; // Usar nome como chave
 
         if (metricasPorClasse[classe].usuarios[usuarioChave]) {
@@ -1453,6 +1475,9 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
           // Se for a primeira vez do usuário na classe, adicionar com 1 item lido
           metricasPorClasse[classe].usuarios[usuarioChave] = 1;
         }
+      } else {
+        // Registrar log de auditoria sem usuário para debug
+        console.log(`⚠️ Auditoria encontrada sem ID de usuário para tipo "${tipo}", classe "${classe}", situação "${situacao}", código "${auditoria.codigo}"`);
       }
     }
   }
@@ -1572,7 +1597,6 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
     // Determinar usuário da auditoria (ID e nome)
     const usuarioId = auditoria.usuarioId || auditoria.Usuario;
     const usuarioNome = auditoria.usuarioNome || auditoria.Nome; // Procurar por possíveis campos de nome
-    if (!usuarioId) continue; // Pular se não tiver ID de usuário definido
 
     // Para compatibilidade, tentar encontrar o local correspondente com múltiplos formatos
     // Primeiro tentar o formato padrão "local - local" (ex: "CS01 - CS01")
@@ -1603,8 +1627,28 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
       metricasPorLocal[localKey].total++;
 
       // Incrementar itens válidos (seguindo lógica específica por tipo de auditoria)
-      // Para presenças: itens válidos devem incluir todos os itens que podem ter presença confirmada ou ausente
-      if (tipo === 'presencas') {
+      if (tipo === 'etiquetas') {
+        // Para etiquetas: itens válidos = Atualizado + Desatualizado + Não lidos com estoque + Lido não pertence
+        // EXCLUINDO: "Sem Estoque" e "Lido sem estoque"
+        if (
+          situacao === "Atualizado" ||
+          situacao === "Desatualizado" ||
+          situacao === "Não lidos com estoque" ||
+          situacao === "Lido não pertence"
+        ) {
+          metricasPorLocal[localKey].itensValidos++;
+        }
+      } else if (tipo === 'rupturas') {
+        // Para rupturas: itens válidos = "Atualizado" (com presença e com estoque) + "Com problema" (sem presença mas com estoque)
+        // Ambos representam itens que podem ser processados no contexto de ruptura
+        if (
+          situacao === "Atualizado" ||
+          situacao === "Com problema"
+        ) {
+          metricasPorLocal[localKey].itensValidos++;
+        }
+      } else if (tipo === 'presencas') {
+        // Para presenças: itens válidos devem incluir todos os itens que podem ter presença confirmada ou ausente
         // Para presença: itens válidos = "Atualizado" (com presença e estoque) +
         // "Com problema" (sem presença mas com estoque) +
         // "Lido não pertence" (lido mas não pertence) +
@@ -1614,17 +1658,6 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
           situacao === "Com problema" ||
           situacao === "Lido não pertence" ||
           situacao === "Não lidos com estoque"
-        ) {
-          metricasPorLocal[localKey].itensValidos++;
-        }
-      } else {
-        // Para etiquetas e rupturas: itens válidos = Atualizado + Desatualizado + Não lidos com estoque + Lido não pertence
-        // EXCLUINDO: "Sem Estoque" e "Lido sem estoque"
-        if (
-          situacao === "Atualizado" ||
-          situacao === "Desatualizado" ||
-          situacao === "Não lidos com estoque" ||
-          situacao === "Lido não pertence"
         ) {
           metricasPorLocal[localKey].itensValidos++;
         }
@@ -1641,11 +1674,15 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
           metricasPorLocal[localKey].lidos++;
         }
       } else if (tipo === 'rupturas') {
-        // Para rupturas: itens lidos = "Atualizado" + "Com problema" (itens verificados independentemente do resultado)
+        // Para rupturas: itens válidos = "Atualizado" + "Com problema" (itens que podem ser processados)
+        // Para rupturas: itens lidos = "Atualizado" (itens com presença e com estoque confirmados)
         if (
           situacao === "Atualizado" ||
           situacao === "Com problema"
         ) {
+          metricasPorLocal[localKey].itensValidos++;
+        }
+        if (situacao === "Atualizado") {
           metricasPorLocal[localKey].lidos++;
         }
       } else if (tipo === 'presencas') {
@@ -1672,16 +1709,21 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
         }
       }
 
-      // Incrementar contagem de usuários
-      // Usar o nome do usuário como chave e armazenar a contagem
-      const usuarioChave = usuarioNome || `Usuário ${usuarioId}`; // Usar nome como chave
+      // Incrementar contagem de usuários (somente se tiver ID de usuário)
+      if (usuarioId) {
+        // Usar o nome do usuário como chave e armazenar a contagem
+        const usuarioChave = usuarioNome || `Usuário ${usuarioId}`; // Usar nome como chave
 
-      if (metricasPorLocal[localKey].usuarios[usuarioChave]) {
-        // Se o usuário já existe no local, apenas incrementar os itens lidos
-        metricasPorLocal[localKey].usuarios[usuarioChave]++;
+        if (metricasPorLocal[localKey].usuarios[usuarioChave]) {
+          // Se o usuário já existe no local, apenas incrementar os itens lidos
+          metricasPorLocal[localKey].usuarios[usuarioChave]++;
+        } else {
+          // Se for a primeira vez do usuário no local, adicionar com 1 item lido
+          metricasPorLocal[localKey].usuarios[usuarioChave] = 1;
+        }
       } else {
-        // Se for a primeira vez do usuário no local, adicionar com 1 item lido
-        metricasPorLocal[localKey].usuarios[usuarioChave] = 1;
+        // Registrar log de auditoria sem usuário para debug
+        console.log(`⚠️ Auditoria encontrada sem ID de usuário para tipo "${tipo}", local "${localKey}", situação "${situacao}"`);
       }
     } else {
       // Registrar um log de debug para identificar locais que não estão sendo encontrados
