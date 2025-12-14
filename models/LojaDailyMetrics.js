@@ -1428,10 +1428,13 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
           metricasPorClasse[classe].lidos++;
         }
       } else if (tipo === 'presencas') {
-        // Para presencas: itens lidos = "Atualizado" + "Com problema" + "Lido não pertence"
+        // Para presencas: itens lidos = "Atualizado" + "Com Presença e sem Estoque" + "Lido não pertence"
+        // "Atualizado" representa "Com Presença e com Estoque" (normalizado)
+        // "Com Presença e sem Estoque" pode estar em seu formato original
+        // "Lido não pertence" permanece como está
         if (
           situacao === "Atualizado" ||
-          situacao === "Com problema" ||
+          situacao === "Com Presença e sem Estoque" ||
           situacao === "Lido não pertence"
         ) {
           metricasPorClasse[classe].lidos++;
@@ -1646,18 +1649,21 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
           metricasPorLocal[localKey].lidos++;
         }
       } else if (tipo === 'presencas') {
-        // Para presencas: itens lidos = "Atualizado" + "Com problema" + "Lido não pertence"
+        // Para presencas: itens lidos = "Atualizado" + "Com Presença e sem Estoque" + "Lido não pertence"
+        // "Atualizado" representa "Com Presença e com Estoque" (normalizado)
+        // "Com Presença e sem Estoque" pode estar em seu formato original
+        // "Lido não pertence" permanece como está
         if (
           situacao === "Atualizado" ||
-          situacao === "Com problema" ||
+          situacao === "Com Presença e sem Estoque" ||
           situacao === "Lido não pertence"
         ) {
           metricasPorLocal[localKey].lidos++;
         }
 
         // Adicionando contador específico para itens com presença confirmada (necessário para cálculo de percentual)
-        // Itens com presença confirmada = "Atualizado" + "Lido não pertence"
-        if (situacao === "Atualizado" || situacao === "Lido não pertence") {
+        // Itens com presença confirmada = "Atualizado" + "Lido não pertence" + "Com Presença e sem Estoque"
+        if (situacao === "Atualizado" || situacao === "Lido não pertence" || situacao === "Com Presença e sem Estoque") {
           // Adicionando um campo temporário para armazenar itens com presença, se não existir
           if (!metricasPorLocal[localKey].itensComPresenca) {
             metricasPorLocal[localKey].itensComPresenca = 0;
