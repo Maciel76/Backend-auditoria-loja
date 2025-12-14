@@ -1878,6 +1878,85 @@ router.get("/ranking-colaboradores", verificarLojaObrigatoria, async (req, res) 
   }
 });
 
+// Endpoint para RankingColaboradores - MetricasUsuario (período completo)
+router.get("/ranking-colaboradores-completo", verificarLojaObrigatoria, async (req, res) => {
+  try {
+    const loja = req.loja;
+    const { tipo } = req.query;
+
+    console.log(`🏆 Buscando ranking completo para loja ${loja.codigo}, tipo: ${tipo || 'todos'}`);
+
+    // Buscar todos os MetricasUsuario da loja (período completo)
+    const usuarios = await MetricasUsuario.find({
+      loja: loja._id,
+      periodo: "periodo_completo"
+    });
+
+    const ranking = [];
+
+    for (const usuario of usuarios) {
+      let contador = 0;
+
+      // LÓGICA CORRETA: Pegar dados específicos do tipo solicitado
+      if (!tipo || tipo === "todos") {
+        // Para "todos": somar todos os tipos
+        contador = (usuario.etiquetas?.itensAtualizados || 0) +
+                   (usuario.rupturas?.itensAtualizados || 0) +
+                   (usuario.presencas?.itensAtualizados || 0);
+      } else if (tipo === "etiqueta") {
+        contador = usuario.etiquetas?.itensAtualizados || 0;
+      } else if (tipo === "ruptura") {
+        contador = usuario.rupturas?.itensAtualizados || 0;
+      } else if (tipo === "presenca") {
+        contador = usuario.presencas?.itensAtualizados || 0;
+      }
+
+      // Filtrar usuários inválidos
+      const isValidUser = contador > 0 &&
+                         usuario.usuarioNome &&
+                         !usuario.usuarioNome.toLowerCase().includes("produto não auditado") &&
+                         !usuario.usuarioNome.toLowerCase().includes("usuário não identificado") &&
+                         usuario.usuarioId &&
+                         !usuario.usuarioId.toLowerCase().includes("produto não auditado") &&
+                         !usuario.usuarioId.toLowerCase().includes("usuário não identificado");
+
+      if (isValidUser) {
+        ranking.push({
+          id: usuario.usuarioId,
+          nome: usuario.usuarioNome,
+          contador: contador,
+          loja: usuario.lojaNome,
+          metricas: {
+            data: usuario.dataInicio,  // Adicionando a data do período
+            totais: usuario.totais,
+            etiquetas: usuario.etiquetas,
+            rupturas: usuario.rupturas,
+            presencas: usuario.presencas
+          },
+          eficiencia: usuario.totais?.percentualConclusaoGeral || 0,
+          pontuacao: usuario.totais?.pontuacaoTotal || 0,
+          posicaoLoja: usuario.ranking?.posicaoLoja || 0,
+          posicaoGeral: usuario.ranking?.posicaoGeral || 0,
+          totalAuditorias: usuario.contadoresAuditorias?.totalGeral || 0
+        });
+      }
+    }
+
+    // Ordenar por contador (itens atualizados)
+    ranking.sort((a, b) => b.contador - a.contador);
+
+    console.log(`✅ Ranking completo gerado: ${ranking.length} colaboradores - Tipo: ${tipo || 'todos'}`);
+
+    res.json(ranking);
+  } catch (error) {
+    console.error("❌ Erro ao buscar ranking colaboradores completo:", error);
+    res.status(500).json({
+      erro: "Falha ao buscar ranking colaboradores completo",
+      detalhes: error.message
+    });
+  }
+});
+
 // Endpoint para obter datas de auditoria disponíveis - UserDailyMetrics
 router.get(
   "/datas-auditoria-colaboradores",

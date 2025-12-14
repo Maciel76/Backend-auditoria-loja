@@ -1566,13 +1566,31 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
     const localValue = auditoria.local;
     if (!localValue) continue; // Pular se não tiver local definido
 
-    // Construir a chave no formato esperado pelo schema (ex: "G01A - G01A")
-    const localKey = `${localValue} - ${localValue}`;
-
     // Determinar usuário da auditoria (ID e nome)
     const usuarioId = auditoria.usuarioId || auditoria.Usuario;
     const usuarioNome = auditoria.usuarioNome || auditoria.Nome; // Procurar por possíveis campos de nome
     if (!usuarioId) continue; // Pular se não tiver ID de usuário definido
+
+    // Para compatibilidade, tentar encontrar o local correspondente com múltiplos formatos
+    // Primeiro tentar o formato padrão "local - local" (ex: "CS01 - CS01")
+    let localKey = `${localValue} - ${localValue}`;
+
+    // Se não existir no objeto de métricas, tentar formatos alternativos
+    if (!metricasPorLocal.hasOwnProperty(localKey)) {
+      // Pode ser que o local no banco de dados já esteja no formato "CS01 - CS01"
+      if (metricasPorLocal.hasOwnProperty(localValue)) {
+        localKey = localValue;
+      } else {
+        // Se ainda não encontrar, verificar se é uma variação conhecida
+        // Procurar por uma chave que contenha o valor no objeto de métricas
+        const matchingKey = Object.keys(metricasPorLocal).find(key =>
+          key.startsWith(localValue + " - ") || key.endsWith(" - " + localValue) || key.includes(" - " + localValue + " - ")
+        );
+        if (matchingKey) {
+          localKey = matchingKey;
+        }
+      }
+    }
 
     // Verificar se o local (com a chave formatada) está no objeto de métricas
     if (metricasPorLocal.hasOwnProperty(localKey)) {
@@ -1581,16 +1599,32 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
       // Incrementar total (todos os itens)
       metricasPorLocal[localKey].total++;
 
-      // Incrementar itens válidos (seguindo mesma lógica de etiquetas.itensValidos)
-      // Itens válidos = Atualizado + Desatualizado + Não lidos com estoque + Lido não pertence
-      // EXCLUINDO: "Sem Estoque" e "Lido sem estoque"
-      if (
-        situacao === "Atualizado" ||
-        situacao === "Desatualizado" ||
-        situacao === "Não lidos com estoque" ||
-        situacao === "Lido não pertence"
-      ) {
-        metricasPorLocal[localKey].itensValidos++;
+      // Incrementar itens válidos (seguindo lógica específica por tipo de auditoria)
+      // Para presenças: itens válidos devem incluir todos os itens que podem ter presença confirmada ou ausente
+      if (tipo === 'presencas') {
+        // Para presença: itens válidos = "Atualizado" (com presença e estoque) +
+        // "Com problema" (sem presença mas com estoque) +
+        // "Lido não pertence" (lido mas não pertence) +
+        // "Não lidos com estoque" (não lidos mas com estoque)
+        if (
+          situacao === "Atualizado" ||
+          situacao === "Com problema" ||
+          situacao === "Lido não pertence" ||
+          situacao === "Não lidos com estoque"
+        ) {
+          metricasPorLocal[localKey].itensValidos++;
+        }
+      } else {
+        // Para etiquetas e rupturas: itens válidos = Atualizado + Desatualizado + Não lidos com estoque + Lido não pertence
+        // EXCLUINDO: "Sem Estoque" e "Lido sem estoque"
+        if (
+          situacao === "Atualizado" ||
+          situacao === "Desatualizado" ||
+          situacao === "Não lidos com estoque" ||
+          situacao === "Lido não pertence"
+        ) {
+          metricasPorLocal[localKey].itensValidos++;
+        }
       }
 
       // Incrementar itens lidos - definição varia por tipo de auditoria
@@ -1620,6 +1654,16 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
         ) {
           metricasPorLocal[localKey].lidos++;
         }
+
+        // Adicionando contador específico para itens com presença confirmada (necessário para cálculo de percentual)
+        // Itens com presença confirmada = "Atualizado" + "Lido não pertence"
+        if (situacao === "Atualizado" || situacao === "Lido não pertence") {
+          // Adicionando um campo temporário para armazenar itens com presença, se não existir
+          if (!metricasPorLocal[localKey].itensComPresenca) {
+            metricasPorLocal[localKey].itensComPresenca = 0;
+          }
+          metricasPorLocal[localKey].itensComPresenca++;
+        }
       }
 
       // Incrementar contagem de usuários
@@ -1633,16 +1677,46 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
         // Se for a primeira vez do usuário no local, adicionar com 1 item lido
         metricasPorLocal[localKey].usuarios[usuarioChave] = 1;
       }
+    } else {
+      // Registrar um log de debug para identificar locais que não estão sendo encontrados
+      console.log(`⚠️ Local não encontrado no schema: "${localValue}" (formatado como "${localKey}") para tipo "${tipo}"`);
     }
   }
 
   // Calcular percentuais e atualizar o campo correspondente
   const locaisLeitura = {};
   for (const [local, valores] of Object.entries(metricasPorLocal)) {
-    // A fórmula correta para o percentual é (lidos / itensValidos)
-    const percentual = valores.itensValidos > 0 ? (valores.lidos / valores.itensValidos) * 100 : 0;
+    // A fórmula para o percentual varia por tipo de auditoria
+    let percentual = 0;
+    if (valores.itensValidos > 0) {
+      if (tipo === 'presencas') {
+        // Para presenças, o percentual deve ser baseado na quantidade de itens com presença confirmada
+        // Itens com presença confirmada = "Atualizado" + "Lido não pertence"
+        // Precisamos contar separadamente porque "lidos" pode incluir "Com problema" que não é presença
+        // Recontar itens com presença para este local
+        let itensComPresenca = 0;
+        // Neste estágio, precisamos confiar nos cálculos feitos anteriormente
+        // O contador de itens com presença precisa ser implementado diretamente no loop acima
+        // Adicionando contador temporário para itens com presença no objeto
+        if (!valores.itensComPresenca) {
+          valores.itensComPresenca = 0; // Inicializar se não existir
+        }
+        const itensPresenca = valores.itensComPresenca || 0;
+        percentual = (itensPresenca / valores.itensValidos) * 100;
+      } else {
+        // Para etiquetas e rupturas, a fórmula padrão é (lidos / itensValidos)
+        percentual = (valores.lidos / valores.itensValidos) * 100;
+      }
+    }
 
-    console.log(`[DIAGNÓSTICO CÁLCULO LOCAL] tipo: ${tipo}, local: ${local}, lidos: ${valores.lidos}, itensValidos: ${valores.itensValidos}, percentual: ${percentual}`);
+    // Garantir que o percentual não exceda 100%
+    if (percentual > 100) {
+      console.log(`⚠️ Percentual acima de 100% detectado: ${percentual}% para tipo ${tipo}, local ${local}`);
+      console.log(`   Itens lidos: ${valores.lidos}, Itens válidos: ${valores.itensValidos}, Itens com presença: ${valores.itensComPresenca || 0}`);
+      percentual = 100; // Limitar ao máximo de 100%
+    }
+
+    console.log(`[DIAGNÓSTICO CÁLCULO LOCAL] tipo: ${tipo}, local: ${local}, lidos: ${valores.lidos}, itensValidos: ${valores.itensValidos}, itensComPresenca: ${valores.itensComPresenca || 0}, percentual: ${percentual}`);
 
     locaisLeitura[local] = {
       total: valores.total,
