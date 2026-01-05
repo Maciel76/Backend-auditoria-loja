@@ -1,29 +1,66 @@
 // routes/lojas.js
 import express from "express";
+import Loja from "../models/Loja.js"; // Importar o modelo Loja
 const router = express.Router();
 
-const lojas = [
-  { codigo: "056", nome: "Loja 056 - Goiania Burits" },
-  { codigo: "084", nome: "Loja 084 - Goiania Independência " },
-  { codigo: "105", nome: "Loja 105 - T9" },
-  { codigo: "111", nome: "Loja 111 - Rio Verde" },
-  { codigo: "140", nome: "Loja 140 - Perimetral" },
-  { codigo: "214", nome: "Loja 214 - Caldas Novas" },
-  { codigo: "176", nome: "Loja 176 - Palmas Teotônio" },
-  { codigo: "194", nome: "Loja 194 - Anápolis" },
-  { codigo: "310", nome: "Loja 310 - Portugal " },
-  { codigo: "320", nome: "Loja 320 - Palmas cesamar " },
-  // ... outras lojas
-];
-
-router.get("/lojas", (req, res) => {
-  res.json(lojas);
+// Rota para buscar todas as lojas ativas do banco de dados
+router.get("/lojas", async (req, res) => {
+  try {
+    const lojas = await Loja.find({ ativa: true }).sort({ codigo: 1 });
+    res.json(lojas);
+  } catch (error) {
+    console.error("Erro ao buscar lojas:", error);
+    res.status(500).json({ mensagem: "Erro interno do servidor ao buscar lojas." });
+  }
 });
+
+// Rota para adicionar uma nova loja
+router.post("/lojas", async (req, res) => {
+  try {
+    const { codigo, nome, cidade, endereco, regiao, imagem, metadata } = req.body;
+
+    // Validação básica
+    if (!codigo || !nome) {
+      return res.status(400).json({ mensagem: "Código e nome da loja são obrigatórios." });
+    }
+
+    // Verificar se a loja já existe
+    const lojaExistente = await Loja.findOne({ codigo });
+    if (lojaExistente) {
+      return res.status(409).json({ mensagem: `A loja com o código ${codigo} já existe.` });
+    }
+
+    const novaLoja = new Loja({
+      codigo,
+      nome,
+      cidade,
+      endereco,
+      regiao,
+      imagem,
+      metadata,
+    });
+
+    await novaLoja.save();
+
+    res.status(201).json({ mensagem: "Loja adicionada com sucesso!", loja: novaLoja });
+  } catch (error) {
+    console.error("Erro ao adicionar nova loja:", error);
+    res.status(500).json({ mensagem: "Erro interno do servidor ao adicionar loja." });
+  }
+});
+
 
 router.post("/selecionar-loja", (req, res) => {
   const { codigo } = req.body;
-  req.session.loja = codigo;
-  res.json({ success: true, loja: codigo });
+  // Esta rota parece usar sessão, o que pode não ser ideal para uma API stateless.
+  // Mantendo a lógica original por enquanto, mas pode ser revisada.
+  if (req.session) {
+    req.session.loja = codigo;
+    res.json({ success: true, loja: codigo });
+  } else {
+    // Fallback para ambientes sem sessão (ex: API pura)
+    res.json({ success: true, message: "Seleção de loja recebida, mas a sessão não está ativa.", loja: codigo });
+  }
 });
 
 export default router;
