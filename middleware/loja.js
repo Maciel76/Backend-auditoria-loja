@@ -14,6 +14,7 @@ const LOJAS_VALIDAS = [
   { codigo: "310", nome: "Loja 310 - Portugal" },
   { codigo: "320", nome: "Loja 320 - Palmas cesamar" },
   { codigo: "347", nome: "Loja 347 - Araguaina" },
+  { codigo: "348", nome: "Loja 348 - Aparecida" },
 ];
 
 // Middleware OBRIGATÓRIO - NÃO permite requests sem loja válida
