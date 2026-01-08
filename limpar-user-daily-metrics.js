@@ -2,7 +2,7 @@
 import mongoose from "mongoose";
 import UserDailyMetrics from "./models/UserDailyMetrics.js";
 
-const MONGODB_URI = "mongodb://localhost:27017/auditorias";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/auditorias";
 
 async function limparEReprocessar() {
   try {

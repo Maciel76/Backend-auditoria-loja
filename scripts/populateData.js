@@ -5,15 +5,15 @@ import User from "../models/User.js";
 import Auditoria from "../models/Auditoria.js";
 import Planilha from "../models/Planilha.js";
 
-// Configuração do banco de dados
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/backoff";
+// Configuraï¿½ï¿½o do banco de dados
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/auditoria";
 
 // Dados de exemplo para lojas
 const lojasData = [
   {
     codigo: "001",
     nome: "Loja Centro",
-    cidade: "São Paulo",
+    cidade: "Sï¿½o Paulo",
     endereco: "Rua das Flores, 123",
     regiao: "Centro",
     imagem: "/images/lojas/loja-001.jpg",
@@ -21,13 +21,13 @@ const lojasData = [
     metadata: {
       telefone: "(11) 1234-5678",
       email: "centro@empresa.com",
-      gerente: "João Silva",
+      gerente: "Joï¿½o Silva",
     },
   },
   {
     codigo: "002",
     nome: "Loja Shopping",
-    cidade: "São Paulo",
+    cidade: "Sï¿½o Paulo",
     endereco: "Shopping Center, Loja 45",
     regiao: "Zona Sul",
     imagem: "/images/lojas/loja-002.jpg",
@@ -54,7 +54,7 @@ const lojasData = [
   },
 ];
 
-// Dados de exemplo para usuários
+// Dados de exemplo para usuï¿½rios
 const usuariosData = [
   {
     id: "123456",
@@ -86,15 +86,15 @@ const usuariosData = [
 const gerarAuditorias = (lojas, usuarios) => {
   const auditorias = [];
   const tipos = ["etiqueta", "presenca", "ruptura"];
-  const situacoes = ["Não lido", "Atualizado", "Pendente"];
-  const locais = ["Setor A", "Setor B", "Setor C", "Estoque", "Gôndola"];
+  const situacoes = ["Nï¿½o lido", "Atualizado", "Pendente"];
+  const locais = ["Setor A", "Setor B", "Setor C", "Estoque", "Gï¿½ndola"];
   const produtos = [
     "Produto A",
     "Produto B",
     "Produto C",
     "Shampoo Dove",
     "Sabonete Protex",
-    "Detergente Ypê"
+    "Detergente Ypï¿½"
   ];
 
   for (let i = 0; i < 50; i++) {
@@ -107,7 +107,7 @@ const gerarAuditorias = (lojas, usuarios) => {
       usuarioId: usuario.id,
       usuarioNome: usuario.nome,
       tipo: tipo,
-      data: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000), // Últimos 30 dias
+      data: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000), // ï¿½ltimos 30 dias
       codigo: `COD${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
       produto: produtos[Math.floor(Math.random() * produtos.length)],
       local: locais[Math.floor(Math.random() * locais.length)],
@@ -116,12 +116,12 @@ const gerarAuditorias = (lojas, usuarios) => {
       contador: Math.floor(Math.random() * 10),
     };
 
-    // Adicionar campos específicos por tipo
+    // Adicionar campos especï¿½ficos por tipo
     if (tipo === "etiqueta") {
       auditoria.ultimaCompra = new Date(Date.now() - Math.random() * 60 * 24 * 60 * 60 * 1000).toLocaleDateString("pt-BR");
     } else if (tipo === "presenca") {
       auditoria.presenca = Math.random() > 0.5;
-      auditoria.presencaConfirmada = auditoria.presenca ? "Sim" : "Não";
+      auditoria.presencaConfirmada = auditoria.presenca ? "Sim" : "Nï¿½o";
       auditoria.auditadoEm = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000);
       auditoria.classeProdutoRaiz = "Higiene e Beleza";
       auditoria.classeProduto = "Cabelos";
@@ -130,7 +130,7 @@ const gerarAuditorias = (lojas, usuarios) => {
       auditoria.classeProdutoRaiz = "Limpeza";
       auditoria.classeProduto = "Detergentes";
       auditoria.setor = auditoria.local;
-      auditoria.situacaoAuditoria = "Em análise";
+      auditoria.situacaoAuditoria = "Em anï¿½lise";
       auditoria.estoqueAtual = String(Math.floor(Math.random() * 50));
       auditoria.estoqueLeitura = String(Math.floor(Math.random() * 50));
       auditoria.residuo = "0";
@@ -145,7 +145,7 @@ const gerarAuditorias = (lojas, usuarios) => {
   return auditorias;
 };
 
-// Função principal
+// Funï¿½ï¿½o principal
 async function populateData() {
   try {
     console.log("= Conectando ao MongoDB...");
@@ -153,7 +153,7 @@ async function populateData() {
     console.log(" Conectado ao MongoDB");
 
     // Limpar dados existentes
-    console.log(">ù Limpando dados existentes...");
+    console.log(">ï¿½ Limpando dados existentes...");
     await Promise.all([
       Loja.deleteMany({}),
       User.deleteMany({}),
@@ -163,12 +163,12 @@ async function populateData() {
     console.log(" Dados antigos removidos");
 
     // Criar lojas
-    console.log("<ê Criando lojas...");
+    console.log("<ï¿½ Criando lojas...");
     const lojas = await Loja.insertMany(lojasData);
     console.log(` ${lojas.length} lojas criadas`);
 
-    // Criar usuários para cada loja
-    console.log("=e Criando usuários...");
+    // Criar usuï¿½rios para cada loja
+    console.log("=e Criando usuï¿½rios...");
     const usuarios = [];
     for (const loja of lojas) {
       for (const userData of usuariosData) {
@@ -194,16 +194,16 @@ async function populateData() {
       }
     }
     await User.insertMany(usuarios);
-    console.log(` ${usuarios.length} usuários criados`);
+    console.log(` ${usuarios.length} usuï¿½rios criados`);
 
     // Criar auditorias
-    console.log("=Ë Criando auditorias...");
+    console.log("=ï¿½ Criando auditorias...");
     const auditorias = gerarAuditorias(lojas, usuariosData);
     await Auditoria.insertMany(auditorias);
     console.log(` ${auditorias.length} auditorias criadas`);
 
     // Criar planilhas de exemplo
-    console.log("=Ê Criando planilhas...");
+    console.log("=ï¿½ Criando planilhas...");
     const planilhas = [];
     const tipos = ["etiqueta", "presenca", "ruptura"];
 
@@ -233,18 +233,18 @@ async function populateData() {
     await Planilha.insertMany(planilhas);
     console.log(` ${planilhas.length} planilhas criadas`);
 
-    // Relatório final
-    console.log("\n=È Relatório Final:");
-    console.log(`<ê Lojas: ${lojas.length}`);
-    console.log(`=e Usuários: ${usuarios.length}`);
-    console.log(`=Ë Auditorias: ${auditorias.length}`);
-    console.log(`=Ê Planilhas: ${planilhas.length}`);
+    // Relatï¿½rio final
+    console.log("\n=ï¿½ Relatï¿½rio Final:");
+    console.log(`<ï¿½ Lojas: ${lojas.length}`);
+    console.log(`=e Usuï¿½rios: ${usuarios.length}`);
+    console.log(`=ï¿½ Auditorias: ${auditorias.length}`);
+    console.log(`=ï¿½ Planilhas: ${planilhas.length}`);
 
-    console.log("\n<‰ Dados populados com sucesso!");
-    console.log("\n=¡ Para testar:");
+    console.log("\n<ï¿½ Dados populados com sucesso!");
+    console.log("\n=ï¿½ Para testar:");
     console.log("1. Acesse o sistema e selecione uma loja (001, 002 ou 003)");
-    console.log("2. Faça upload de uma planilha de teste");
-    console.log("3. Verifique os rankings e relatórios");
+    console.log("2. Faï¿½a upload de uma planilha de teste");
+    console.log("3. Verifique os rankings e relatï¿½rios");
 
   } catch (error) {
     console.error("L Erro ao popular dados:", error);

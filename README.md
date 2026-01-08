@@ -8,7 +8,7 @@ Este backend é responsável por processar, armazenar e disponibilizar os dados 
 
 - **Node.js**: Plataforma principal
 - **Express**: Framework para rotas e APIs
-- **MongoDB**: Banco de dados NoSQL
+- **MongoDB**: Banco de dados NoSQL (suporte para MongoDB Atlas)
 - **Mongoose**: ODM para MongoDB
 - **Multer**: Upload de arquivos
 - **xlsx**: Leitura de planilhas Excel
@@ -55,8 +55,21 @@ npm install
 
 ### 3. Configurar o MongoDB
 
-- Certifique-se de ter o MongoDB instalado e rodando localmente (padrão: mongodb://localhost:27017)
+#### MongoDB Local (padrão)
+- Certifique-se de ter o MongoDB instalado e rodando localmente (padrão: mongodb://127.0.0.1:27017)
 - O backend já está configurado para conectar no banco local
+
+#### MongoDB Atlas (nuvem) - Recomendado para produção
+- Crie uma conta no [MongoDB Atlas](https://www.mongodb.com/atlas/database)
+- Crie um cluster gratuito
+- Configure seu IP para acesso (adicionar 0.0.0.0/0 para acesso de qualquer lugar ou adicione seu IP específico)
+- Crie um usuário de banco de dados
+- Copie a string de conexão fornecida pelo Atlas
+- Crie um arquivo `.env` na raiz do diretório backend com a variável `MONGODB_URI`:
+
+```
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-name>.mongodb.net/<database-name>?retryWrites=true&w=majority
+```
 
 ### 4. Iniciar o backend
 

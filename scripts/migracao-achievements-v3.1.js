@@ -22,7 +22,7 @@ dotenv.config();
 // Conectar ao MongoDB
 const conectarDB = async () => {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/backoff';
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/auditoria';
     await mongoose.connect(mongoUri);
     console.log('✅ Conectado ao MongoDB');
   } catch (error) {

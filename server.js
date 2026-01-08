@@ -18,6 +18,7 @@ import avisosRouter from "./routes/avisos.js";
 import votacoesRouter from "./routes/votacoes.js";
 import articlesRouter from "./routes/articles.js";
 import achievementsRouter from "./routes/achievements.js";
+import conquistasRoutes from "./routes/conquistasRoutes.js";
 import metricasUsuariosRoutes from "./routes/metricasUsuarios.js";
 import metricasLojasRoutes from "./routes/metricasLojas.js";
 import lojaDailyMetricsRoutes from "./routes/lojaDailyMetrics.js";
@@ -180,9 +181,17 @@ try {
 // ⚠️ ADICIONAR APENAS ESTA LINHA (não modificar nada mais!)
 try {
   app.use("/api/achievements", achievementsRouter);
-  console.log("✅ Rotas de conquistas carregadas");
+  console.log("✅ Rotas de achievements carregadas");
 } catch (error) {
-  console.log("❌ Erro nas rotas de conquistas:", error.message);
+  console.log("❌ Erro nas rotas de achievements:", error.message);
+}
+
+// Adicionando rotas para /api/conquistas também
+try {
+  app.use("/api/conquistas", conquistasRoutes);
+  console.log("✅ Rotas de conquistas (pt-br) carregadas");
+} catch (error) {
+  console.log("❌ Erro nas rotas de conquistas (pt-br):", error.message);
 }
 
 try {

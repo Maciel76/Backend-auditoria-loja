@@ -7,7 +7,8 @@ async function testFix() {
 
   try {
     // Connect to MongoDB
-    await mongoose.connect('mongodb://localhost:27017/backoff_test', {
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/backoff_test';
+    await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
