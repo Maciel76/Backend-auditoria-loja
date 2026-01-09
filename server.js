@@ -24,6 +24,7 @@ import metricasLojasRoutes from "./routes/metricasLojas.js";
 import lojaDailyMetricsRoutes from "./routes/lojaDailyMetrics.js";
 import performanceMapRoutes from "./routes/performanceMap.js";
 import perfilLojaRoutes from "./routes/perfilLoja.js";
+import auditProductsRouter from "./routes/auditProducts.js";
 import "./utils/planilhaHelpers.js";
 
 const app = express();
@@ -210,6 +211,7 @@ try {
 app.use("/api/loja-daily-metrics", lojaDailyMetricsRoutes);
 app.use("/api/perfil-loja", perfilLojaRoutes);
 app.use("/api/performance-map", performanceMapRoutes);
+app.use("/api/audit-products", auditProductsRouter);
 
 
 // Rota de sincronização removida - agora usa modelos unificados

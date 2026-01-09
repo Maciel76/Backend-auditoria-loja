@@ -15,6 +15,7 @@ import UserDailyMetrics from "../models/UserDailyMetrics.js";
 import MetricasUsuario from "../models/MetricasUsuario.js";
 import Loja from "../models/Loja.js";
 import achievementRulesService from "../services/achievementRulesService.js";
+import AuditProductsService from "../services/auditProductsService.js";
 
 // Helper function to access obterPeriodo
 const obterPeriodo = (periodo, data) => {
@@ -260,6 +261,9 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
       tipo: "etiqueta",
     });
 
+    // Limpar produtos de auditoria para este tipo e loja
+    await AuditProductsService.limparProdutosPorLojaELojaTipo(loja._id, "etiqueta");
+
     console.log(
       `🗑️ Dados antigos removidos para loja ${
         loja.codigo
@@ -363,6 +367,13 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
     );
 
     console.log(`✅ Planilha processada com sucesso para loja ${loja.codigo}`);
+
+    // Processar e armazenar produtos de auditoria
+    try {
+      await AuditProductsService.processarNovaPlanilha(loja._id, loja.nome, "etiqueta", setoresBatch);
+    } catch (error) {
+      console.error(`❌ Erro ao processar produtos de auditoria para etiqueta:`, error);
+    }
 
     const resultado = {
       success: true,
@@ -502,6 +513,9 @@ async function processarRuptura(file, dataAuditoria, loja) {
       loja: loja._id,
       tipo: "ruptura",
     });
+
+    // Limpar produtos de auditoria para este tipo e loja
+    await AuditProductsService.limparProdutosPorLojaELojaTipo(loja._id, "ruptura");
 
     console.log(`🗑️ Rupturas antigas removidas para loja ${loja.codigo}`);
 
@@ -649,6 +663,13 @@ async function processarRuptura(file, dataAuditoria, loja) {
 
     console.log(`✅ Ruptura processada com sucesso para loja ${loja.codigo}`);
 
+    // Processar e armazenar produtos de auditoria
+    try {
+      await AuditProductsService.processarNovaPlanilha(loja._id, loja.nome, "ruptura", dadosProcessados);
+    } catch (error) {
+      console.error(`❌ Erro ao processar produtos de auditoria para ruptura:`, error);
+    }
+
     return {
       success: true,
       totalItens: jsonData.length,
@@ -779,6 +800,9 @@ async function processarPresenca(file, dataAuditoria, loja) {
       loja: loja._id,
       tipo: "presenca",
     });
+
+    // Limpar produtos de auditoria para este tipo e loja
+    await AuditProductsService.limparProdutosPorLojaELojaTipo(loja._id, "presenca");
 
     console.log(`🗑️ Presenças antigas removidas para loja ${loja.codigo}`);
 
@@ -920,6 +944,13 @@ async function processarPresenca(file, dataAuditoria, loja) {
     );
 
     console.log(`✅ Presença processada com sucesso para loja ${loja.codigo}`);
+
+    // Processar e armazenar produtos de auditoria
+    try {
+      await AuditProductsService.processarNovaPlanilha(loja._id, loja.nome, "presenca", dadosProcessados);
+    } catch (error) {
+      console.error(`❌ Erro ao processar produtos de auditoria para presenca:`, error);
+    }
 
     return {
       success: true,
