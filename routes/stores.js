@@ -105,15 +105,38 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+// Update store cover
+router.patch("/:codigo/cover", async (req, res) => {
+  try {
+    const { codigo } = req.params;
+    const { coverId } = req.body;
+
+    const store = await Loja.findOneAndUpdate(
+      { codigo: codigo },
+      { coverId: coverId },
+      { new: true, runValidators: true }
+    );
+
+    if (!store) {
+      return res.status(404).json({ error: "Loja não encontrada" });
+    }
+
+    res.json(store);
+  } catch (error) {
+    console.error("Error updating store cover:", error);
+    res.status(500).json({ error: "Erro ao atualizar cover da loja" });
+  }
+});
+
 // Delete store
 router.delete("/:id", async (req, res) => {
   try {
     const store = await Loja.findByIdAndDelete(req.params.id);
-    
+
     if (!store) {
       return res.status(404).json({ error: "Loja não encontrada" });
     }
-    
+
     res.json({ message: "Loja excluída com sucesso" });
   } catch (error) {
     console.error("Error deleting store:", error);

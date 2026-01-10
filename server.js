@@ -25,6 +25,7 @@ import lojaDailyMetricsRoutes from "./routes/lojaDailyMetrics.js";
 import performanceMapRoutes from "./routes/performanceMap.js";
 import perfilLojaRoutes from "./routes/perfilLoja.js";
 import auditProductsRouter from "./routes/auditProducts.js";
+import storesRouter from "./routes/stores.js";
 import "./utils/planilhaHelpers.js";
 
 const app = express();
@@ -35,7 +36,7 @@ conectarBanco();
 // Middleware ANTES das rotas
 app.use(cors({
   origin: ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173", "http://127.0.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001"],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "x-loja"],
   credentials: true
 }));
@@ -49,7 +50,7 @@ app.use(express.static("../frontend/public"));
 // Middleware global de CORS como fallback
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "http://localhost:5173");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, x-loja");
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
@@ -212,6 +213,7 @@ app.use("/api/loja-daily-metrics", lojaDailyMetricsRoutes);
 app.use("/api/perfil-loja", perfilLojaRoutes);
 app.use("/api/performance-map", performanceMapRoutes);
 app.use("/api/audit-products", auditProductsRouter);
+app.use("/api/stores", storesRouter);
 
 
 // Rota de sincronização removida - agora usa modelos unificados

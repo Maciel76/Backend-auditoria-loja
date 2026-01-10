@@ -8,14 +8,12 @@ const metricasLojaSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Loja",
       required: true,
-      index: true,
     },
 
     // NOVO: Nome da loja desnormalizado para consultas rápidas
     lojaNome: {
       type: String,
       required: true,
-      index: true,
     },
 
     // Período das métricas - AGORA APENAS PERÍODO COMPLETO
@@ -179,11 +177,8 @@ metricasLojaSchema.index({
 metricasLojaSchema.index({ "ranking.posicaoGeral": 1 });
 metricasLojaSchema.index({ lojaNome: 1 });
 
-// Índice único para evitar duplicatas - REMOVIDO PERÍODO
-metricasLojaSchema.index(
-  { loja: 1, dataInicio: 1 },
-  { unique: true }
-);
+// Índice único para evitar duplicatas - APENAS LOJA (1 registro por loja para periodo_completo)
+metricasLojaSchema.index({ loja: 1 }, { unique: true });
 
 // Métodos estáticos úteis - ATUALIZADOS PARA PERÍODO COMPLETO
 metricasLojaSchema.statics.obterRankingGeral = function (
@@ -214,10 +209,7 @@ metricasLojaSchema.statics.obterComparacaoLojas = function (
     .sort({ "ranking.pontuacaoTotal": -1 });
 };
 
-metricasLojaSchema.statics.obterTendenciaLoja = function (
-  lojaId,
-  limite = 12
-) {
+metricasLojaSchema.statics.obterTendenciaLoja = function (lojaId, limite = 12) {
   return this.find({
     loja: lojaId,
   })
@@ -240,8 +232,10 @@ metricasLojaSchema.statics.obterLojasComProblemas = function (
 
 // NOVO MÉTODO: Obter métrica única da loja
 metricasLojaSchema.statics.obterMetricaLoja = function (lojaId) {
-  return this.findOne({ loja: lojaId })
-    .populate("loja", "codigo nome cidade regiao");
+  return this.findOne({ loja: lojaId }).populate(
+    "loja",
+    "codigo nome cidade regiao"
+  );
 };
 
 // Métodos de instância
@@ -330,14 +324,17 @@ metricasLojaSchema.methods.atualizarTotais = function () {
 };
 
 // NOVO MÉTODO: Atualizar com base nos dados de auditoria
-metricasLojaSchema.methods.atualizarComAuditorias = function (auditorias, tipo) {
+metricasLojaSchema.methods.atualizarComAuditorias = function (
+  auditorias,
+  tipo
+) {
   if (!auditorias || auditorias.length === 0) return;
 
   const situacaoMap = new Map();
   const usuariosUnicos = new Set();
 
   // Contar situações e usuários
-  auditorias.forEach(auditoria => {
+  auditorias.forEach((auditoria) => {
     const situacao = auditoria.situacao || auditoria.Situacao;
     situacaoMap.set(situacao, (situacaoMap.get(situacao) || 0) + 1);
 
@@ -346,15 +343,18 @@ metricasLojaSchema.methods.atualizarComAuditorias = function (auditorias, tipo) 
     }
   });
 
-  if (tipo === 'etiquetas') {
+  if (tipo === "etiquetas") {
     this.etiquetas.totalItens = auditorias.length;
-    this.etiquetas.itensAtualizados = situacaoMap.get('Atualizado') || 0;
-    this.etiquetas.itensNaolidos = situacaoMap.get('Não lidos com estoque') || 0;
-    this.etiquetas.itensDesatualizado = situacaoMap.get('Desatualizado') || 0;
-    this.etiquetas.itensNaopertence = situacaoMap.get('Lido não pertence') || 0;
-    this.etiquetas.itensLidosemestoque = situacaoMap.get('Lido sem estoque') || 0;
-    this.etiquetas.itensNlidocomestoque = situacaoMap.get('Não lidos com estoque') || 0;
-    this.etiquetas.itensSemestoque = situacaoMap.get('Sem Estoque') || 0;
+    this.etiquetas.itensAtualizados = situacaoMap.get("Atualizado") || 0;
+    this.etiquetas.itensNaolidos =
+      situacaoMap.get("Não lidos com estoque") || 0;
+    this.etiquetas.itensDesatualizado = situacaoMap.get("Desatualizado") || 0;
+    this.etiquetas.itensNaopertence = situacaoMap.get("Lido não pertence") || 0;
+    this.etiquetas.itensLidosemestoque =
+      situacaoMap.get("Lido sem estoque") || 0;
+    this.etiquetas.itensNlidocomestoque =
+      situacaoMap.get("Não lidos com estoque") || 0;
+    this.etiquetas.itensSemestoque = situacaoMap.get("Sem Estoque") || 0;
 
     // Calcular itens válidos (que podem ser auditados)
     this.etiquetas.itensValidos =
@@ -373,10 +373,13 @@ metricasLojaSchema.methods.atualizarComAuditorias = function (auditorias, tipo) 
   }
 
   // Implementar lógica similar para rupturas e presencas...
-  if (tipo === 'rupturas') {
+  if (tipo === "rupturas") {
     this.rupturas.totalItens = auditorias.length;
-    this.rupturas.itensAtualizados = situacaoMap.get('Com Presença e com Estoque') || 0;
-    this.rupturas.itensLidos = auditorias.filter(a => a.situacao !== 'Não lido').length;
+    this.rupturas.itensAtualizados =
+      situacaoMap.get("Com Presença e com Estoque") || 0;
+    this.rupturas.itensLidos = auditorias.filter(
+      (a) => a.situacao !== "Não lido"
+    ).length;
 
     if (this.rupturas.itensLidos > 0) {
       this.rupturas.percentualConclusao = Math.round(
@@ -387,10 +390,12 @@ metricasLojaSchema.methods.atualizarComAuditorias = function (auditorias, tipo) 
     this.rupturas.usuariosAtivos = usuariosUnicos.size;
   }
 
-  if (tipo === 'presencas') {
+  if (tipo === "presencas") {
     this.presencas.totalItens = auditorias.length;
-    this.presencas.itensAtualizados = situacaoMap.get('Confirmado') || 0;
-    this.presencas.itensLidos = auditorias.filter(a => a.situacao !== 'Não lido').length;
+    this.presencas.itensAtualizados = situacaoMap.get("Confirmado") || 0;
+    this.presencas.itensLidos = auditorias.filter(
+      (a) => a.situacao !== "Não lido"
+    ).length;
 
     if (this.presencas.itensLidos > 0) {
       this.presencas.percentualConclusao = Math.round(

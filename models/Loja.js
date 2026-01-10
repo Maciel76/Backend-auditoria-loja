@@ -25,6 +25,10 @@ const lojaSchema = new mongoose.Schema(
       type: String,
       default: "/images/lojas/default.jpg",
     },
+    coverId: {
+      type: String,
+      default: "gradient-1",
+    },
     ativa: {
       type: Boolean,
       default: true,
