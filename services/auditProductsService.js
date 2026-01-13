@@ -100,6 +100,9 @@ class AuditProductsService {
       situacaoAuditoria: auditoria.situacaoAuditoria || "",
       estoqueAtual: auditoria.estoqueAtual || "0",
       estoqueLeitura: auditoria.estoqueLeitura || "0",
+      // Campos para armazenar informações do usuário que realizou a leitura
+      usuarioLeitura: auditoria.usuarioNome || "",
+      usuarioId: auditoria.usuarioId || ""
     };
   }
 

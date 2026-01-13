@@ -77,27 +77,29 @@ router.post("/", async (req, res) => {
 // Update store
 router.put("/:id", async (req, res) => {
   try {
-    const { codigo, nome, cidade, endereco, regiao, imagem, metadata, ativa } = req.body;
-    
+    const { codigo, nome, cidade, endereco, regiao, imagem, metadata, ativa, coverId, selectedBadges } = req.body;
+
     const store = await Loja.findByIdAndUpdate(
       req.params.id,
-      { 
+      {
         codigo,
-        nome, 
-        cidade, 
-        endereco, 
-        regiao, 
+        nome,
+        cidade,
+        endereco,
+        regiao,
         imagem,
         metadata,
-        ativa
+        ativa,
+        coverId,
+        selectedBadges
       },
       { new: true, runValidators: true }
     );
-    
+
     if (!store) {
       return res.status(404).json({ error: "Loja não encontrada" });
     }
-    
+
     res.json(store);
   } catch (error) {
     console.error("Error updating store:", error);
@@ -125,6 +127,29 @@ router.patch("/:codigo/cover", async (req, res) => {
   } catch (error) {
     console.error("Error updating store cover:", error);
     res.status(500).json({ error: "Erro ao atualizar cover da loja" });
+  }
+});
+
+// Update store badges
+router.patch("/:codigo/badges", async (req, res) => {
+  try {
+    const { codigo } = req.params;
+    const { selectedBadges } = req.body;
+
+    const store = await Loja.findOneAndUpdate(
+      { codigo: codigo },
+      { selectedBadges: selectedBadges },
+      { new: true, runValidators: true }
+    );
+
+    if (!store) {
+      return res.status(404).json({ error: "Loja não encontrada" });
+    }
+
+    res.json(store);
+  } catch (error) {
+    console.error("Error updating store badges:", error);
+    res.status(500).json({ error: "Erro ao atualizar selos da loja" });
   }
 });
 

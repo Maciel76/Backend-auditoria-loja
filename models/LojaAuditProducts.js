@@ -23,7 +23,10 @@ const produtoSchema = new mongoose.Schema({
   classeProduto: { type: String, default: "" },
   situacaoAuditoria: { type: String, default: "" },
   estoqueAtual: { type: String, default: "0" },
-  estoqueLeitura: { type: String, default: "0" }
+  estoqueLeitura: { type: String, default: "0" },
+  // Campo para armazenar o nome do usuário que realizou a leitura do item
+  usuarioLeitura: { type: String, default: "" },
+  usuarioId: { type: String, default: "" }
 });
 
 // Schema para armazenar produtos por tipo de auditoria
@@ -126,19 +129,83 @@ lojaAuditProductsSchema.statics.adicionarProduto = async function (lojaId, lojaN
     }
 
     if (!produtoJaExiste) {
+      // Se for um objeto de produto, garantir que tenha os campos de usuário
+      let produtoFinal = produto;
+      if (typeof produto === 'object' && produto.codigo) {
+        produtoFinal = {
+          codigo: produto.codigo || "",
+          nome: produto.nome || "",
+          classe: produto.classe || "",
+          local: produto.local || "",
+          situacao: produto.situacao || "",
+          estoque: produto.estoque || "0",
+          ultimaCompra: produto.ultimaCompra || "",
+          auditadoDia: produto.auditadoDia || "",
+          auditadoHora: produto.auditadoHora || "",
+          fornecedor: produto.fornecedor || "",
+          setor: produto.setor || "",
+          custoRuptura: produto.custoRuptura || 0,
+          presenca: produto.presenca || false,
+          presencaConfirmada: produto.presencaConfirmada || "",
+          diasSemVenda: produto.diasSemVenda || 0,
+          residuo: produto.residuo || "",
+          classeProdutoRaiz: produto.classeProdutoRaiz || "",
+          classeProduto: produto.classeProduto || "",
+          situacaoAuditoria: produto.situacaoAuditoria || "",
+          estoqueAtual: produto.estoqueAtual || "0",
+          estoqueLeitura: produto.estoqueLeitura || "0",
+          // Campos para armazenar informações do usuário que realizou a leitura
+          usuarioLeitura: produto.usuarioLeitura || "",
+          usuarioId: produto.usuarioId || "",
+          ...produto // Manter quaisquer outros campos que possam ter sido passados
+        };
+      }
+
       // Adicionar o produto ao array do tipo específico
-      lojaProdutos.produtos[tipo] = [...produtosExistentes, produto];
+      lojaProdutos.produtos[tipo] = [...produtosExistentes, produtoFinal];
       await lojaProdutos.save();
       return lojaProdutos;
     }
     return lojaProdutos; // Produto já existe
   } else {
     // Criar novo documento
+    // Se for um objeto de produto, garantir que tenha os campos de usuário
+    let produtoFinal = produto;
+    if (typeof produto === 'object' && produto.codigo) {
+      produtoFinal = {
+        codigo: produto.codigo || "",
+        nome: produto.nome || "",
+        classe: produto.classe || "",
+        local: produto.local || "",
+        situacao: produto.situacao || "",
+        estoque: produto.estoque || "0",
+        ultimaCompra: produto.ultimaCompra || "",
+        auditadoDia: produto.auditadoDia || "",
+        auditadoHora: produto.auditadoHora || "",
+        fornecedor: produto.fornecedor || "",
+        setor: produto.setor || "",
+        custoRuptura: produto.custoRuptura || 0,
+        presenca: produto.presenca || false,
+        presencaConfirmada: produto.presencaConfirmada || "",
+        diasSemVenda: produto.diasSemVenda || 0,
+        residuo: produto.residuo || "",
+        classeProdutoRaiz: produto.classeProdutoRaiz || "",
+        classeProduto: produto.classeProduto || "",
+        situacaoAuditoria: produto.situacaoAuditoria || "",
+        estoqueAtual: produto.estoqueAtual || "0",
+        estoqueLeitura: produto.estoqueLeitura || "0",
+        // Campos para armazenar informações do usuário que realizou a leitura
+        usuarioLeitura: produto.usuarioLeitura || "",
+        usuarioId: produto.usuarioId || "",
+        ...produto // Manter quaisquer outros campos que possam ter sido passados
+      };
+    }
+
     const novoDocumento = new this({
       loja: lojaId,
       lojaNome,
       produtos: {
-        [tipo]: [produto]
+        [tipo]: [produtoFinal]
       }
     });
     return await novoDocumento.save();
@@ -151,7 +218,32 @@ lojaAuditProductsSchema.statics.adicionarVariosProdutos = async function (lojaId
   }
 
   // Remover duplicatas dos produtos a serem adicionados
-  const produtosUnicos = [...new Set(produtos)];
+  // Para objetos, precisamos comparar por código ou nome
+  let produtosUnicos = [];
+  const codigosVistos = new Set();
+  const nomesVistos = new Set();
+
+  for (const produto of produtos) {
+    if (typeof produto === 'object' && produto.codigo) {
+      // É um objeto de produto, verificar duplicata por código
+      if (!codigosVistos.has(produto.codigo)) {
+        codigosVistos.add(produto.codigo);
+        produtosUnicos.push(produto);
+      }
+    } else if (typeof produto === 'string') {
+      // É uma string, verificar duplicata por nome
+      if (!nomesVistos.has(produto)) {
+        nomesVistos.add(produto);
+        produtosUnicos.push(produto);
+      }
+    } else if (typeof produto === 'object' && produto.nome) {
+      // É um objeto sem código mas com nome
+      if (!nomesVistos.has(produto.nome)) {
+        nomesVistos.add(produto.nome);
+        produtosUnicos.push(produto);
+      }
+    }
+  }
 
   const lojaProdutos = await this.findOne({ loja: lojaId });
 
@@ -160,9 +252,19 @@ lojaAuditProductsSchema.statics.adicionarVariosProdutos = async function (lojaId
     const produtosExistentes = lojaProdutos.produtos[tipo] || [];
 
     // Filtrar produtos que ainda não existem
-    const produtosParaAdicionar = produtosUnicos.filter(produto =>
-      !produtosExistentes.includes(produto)
-    );
+    const produtosParaAdicionar = produtosUnicos.filter(produto => {
+      if (typeof produto === 'object' && produto.codigo) {
+        // Comparar por código se for objeto com código
+        return !produtosExistentes.some(p => p.codigo === produto.codigo);
+      } else if (typeof produto === 'string') {
+        // Comparar por nome se for string
+        return !produtosExistentes.includes(produto);
+      } else if (typeof produto === 'object' && produto.nome) {
+        // Comparar por nome se for objeto sem código
+        return !produtosExistentes.some(p => p.nome === produto.nome);
+      }
+      return true; // Caso padrão
+    });
 
     if (produtosParaAdicionar.length > 0) {
       // Adicionar os produtos que não existem
@@ -212,7 +314,10 @@ lojaAuditProductsSchema.statics.adicionarVariosProdutosDetalhados = async functi
     classeProduto: produto.classeProduto || "",
     situacaoAuditoria: produto.situacaoAuditoria || "",
     estoqueAtual: produto.estoqueAtual || "0",
-    estoqueLeitura: produto.estoqueLeitura || "0"
+    estoqueLeitura: produto.estoqueLeitura || "0",
+    // Campos para armazenar informações do usuário que realizou a leitura
+    usuarioLeitura: produto.usuarioLeitura || "",
+    usuarioId: produto.usuarioId || ""
   }));
 
   const lojaProdutos = await this.findOne({ loja: lojaId });

@@ -29,6 +29,9 @@ const lojaSchema = new mongoose.Schema(
       type: String,
       default: "gradient-1",
     },
+    selectedBadges: [{
+      type: String
+    }],
     ativa: {
       type: Boolean,
       default: true,
