@@ -65,6 +65,7 @@ router.get('/metricas/lojas', async (req, res) => {
       posicaoGeral: metricasLoja.ranking.posicaoGeral || 0,
       colaboradorDestaque: metricasLoja.usuariosEstatisticas?.melhorUsuario?.usuarioNome || "N/A",
       totalColaboradores: metricasLoja.totais.usuariosAtivos || 0,
+      totalItensAuditados: metricasLoja.totais.itensLidos || 0, // Adicionando o campo itensLidos
       loja: {
         codigo: metricasLoja.loja.codigo,
         nome: metricasLoja.loja.nome,
