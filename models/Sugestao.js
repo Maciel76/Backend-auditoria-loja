@@ -100,6 +100,30 @@ const sugestaoSchema = new mongoose.Schema(
         users: [{ type: String }]
       }
     },
+
+    // Comentários
+    comentarios: [{
+      conteudo: {
+        type: String,
+        required: true,
+        trim: true,
+        maxlength: 1000
+      },
+      autor: {
+        type: String,
+        required: true,
+        trim: true,
+        maxlength: 100
+      },
+      data: {
+        type: Date,
+        default: Date.now
+      },
+      avatar: {
+        type: String,
+        maxlength: 10
+      }
+    }],
   },
   {
     timestamps: true,

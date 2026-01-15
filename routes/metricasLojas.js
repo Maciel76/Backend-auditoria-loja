@@ -1,5 +1,6 @@
 import express from 'express';
 import MetricasLoja from '../models/MetricasLoja.js';
+import MetricasUsuario from '../models/MetricasUsuario.js';
 import Loja from '../models/Loja.js';
 
 const router = express.Router();
@@ -26,13 +27,28 @@ router.get('/metricas/lojas', async (req, res) => {
       .sort({ dataInicio: -1 })
       .populate('loja', 'nome codigo cidade');
 
+    // Buscar o colaborador em destaque diretamente do modelo MetricasUsuario
+    let colaboradorDestaque = "N/A";
+    try {
+      const topUsuario = await MetricasUsuario.findOne({ loja: loja._id })
+        .sort({ 'totais.pontuacaoTotal': -1 }) // Ordenar pela pontuação total
+        .limit(1);
+
+      if (topUsuario && topUsuario.usuarioNome) {
+        colaboradorDestaque = topUsuario.usuarioNome;
+      }
+    } catch (error) {
+      console.error("Erro ao buscar colaborador em destaque:", error);
+      // Continuar com o valor padrão "N/A"
+    }
+
     if (!metricasLoja) {
       // Se não houver métricas, retornar valores padrão
       return res.json({
         auditoriasRealizadas: 0,
         variacaoAuditorias: 0,
         posicaoGeral: 0,
-        colaboradorDestaque: "N/A",
+        colaboradorDestaque: colaboradorDestaque, // Usar o valor buscado do MetricasUsuario
         totalColaboradores: 0,
         loja: {
           codigo: loja.codigo,
@@ -63,7 +79,7 @@ router.get('/metricas/lojas', async (req, res) => {
       auditoriasRealizadas: metricasLoja.totais.planilhasProcessadas || 0,
       variacaoAuditorias: variacaoAuditorias,
       posicaoGeral: metricasLoja.ranking.posicaoGeral || 0,
-      colaboradorDestaque: metricasLoja.usuariosEstatisticas?.melhorUsuario?.usuarioNome || "N/A",
+      colaboradorDestaque: colaboradorDestaque, // Usar o valor buscado do MetricasUsuario
       totalColaboradores: metricasLoja.totais.usuariosAtivos || 0,
       totalItensAuditados: metricasLoja.totais.itensLidos || 0, // Adicionando o campo itensLidos
       loja: {
