@@ -1382,6 +1382,7 @@ router.get("/usuarios", verificarLojaObrigatoria, async (req, res) => {
       usuarios.map((u) => ({
         id: u.id,
         nome: u.nome,
+        foto: u.foto,
         contador: u.contadorTotal,
         iniciais: u.nome
           .split(" ")
