@@ -1969,6 +1969,11 @@ router.get(
       // Buscar todos os UserDailyMetrics da loja
       const usuarios = await UserDailyMetrics.find({ loja: loja._id });
 
+      // Buscar os dados de foto para todos os usuários de uma vez para melhorar performance
+      const idsUsuarios = [...new Set(usuarios.map(u => u.usuarioId))];
+      const usuariosDocs = await User.find({ id: { $in: idsUsuarios } });
+      const usuariosMap = new Map(usuariosDocs.map(u => [u.id, u]));
+
       const ranking = [];
 
       for (const usuario of usuarios) {
@@ -2007,9 +2012,12 @@ router.get(
           !usuario.usuarioId.toLowerCase().includes("usuário não identificado");
 
         if (isValidUser) {
+          const usuarioDoc = usuariosMap.get(usuario.usuarioId);
+
           ranking.push({
             id: usuario.usuarioId,
             nome: usuario.usuarioNome,
+            foto: usuarioDoc?.foto || null,
             contador: contador,
             loja: usuario.lojaNome,
             metricas: metricas,
@@ -2061,6 +2069,11 @@ router.get(
         periodo: "periodo_completo",
       });
 
+      // Buscar os dados de foto para todos os usuários de uma vez para melhorar performance
+      const idsUsuarios = [...new Set(usuarios.map(u => u.usuarioId))];
+      const usuariosDocs = await User.find({ id: { $in: idsUsuarios } });
+      const usuariosMap = new Map(usuariosDocs.map(u => [u.id, u]));
+
       const ranking = [];
 
       for (const usuario of usuarios) {
@@ -2094,9 +2107,12 @@ router.get(
           !usuario.usuarioId.toLowerCase().includes("usuário não identificado");
 
         if (isValidUser) {
+          const usuarioDoc = usuariosMap.get(usuario.usuarioId);
+
           ranking.push({
             id: usuario.usuarioId,
             nome: usuario.usuarioNome,
+            foto: usuarioDoc?.foto || null,
             contador: contador,
             loja: usuario.lojaNome,
             metricas: {
