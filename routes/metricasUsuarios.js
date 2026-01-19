@@ -1,6 +1,7 @@
 import express from 'express';
 import metricasUsuariosService from '../services/metricasUsuariosService.js';
 import Loja from '../models/Loja.js';
+import User from '../models/User.js';
 
 const router = express.Router();
 
@@ -66,44 +67,53 @@ router.get('/metricas/usuarios', async (req, res) => {
       return isValid;
     });
 
+    // Buscar os dados de foto para todos os usuários de uma vez para melhorar performance
+    const idsUsuarios = [...new Set(usuariosValidos.map(m => m.usuarioId))];
+    const usuariosDocs = await User.find({ id: { $in: idsUsuarios } });
+    const usuariosMap = new Map(usuariosDocs.map(u => [u.id, u]));
+
     // Mapear os dados para o formato esperado pelo frontend
-    const usuarios = usuariosValidos.map(metrica => ({
-      id: metrica.usuarioId,
-      nome: metrica.usuarioNome,
-      iniciais: metrica.usuarioNome ?
-        metrica.usuarioNome.split(' ')
-          .map(part => part[0])
-          .join('')
-          .toUpperCase()
-          .substring(0, 2) : '??',
-      contador: metrica.totaisAcumulados?.itensLidosTotal || metrica.totais?.itensAtualizados || 0,
-      totalAuditorias: metrica.contadoresAuditorias?.totalGeral || 0,
-      loja: metrica.loja?.codigo || lojaCodigo || 'N/A',
-      lojaCompleta: metrica.loja?.nome || metrica.lojaNome || 'Nome da Loja',
-      foto: metrica.foto || null,
-      ultimaAuditoria: metrica.ultimaAtualizacao,
-      conquistas: {
-        totalConquistas: metrica.achievements?.stats?.totalUnlockedAchievements || 0,
-        nivel: metrica.achievements?.level?.current || 1,
-        titulo: metrica.achievements?.level?.title || 'Novato',
-        xpTotal: metrica.achievements?.xp?.total || 0
-      },
-      desempenho: {
-        posicaoLoja: metrica.ranking?.posicaoLoja || 0,
-        posicaoGeral: metrica.ranking?.posicaoGeral || 0,
-        pontuacaoTotal: metrica.totais?.pontuacaoTotal || 0
-      },
-      auditoriasPorTipo: {
-        etiquetas: metrica.contadoresAuditorias?.totalEtiquetas || 0,
-        rupturas: metrica.contadoresAuditorias?.totalRupturas || 0,
-        presencas: metrica.contadoresAuditorias?.totalPresencas || 0
-      },
-      metricas: {
-        etiquetas: metrica.etiquetas,
-        rupturas: metrica.rupturas,
-        presencas: metrica.presencas
-      }
-    }));
+    const usuarios = usuariosValidos.map(metrica => {
+      const usuarioDoc = usuariosMap.get(metrica.usuarioId);
+
+      return {
+        id: metrica.usuarioId,
+        nome: metrica.usuarioNome,
+        iniciais: metrica.usuarioNome ?
+          metrica.usuarioNome.split(' ')
+            .map(part => part[0])
+            .join('')
+            .toUpperCase()
+            .substring(0, 2) : '??',
+        contador: metrica.totaisAcumulados?.itensLidosTotal || metrica.totais?.itensAtualizados || 0,
+        totalAuditorias: metrica.contadoresAuditorias?.totalGeral || 0,
+        loja: metrica.loja?.codigo || lojaCodigo || 'N/A',
+        lojaCompleta: metrica.loja?.nome || metrica.lojaNome || 'Nome da Loja',
+        foto: usuarioDoc?.foto || metrica.foto || null,
+        ultimaAuditoria: metrica.ultimaAtualizacao,
+        conquistas: {
+          totalConquistas: metrica.achievements?.stats?.totalUnlockedAchievements || 0,
+          nivel: metrica.achievements?.level?.current || 1,
+          titulo: metrica.achievements?.level?.title || 'Novato',
+          xpTotal: metrica.achievements?.xp?.total || 0
+        },
+        desempenho: {
+          posicaoLoja: metrica.ranking?.posicaoLoja || 0,
+          posicaoGeral: metrica.ranking?.posicaoGeral || 0,
+          pontuacaoTotal: metrica.totais?.pontuacaoTotal || 0
+        },
+        auditoriasPorTipo: {
+          etiquetas: metrica.contadoresAuditorias?.totalEtiquetas || 0,
+          rupturas: metrica.contadoresAuditorias?.totalRupturas || 0,
+          presencas: metrica.contadoresAuditorias?.totalPresencas || 0
+        },
+        metricas: {
+          etiquetas: metrica.etiquetas,
+          rupturas: metrica.rupturas,
+          presencas: metrica.presencas
+        }
+      };
+    });
 
     const totalColaboradoresGeral = usuarios.length;
 
