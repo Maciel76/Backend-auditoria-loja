@@ -882,6 +882,126 @@ class MetricasUsuariosService {
       throw error;
     }
   }
+
+  /**
+   * Recalcula as métricas de um usuário específico para um determinado dia
+   * Isso garante que não haja acumulação indevida quando os dados são substituídos
+   */
+  async recalcularMetricasUsuario(lojaId, usuarioId, dataReferencia) {
+    try {
+      console.log(`🔄 [MetricasUsuarios] Recalculando métricas para usuário ${usuarioId} na loja ${lojaId} para a data ${dataReferencia}`);
+
+      // Buscar todas as auditorias do usuário na loja para o período
+      const inicioDia = new Date(dataReferencia);
+      inicioDia.setHours(0, 0, 0, 0);
+      const fimDia = new Date(dataReferencia);
+      fimDia.setHours(23, 59, 59, 999);
+
+      const auditorias = await Auditoria.find({
+        loja: lojaId,
+        usuarioId: usuarioId,
+        data: { $gte: inicioDia, $lte: fimDia }
+      }).populate('loja', 'codigo nome regiao');
+
+      if (auditorias.length === 0) {
+        console.log(`⚠️ [MetricasUsuarios] Nenhuma auditoria encontrada para recalculo do usuário ${usuarioId}`);
+        return { success: true, recalculated: false };
+      }
+
+      // Agrupar auditorias por tipo
+      const dadosUsuario = {
+        usuarioId: usuarioId,
+        usuarioNome: auditorias[0].usuarioNome || usuarioId,
+        loja: auditorias[0].loja,
+        etiquetas: this.criarMetricasVazias(),
+        rupturas: this.criarMetricasVazias('ruptura'),
+        presencas: this.criarMetricasVazias('presenca'),
+        ContadorClassesProduto: new Map(),
+        ContadorLocais: new Map(),
+      };
+
+      // Processar todas as auditorias
+      for (const auditoria of auditorias) {
+        this.processarAuditoria(auditoria, dadosUsuario);
+        this.contarClasseProduto(auditoria, dadosUsuario);
+        this.contarLocal(auditoria, dadosUsuario);
+      }
+
+      // Buscar totais da loja para calcular percentuais
+      const totaisDaLoja = await this.calcularTotaisPorLojaRapido(lojaId);
+
+      // Atualizar ou criar métricas do usuário
+      let metricasUsuario = await MetricasUsuario.findOne({
+        loja: lojaId,
+        usuarioId: usuarioId,
+        periodo: "periodo_completo",
+      });
+
+      if (!metricasUsuario) {
+        console.log(`📝 [MetricasUsuarios] Criando novo registro para ${dadosUsuario.usuarioNome}`);
+        metricasUsuario = new MetricasUsuario({
+          loja: lojaId,
+          usuarioId: dadosUsuario.usuarioId,
+          usuarioNome: dadosUsuario.usuarioNome,
+          lojaNome: dadosUsuario.loja.nome,
+          periodo: "periodo_completo",
+          dataInicio: dataReferencia,
+          dataFim: dataReferencia,
+          versaoCalculo: this.versaoCalculo,
+        });
+      } else {
+        console.log(`🔄 [MetricasUsuarios] Atualizando ${dadosUsuario.usuarioNome}`);
+        // Atualizar campos básicos
+        metricasUsuario.usuarioNome = dadosUsuario.usuarioNome;
+        metricasUsuario.lojaNome = dadosUsuario.loja.nome;
+        metricasUsuario.dataFim = dataReferencia;
+
+        // Atualizar dataInicio apenas se a nova for anterior
+        if (!metricasUsuario.dataInicio || dataReferencia < metricasUsuario.dataInicio) {
+          metricasUsuario.dataInicio = dataReferencia;
+        }
+      }
+
+      // Atualizar métricas principais com os valores recalculados
+      metricasUsuario.etiquetas = this.calcularMetricasComPercentual(dadosUsuario.etiquetas, totaisDaLoja.etiquetas, 'etiqueta');
+      metricasUsuario.rupturas = this.calcularMetricasComPercentual(dadosUsuario.rupturas, totaisDaLoja.rupturas, 'ruptura');
+      metricasUsuario.presencas = this.calcularMetricasComPercentual(dadosUsuario.presencas, totaisDaLoja.presencas, 'presenca');
+
+      // Atualizar contadores
+      metricasUsuario.ContadorClassesProduto = Object.fromEntries(dadosUsuario.ContadorClassesProduto);
+      metricasUsuario.ContadorLocais = Object.fromEntries(dadosUsuario.ContadorLocais);
+
+      // Recalcular contadores de auditorias
+      const contadores = await this.calcularContadoresAuditorias(lojaId, dadosUsuario.usuarioId);
+      metricasUsuario.contadoresAuditorias = contadores;
+
+      // Calcular totais acumulados
+      const totaisAcumulados = this.calcularTotaisAcumulados(dadosUsuario);
+      metricasUsuario.totaisAcumulados = totaisAcumulados;
+
+      // Calcular tendências
+      const tendencias = await this.calcularTendencias(lojaId, dadosUsuario.usuarioId, dadosUsuario);
+      metricasUsuario.tendencias = tendencias;
+
+      // Calcular totais e pontuação
+      metricasUsuario.atualizarTotais();
+
+      // Salvar no banco
+      await metricasUsuario.save();
+
+      console.log(`✅ [MetricasUsuarios] Métricas recalculadas para ${dadosUsuario.usuarioNome}: ${totaisAcumulados.itensLidosTotal} itens lidos`);
+
+      return {
+        success: true,
+        recalculated: true,
+        totalItens: totaisAcumulados.itensLidosTotal
+      };
+
+    } catch (error) {
+      console.error(`❌ [MetricasUsuarios] Erro ao recalcular métricas do usuário:`, error);
+      throw error;
+    }
+  }
 }
 
 // Exportar instância única

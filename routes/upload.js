@@ -417,11 +417,10 @@ async function processarRuptura(file, dataAuditoria, loja) {
     const sheet = workbook.Sheets[sheetName];
     const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
 
-    // Extrair data real da planilha
-    let dataAuditoriaFinal = extrairDataDaPlanilha(jsonData, file.originalname);
-    if (!dataAuditoriaFinal || isNaN(dataAuditoriaFinal.getTime())) {
-      dataAuditoriaFinal = dataAuditoria;
-    }
+    // Para garantir consistência e evitar acúmulo indevido,
+    // usaremos a data de auditoria padrão (data do upload) em vez da data extraída da planilha
+    // Isso garante que uploads múltiplos no mesmo dia substituam-se corretamente
+    const dataAuditoriaFinal = dataAuditoria;
 
     const dadosProcessados = [];
     const usuariosMap = new Map();
@@ -735,11 +734,10 @@ async function processarPresenca(file, dataAuditoria, loja) {
     const sheet = workbook.Sheets[sheetName];
     const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
 
-    // Extrair data real da planilha
-    let dataAuditoriaFinal = extrairDataDaPlanilha(jsonData, file.originalname);
-    if (!dataAuditoriaFinal || isNaN(dataAuditoriaFinal.getTime())) {
-      dataAuditoriaFinal = dataAuditoria;
-    }
+    // Para garantir consistência e evitar acúmulo indevido,
+    // usaremos a data de auditoria padrão (data do upload) em vez da data extraída da planilha
+    // Isso garante que uploads múltiplos no mesmo dia substituam-se corretamente
+    const dataAuditoriaFinal = dataAuditoria;
 
     const dadosProcessados = [];
     const usuariosMap = new Map();
@@ -1160,6 +1158,32 @@ router.post(
         // ⚡ CÁLCULO INCREMENTAL: Atualizar apenas as novas métricas
         metricsStatus.mensal.attempted = true;
         try {
+          // Para evitar acumulação indevida quando os dados são substituídos (mesmo dia),
+          // recalculamos as métricas dos usuários afetados para o dia específico
+          console.log(`🔄 Recalculando métricas para o dia ${resultado.dataAuditoria || dataAuditoria} para evitar acumulação...`);
+
+          // Recalcula as métricas para os usuários afetados no dia específico
+          const usuariosAfetados = [...new Set(resultado.usuariosEnvolvidos.map(usuarioStr => {
+            const match = usuarioStr.match(/^(\d+)\s*\((.*)\)$/);
+            return match ? match[1].trim() : usuarioStr;
+          }))];
+
+          for (const userId of usuariosAfetados) {
+            if (userId && userId !== 'Produto não auditado' && userId !== 'Usuário não identificado') {
+              try {
+                // Recalcula as métricas do usuário para o dia específico para garantir consistência
+                await metricasUsuariosService.recalcularMetricasUsuario(
+                  loja._id,
+                  userId,
+                  resultado.dataAuditoria || dataAuditoria
+                );
+                console.log(`✅ Métricas recalculadas para usuário ${userId}`);
+              } catch (errorRecalc) {
+                console.error(`❌ Erro ao recalcular métricas para usuário ${userId}:`, errorRecalc.message);
+              }
+            }
+          }
+
           if (resultado.auditoriasIds && resultado.auditoriasIds.length > 0) {
             console.log(
               `⚡ Usando cálculo INCREMENTAL para ${resultado.auditoriasIds.length} auditorias`
@@ -1178,6 +1202,7 @@ router.post(
             console.log(`⚠️ Nenhuma auditoria nova para calcular métricas`);
             metricsStatus.mensal.success = true;
           }
+
 
           // 🏪 ATUALIZAR MÉTRICAS DE LOJA (Período Completo)
           console.log(`🏪 ============================================`);
