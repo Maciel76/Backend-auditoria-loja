@@ -1,530 +1,20 @@
 // models/LojaDailyMetrics.js - Métricas diárias da loja (período diário)
 import mongoose from "mongoose";
 
-// Schema para contadores de leitura por classe de produto
+// Schema para contadores de leitura por classe de produto - dinâmico
 const classesLeituraSchema = new mongoose.Schema({
-  "A CLASSIFICAR": {
-    total: { type: Number, default: 0 },  // Total itens da classe (todos)
-    itensValidos: { type: Number, default: 0 },  // Itens válidos da classe (excluindo "Sem Estoque")
-    lidos: { type: Number, default: 0 },  // Quantidade de itens lidos (atualizados + desatualizado + nao_pertence)
-    percentual: { type: Number, default: 0 }, // Percentual (lidos/itensValidos)
-    usuarios: { type: Object, default: {} } // Objeto com usuários e suas leituras por classe
-  },
-  "ALTO GIRO": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  BAZAR: {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  DIVERSOS: {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  DPH: {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  FLV: {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "LATICINIOS 1": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  LIQUIDA: {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "PERECIVEL 1": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "PERECIVEL 2": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "PERECIVEL 2 B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "PERECIVEL 3": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "SECA DOCE": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "SECA SALGADA": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "SECA SALGADA 2": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
+  // Dynamic keys will be added at runtime based on data from spreadsheets
+}, {
+  _id: false,
+  strict: false  // Allow dynamic fields
 });
 
-// Schema para contadores de leitura por local
+// Schema para contadores de leitura por local - dinâmico
 const locaisLeituraSchema = new mongoose.Schema({
-  "C01 - C01": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} } // Objeto com usuários e suas leituras por local
-  },
-  "CS01 - CS01": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "F01 - F01": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "F02 - F02": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "FLV - FLV": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G01A - G01A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G01B - G01B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G02A - G02A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G02B - G02B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G03A - G03A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G03B - G03B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G04A - G04A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G04B - G04B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G05A - G05A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G05B - G05B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G06A - G06A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G06B - G06B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G07A - G07A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G07B - G07B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G08A - G08A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G08B - G08B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G09A - G09A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G09B - G09B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G10A - G10A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G10B - G10B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G11A - G11A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G11B - G11B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G12A - G12A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G12B - G12B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G13A - G13A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G13B - G13B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G14A - G14A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G14B - G14B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G15A - G15A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G15B - G15B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G16A - G16A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G16B - G16B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G17A - G17A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G17B - G17B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G18A - G18A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G18B - G18B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G19A - G19A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G19B - G19B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G20A - G20A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G20B - G20B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G21A - G21A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G21B - G21B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G22A - G22A": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "G22B - G22B": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "GELO - GELO": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "I01 - I01": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "PA01 - PA01": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "PAO - PAO": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "PF01 - PF01": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "PF02 - PF02": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "PF03 - PF03": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "PL01 - PL01": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "PL02 - PL02": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
-  "SORVETE - SORVETE": {
-    total: { type: Number, default: 0 },
-    itensValidos: { type: Number, default: 0 },
-    lidos: { type: Number, default: 0 },
-    percentual: { type: Number, default: 0 },
-    usuarios: { type: Object, default: {} }
-  },
+  // Dynamic keys will be added at runtime based on data from spreadsheets
+}, {
+  _id: false,
+  strict: false  // Allow dynamic fields
 });
 
 // Schema para métricas de etiquetas
@@ -1350,24 +840,19 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
 lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias, tipo) {
   if (!auditorias || auditorias.length === 0) return;
 
-  // Inicializar objeto para armazenar métricas por classe
-  const metricasPorClasse = {
-    "A CLASSIFICAR": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "ALTO GIRO": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    BAZAR: { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    DIVERSOS: { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    DPH: { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    FLV: { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "LATICINIOS 1": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    LIQUIDA: { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "PERECIVEL 1": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "PERECIVEL 2": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "PERECIVEL 2 B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "PERECIVEL 3": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "SECA DOCE": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "SECA SALGADA": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "SECA SALGADA 2": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-  };
+  // Inicializar objeto para armazenar métricas por classe - dinamicamente
+  const metricasPorClasse = {};
+
+  // Primeiro, percorrer todas as auditorias para identificar todas as classes existentes
+  for (const auditoria of auditorias) {
+    const classe = auditoria.ClasseProduto || auditoria.classeProdutoRaiz;
+    if (!classe) continue; // Pular se não tiver classe definida
+
+    // Inicializar a classe no objeto se ainda não existir
+    if (!metricasPorClasse.hasOwnProperty(classe)) {
+      metricasPorClasse[classe] = { total: 0, itensValidos: 0, lidos: 0, usuarios: {} };
+    }
+  }
 
   // Processar cada auditoria
   let contadorDebug = 0;
@@ -1380,7 +865,7 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
     const usuarioId = auditoria.usuarioId || auditoria.Usuario;
     const usuarioNome = auditoria.usuarioNome || auditoria.Nome; // Procurar por possíveis campos de nome
 
-    // Verificar se a classe está no objeto de métricas
+    // Agora a classe já está garantida no objeto de métricas
     if (metricasPorClasse.hasOwnProperty(classe)) {
       const situacao = auditoria.situacao || auditoria.Situacao;
 
@@ -1526,68 +1011,19 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
 lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, tipo) {
   if (!auditorias || auditorias.length === 0) return;
 
-  // Inicializar objeto para armazenar métricas por local
-  const metricasPorLocal = {
-    "C01 - C01": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "CS01 - CS01": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "F01 - F01": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "F02 - F02": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "FLV - FLV": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G01A - G01A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G01B - G01B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G02A - G02A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G02B - G02B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G03A - G03A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G03B - G03B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G04A - G04A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G04B - G04B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G05A - G05A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G05B - G05B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G06A - G06A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G06B - G06B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G07A - G07A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G07B - G07B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G08A - G08A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G08B - G08B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G09A - G09A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G09B - G09B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G10A - G10A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G10B - G10B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G11A - G11A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G11B - G11B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G12A - G12A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G12B - G12B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G13A - G13A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G13B - G13B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G14A - G14A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G14B - G14B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G15A - G15A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G15B - G15B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G16A - G16A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G16B - G16B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G17A - G17A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G17B - G17B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G18A - G18A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G18B - G18B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G19A - G19A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G19B - G19B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G20A - G20A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G20B - G20B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G21A - G21A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G21B - G21B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G22A - G22A": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "G22B - G22B": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "GELO - GELO": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "I01 - I01": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "PA01 - PA01": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "PAO - PAO": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "PF01 - PF01": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "PF02 - PF02": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "PF03 - PF03": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "PL01 - PL01": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "PL02 - PL02": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-    "SORVETE - SORVETE": { total: 0, itensValidos: 0, lidos: 0, usuarios: {} },
-  };
+  // Inicializar objeto para armazenar métricas por local - dinamicamente
+  const metricasPorLocal = {};
+
+  // Primeiro, percorrer todas as auditorias para identificar todos os locais existentes
+  for (const auditoria of auditorias) {
+    const localValue = auditoria.local;
+    if (!localValue) continue; // Pular se não tiver local definido
+
+    // Inicializar o local no objeto se ainda não existir
+    if (!metricasPorLocal.hasOwnProperty(localValue)) {
+      metricasPorLocal[localValue] = { total: 0, itensValidos: 0, lidos: 0, usuarios: {} };
+    }
+  }
 
   // Processar cada auditoria
   for (const auditoria of auditorias) {
@@ -1598,33 +1034,12 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
     const usuarioId = auditoria.usuarioId || auditoria.Usuario;
     const usuarioNome = auditoria.usuarioNome || auditoria.Nome; // Procurar por possíveis campos de nome
 
-    // Para compatibilidade, tentar encontrar o local correspondente com múltiplos formatos
-    // Primeiro tentar o formato padrão "local - local" (ex: "CS01 - CS01")
-    let localKey = `${localValue} - ${localValue}`;
-
-    // Se não existir no objeto de métricas, tentar formatos alternativos
-    if (!metricasPorLocal.hasOwnProperty(localKey)) {
-      // Pode ser que o local no banco de dados já esteja no formato "CS01 - CS01"
-      if (metricasPorLocal.hasOwnProperty(localValue)) {
-        localKey = localValue;
-      } else {
-        // Se ainda não encontrar, verificar se é uma variação conhecida
-        // Procurar por uma chave que contenha o valor no objeto de métricas
-        const matchingKey = Object.keys(metricasPorLocal).find(key =>
-          key.startsWith(localValue + " - ") || key.endsWith(" - " + localValue) || key.includes(" - " + localValue + " - ")
-        );
-        if (matchingKey) {
-          localKey = matchingKey;
-        }
-      }
-    }
-
-    // Verificar se o local (com a chave formatada) está no objeto de métricas
-    if (metricasPorLocal.hasOwnProperty(localKey)) {
+    // Agora o local já está garantido no objeto de métricas
+    if (metricasPorLocal.hasOwnProperty(localValue)) {
       const situacao = auditoria.situacao || auditoria.Situacao;
 
       // Incrementar total (todos os itens)
-      metricasPorLocal[localKey].total++;
+      metricasPorLocal[localValue].total++;
 
       // Incrementar itens válidos (seguindo lógica específica por tipo de auditoria)
       if (tipo === 'etiquetas') {
@@ -1636,7 +1051,7 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
           situacao === "Não lidos com estoque" ||
           situacao === "Lido não pertence"
         ) {
-          metricasPorLocal[localKey].itensValidos++;
+          metricasPorLocal[localValue].itensValidos++;
         }
       } else if (tipo === 'rupturas') {
         // Para rupturas: itens válidos = "Atualizado" (com presença e com estoque) + "Com problema" (sem presença mas com estoque)
@@ -1645,7 +1060,7 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
           situacao === "Atualizado" ||
           situacao === "Com problema"
         ) {
-          metricasPorLocal[localKey].itensValidos++;
+          metricasPorLocal[localValue].itensValidos++;
         }
       } else if (tipo === 'presencas') {
         // Para presenças: itens válidos devem incluir todos os itens que podem ter presença confirmada ou ausente
@@ -1659,7 +1074,7 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
           situacao === "Lido não pertence" ||
           situacao === "Não lidos com estoque"
         ) {
-          metricasPorLocal[localKey].itensValidos++;
+          metricasPorLocal[localValue].itensValidos++;
         }
       }
 
@@ -1671,7 +1086,7 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
           situacao === "Desatualizado" ||
           situacao === "Lido não pertence"
         ) {
-          metricasPorLocal[localKey].lidos++;
+          metricasPorLocal[localValue].lidos++;
         }
       } else if (tipo === 'rupturas') {
         // Para rupturas: itens válidos = "Atualizado" + "Com problema" (itens que podem ser processados)
@@ -1680,10 +1095,10 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
           situacao === "Atualizado" ||
           situacao === "Com problema"
         ) {
-          metricasPorLocal[localKey].itensValidos++;
+          metricasPorLocal[localValue].itensValidos++;
         }
         if (situacao === "Atualizado") {
-          metricasPorLocal[localKey].lidos++;
+          metricasPorLocal[localValue].lidos++;
         }
       } else if (tipo === 'presencas') {
         // Para presencas: itens lidos = "Atualizado" + "Com Presença e sem Estoque" + "Lido não pertence"
@@ -1695,17 +1110,17 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
           situacao === "Com Presença e sem Estoque" ||
           situacao === "Lido não pertence"
         ) {
-          metricasPorLocal[localKey].lidos++;
+          metricasPorLocal[localValue].lidos++;
         }
 
         // Adicionando contador específico para itens com presença confirmada (necessário para cálculo de percentual)
         // Itens com presença confirmada = "Atualizado" + "Lido não pertence" + "Com Presença e sem Estoque"
         if (situacao === "Atualizado" || situacao === "Lido não pertence" || situacao === "Com Presença e sem Estoque") {
           // Adicionando um campo temporário para armazenar itens com presença, se não existir
-          if (!metricasPorLocal[localKey].itensComPresenca) {
-            metricasPorLocal[localKey].itensComPresenca = 0;
+          if (!metricasPorLocal[localValue].itensComPresenca) {
+            metricasPorLocal[localValue].itensComPresenca = 0;
           }
-          metricasPorLocal[localKey].itensComPresenca++;
+          metricasPorLocal[localValue].itensComPresenca++;
         }
       }
 
@@ -1714,20 +1129,17 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorLocal = function (auditorias, 
         // Usar o nome do usuário como chave e armazenar a contagem
         const usuarioChave = usuarioNome || `Usuário ${usuarioId}`; // Usar nome como chave
 
-        if (metricasPorLocal[localKey].usuarios[usuarioChave]) {
+        if (metricasPorLocal[localValue].usuarios[usuarioChave]) {
           // Se o usuário já existe no local, apenas incrementar os itens lidos
-          metricasPorLocal[localKey].usuarios[usuarioChave]++;
+          metricasPorLocal[localValue].usuarios[usuarioChave]++;
         } else {
           // Se for a primeira vez do usuário no local, adicionar com 1 item lido
-          metricasPorLocal[localKey].usuarios[usuarioChave] = 1;
+          metricasPorLocal[localValue].usuarios[usuarioChave] = 1;
         }
       } else {
         // Registrar log de auditoria sem usuário para debug
-        console.log(`⚠️ Auditoria encontrada sem ID de usuário para tipo "${tipo}", local "${localKey}", situação "${situacao}"`);
+        console.log(`⚠️ Auditoria encontrada sem ID de usuário para tipo "${tipo}", local "${localValue}", situação "${situacao}"`);
       }
-    } else {
-      // Registrar um log de debug para identificar locais que não estão sendo encontrados
-      console.log(`⚠️ Local não encontrado no schema: "${localValue}" (formatado como "${localKey}") para tipo "${tipo}"`);
     }
   }
 

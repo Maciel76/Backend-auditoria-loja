@@ -1284,86 +1284,30 @@ class MetricsCalculationService {
 
         const auditorias = await Auditoria.find(filtroAuditoria);
 
-        // Estrutura seguindo o padrão do LojaDailyMetrics.js
-        const contadoresClasses = new Map([
-          ["A CLASSIFICAR", 0],
-          ["ALTO GIRO", 0],
-          ["BAZAR", 0],
-          ["DIVERSOS", 0],
-          ["DPH", 0],
-          ["FLV", 0],
-          ["LATICINIOS 1", 0],
-          ["LIQUIDA", 0],
-          ["PERECIVEL 1", 0],
-          ["PERECIVEL 2", 0],
-          ["PERECIVEL 2 B", 0],
-          ["PERECIVEL 3", 0],
-          ["SECA DOCE", 0],
-          ["SECA SALGADA", 0],
-          ["SECA SALGADA 2", 0],
-        ]);
+        // Inicializar contadores de classes dinamicamente a partir das auditorias
+        const contadoresClasses = new Map();
 
-        const contadoresLocais = new Map([
-          ["C01 - C01", 0],
-          ["CS01 - CS01", 0],
-          ["F01 - F01", 0],
-          ["F02 - F02", 0],
-          ["FLV - FLV", 0],
-          ["G01A - G01A", 0],
-          ["G01B - G01B", 0],
-          ["G02A - G02A", 0],
-          ["G02B - G02B", 0],
-          ["G03A - G03A", 0],
-          ["G03B - G03B", 0],
-          ["G04A - G04A", 0],
-          ["G04B - G04B", 0],
-          ["G05A - G05A", 0],
-          ["G05B - G05B", 0],
-          ["G06A - G06A", 0],
-          ["G06B - G06B", 0],
-          ["G07A - G07A", 0],
-          ["G07B - G07B", 0],
-          ["G08A - G08A", 0],
-          ["G08B - G08B", 0],
-          ["G09A - G09A", 0],
-          ["G09B - G09B", 0],
-          ["G10A - G10A", 0],
-          ["G10B - G10B", 0],
-          ["G11A - G11A", 0],
-          ["G11B - G11B", 0],
-          ["G12A - G12A", 0],
-          ["G12B - G12B", 0],
-          ["G13A - G13A", 0],
-          ["G13B - G13B", 0],
-          ["G14A - G14A", 0],
-          ["G14B - G14B", 0],
-          ["G15A - G15A", 0],
-          ["G15B - G15B", 0],
-          ["G16A - G16A", 0],
-          ["G16B - G16B", 0],
-          ["G17A - G17A", 0],
-          ["G17B - G17B", 0],
-          ["G18A - G18A", 0],
-          ["G18B - G18B", 0],
-          ["G19A - G19A", 0],
-          ["G19B - G19B", 0],
-          ["G20A - G20A", 0],
-          ["G20B - G20B", 0],
-          ["G21A - G21A", 0],
-          ["G21B - G21B", 0],
-          ["G22A - G22A", 0],
-          ["G22B - G22B", 0],
-          ["GELO - GELO", 0],
-          ["I01 - I01", 0],
-          ["PA01 - PA01", 0],
-          ["PAO - PAO", 0],
-          ["PF01 - PF01", 0],
-          ["PF02 - PF02", 0],
-          ["PF03 - PF03", 0],
-          ["PL01 - PL01", 0],
-          ["PL02 - PL02", 0],
-          ["SORVETE - SORVETE", 0],
-        ]);
+        // Primeiro, percorrer todas as auditorias para identificar todas as classes existentes
+        for (const auditoria of auditorias) {
+          const classe = auditoria.ClasseProduto || auditoria.classeProdutoRaiz;
+          if (classe) {
+            if (!contadoresClasses.has(classe)) {
+              contadoresClasses.set(classe, 0);
+            }
+          }
+        }
+
+        // Inicializar contadores de locais dinamicamente a partir das auditorias
+        const contadoresLocais = new Map();
+
+        // Primeiro, percorrer todas as auditorias para identificar todos os locais existentes
+        for (const auditoria of auditorias) {
+          if (auditoria.local) {
+            if (!contadoresLocais.has(auditoria.local)) {
+              contadoresLocais.set(auditoria.local, 0);
+            }
+          }
+        }
 
         const tiposAuditoria = {
           etiquetas: {
@@ -1479,19 +1423,19 @@ class MetricsCalculationService {
             }
           }
 
-          // Contar classes de produto
-          if (
-            auditoria.ClasseProduto &&
-            contadoresClasses.has(auditoria.ClasseProduto)
-          ) {
+          // Contar classes de produto - dinamicamente
+          if (auditoria.ClasseProduto) {
+            if (!contadoresClasses.has(auditoria.ClasseProduto)) {
+              contadoresClasses.set(auditoria.ClasseProduto, 0);
+            }
             contadoresClasses.set(
               auditoria.ClasseProduto,
               contadoresClasses.get(auditoria.ClasseProduto) + 1
             );
-          } else if (
-            auditoria.classeProdutoRaiz &&
-            contadoresClasses.has(auditoria.classeProdutoRaiz)
-          ) {
+          } else if (auditoria.classeProdutoRaiz) {
+            if (!contadoresClasses.has(auditoria.classeProdutoRaiz)) {
+              contadoresClasses.set(auditoria.classeProdutoRaiz, 0);
+            }
             contadoresClasses.set(
               auditoria.classeProdutoRaiz,
               contadoresClasses.get(auditoria.classeProdutoRaiz) + 1
@@ -1546,24 +1490,13 @@ class MetricsCalculationService {
             tipo.percentualRestante = 100 - tipo.percentualConclusao;
           }
 
-          // Inicializar classesLeitura com valores padrão
-          tipo.classesLeitura = {
-            "A CLASSIFICAR": { total: 0, lidos: 0, percentual: 0 },
-            "ALTO GIRO": { total: 0, lidos: 0, percentual: 0 },
-            BAZAR: { total: 0, lidos: 0, percentual: 0 },
-            DIVERSOS: { total: 0, lidos: 0, percentual: 0 },
-            DPH: { total: 0, lidos: 0, percentual: 0 },
-            FLV: { total: 0, lidos: 0, percentual: 0 },
-            "LATICINIOS 1": { total: 0, lidos: 0, percentual: 0 },
-            LIQUIDA: { total: 0, lidos: 0, percentual: 0 },
-            "PERECIVEL 1": { total: 0, lidos: 0, percentual: 0 },
-            "PERECIVEL 2": { total: 0, lidos: 0, percentual: 0 },
-            "PERECIVEL 2 B": { total: 0, lidos: 0, percentual: 0 },
-            "PERECIVEL 3": { total: 0, lidos: 0, percentual: 0 },
-            "SECA DOCE": { total: 0, lidos: 0, percentual: 0 },
-            "SECA SALGADA": { total: 0, lidos: 0, percentual: 0 },
-            "SECA SALGADA 2": { total: 0, lidos: 0, percentual: 0 },
-          };
+          // Inicializar classesLeitura com valores padrão - dinamicamente
+          tipo.classesLeitura = {};
+
+          // Preencher com as classes encontradas nas auditorias
+          for (const [classe] of contadoresClasses) {
+            tipo.classesLeitura[classe] = { total: 0, lidos: 0, percentual: 0 };
+          }
 
           if (tipo.custoTotalRuptura && tipo.totalItens > 0) {
             tipo.custoMedioRuptura = tipo.custoTotalRuptura / tipo.totalItens;
