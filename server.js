@@ -26,6 +26,7 @@ import performanceMapRoutes from "./routes/performanceMap.js";
 import perfilLojaRoutes from "./routes/perfilLoja.js";
 import auditProductsRouter from "./routes/auditProducts.js";
 import storesRouter from "./routes/stores.js";
+import usuariosRouter from "./routes/usuarios.js";
 import "./utils/planilhaHelpers.js";
 
 const app = express();
@@ -214,6 +215,7 @@ app.use("/api/perfil-loja", perfilLojaRoutes);
 app.use("/api/performance-map", performanceMapRoutes);
 app.use("/api/audit-products", auditProductsRouter);
 app.use("/api/stores", storesRouter);
+app.use("/api/usuarios", usuariosRouter);
 
 
 // Rota de sincronização removida - agora usa modelos unificados

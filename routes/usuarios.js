@@ -44,9 +44,9 @@ const fileFilter = (req, file, cb) => {
   } else {
     cb(
       new Error(
-        "Tipo de arquivo não permitido. Use apenas JPEG, PNG, GIF ou WebP."
+        "Tipo de arquivo não permitido. Use apenas JPEG, PNG, GIF ou WebP.",
       ),
-      false
+      false,
     );
   }
 };
@@ -119,6 +119,68 @@ router.post("/:id/foto", upload.single("foto"), async (req, res) => {
 });
 
 /**
+ * PATCH /api/usuarios/:id/cover
+ * Atualiza o cover/tema do perfil do usuário
+ */
+router.patch("/:id/cover", async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { coverId, selectedBadges, selectedAvatar } = req.body;
+
+    // At least one field must be provided
+    if (!coverId && !selectedBadges && !selectedAvatar) {
+      return res.status(400).json({ erro: "Pelo menos um campo deve ser fornecido: coverId, selectedBadges ou selectedAvatar" });
+    }
+
+    // Prepare update object
+    const updateObj = {};
+
+    // Include coverId if provided
+    if (coverId !== undefined) {
+      updateObj.coverId = coverId;
+    }
+
+    // Include selectedBadges if provided
+    if (selectedBadges !== undefined) {
+      updateObj.selectedBadges = selectedBadges;
+    }
+
+    // Include selectedAvatar if provided
+    if (selectedAvatar !== undefined) {
+      updateObj.foto = selectedAvatar;
+    }
+
+    const usuario = await User.findOneAndUpdate(
+      { id: userId },
+      updateObj,
+      { new: true, runValidators: true },
+    );
+
+    if (!usuario) {
+      return res.status(404).json({ erro: "Usuário não encontrado" });
+    }
+
+    res.json({
+      sucesso: true,
+      mensagem: "Perfil atualizado com sucesso",
+      usuario: {
+        id: usuario.id,
+        nome: usuario.nome,
+        coverId: usuario.coverId,
+        selectedBadges: usuario.selectedBadges,
+        foto: usuario.foto,
+      },
+    });
+  } catch (error) {
+    console.error("Erro ao atualizar perfil do usuário:", error);
+    res.status(500).json({
+      erro: "Erro ao atualizar perfil",
+      detalhes: error.message,
+    });
+  }
+});
+
+/**
  * DELETE /api/usuarios/:id/foto
  * Remove foto de perfil do usuário
  */
@@ -175,6 +237,8 @@ router.get("/", verificarLojaObrigatoria, async (req, res) => {
       email: user.email,
       cargo: user.cargo,
       foto: user.foto,
+      coverId: user.coverId || "gradient-1",
+      selectedBadges: user.selectedBadges || [],
       iniciais: user.nome
         .split(" ")
         .map((part) => part[0])
@@ -203,7 +267,7 @@ router.get("/:id", async (req, res) => {
   try {
     const usuario = await User.findOne({ id: req.params.id }).populate(
       "loja",
-      "codigo nome cidade"
+      "codigo nome cidade",
     );
 
     if (!usuario) {
@@ -217,6 +281,8 @@ router.get("/:id", async (req, res) => {
       telefone: usuario.telefone,
       cargo: usuario.cargo,
       foto: usuario.foto,
+      coverId: usuario.coverId || "gradient-1",
+      selectedBadges: usuario.selectedBadges || [],
       iniciais: usuario.nome
         .split(" ")
         .map((part) => part[0])

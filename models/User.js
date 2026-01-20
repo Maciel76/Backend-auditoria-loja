@@ -23,6 +23,13 @@ const userSchema = new mongoose.Schema(
     foto: {
       type: String,
     },
+    coverId: {
+      type: String,
+      default: "gradient-1",
+    },
+    selectedBadges: [{
+      type: String
+    }],
     contadorTotal: {
       type: Number,
       default: 0,
@@ -35,7 +42,7 @@ const userSchema = new mongoose.Schema(
       index: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Índices compostos para queries otimizadas
