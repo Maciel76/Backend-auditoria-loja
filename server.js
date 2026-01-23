@@ -36,9 +36,18 @@ conectarBanco();
 
 // Middleware ANTES das rotas
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173", "http://127.0.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001"],
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+    "https://<seu-frontend>.vercel.app",  // Substitua com seu domínio do Vercel
+    "https://<seu-dominio-personalizado>.com"  // Se tiver domínio personalizado
+  ],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "x-loja"],
+  allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "x-loja", "Authorization"],
   credentials: true
 }));
 app.use(express.json());
