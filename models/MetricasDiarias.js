@@ -1,3 +1,8 @@
+/**
+ * MODELO: MetricasDiarias
+ * OBSERVAÇÃO: Este modelo é usado internamente pelo serviço metricasDiariasService
+ * para processar métricas diárias de auditoria. Não possui endpoints próprios.
+ */
 // models/MetricasDiarias.js
 import mongoose from "mongoose";
 

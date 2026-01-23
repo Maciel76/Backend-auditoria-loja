@@ -1,3 +1,12 @@
+/**
+ * MODELO: Votacao
+ * ENDPOINTS ASSOCIADOS:
+ * - POST /api/votacoes - Criar nova votação
+ * - GET /api/votacoes - Listar votações
+ * - POST /api/votacoes/:id/react - Reagir a uma votação
+ * - PUT /api/votacoes/:id/status - Atualizar status da votação (admin)
+ * - DELETE /api/votacoes/:id - Deletar votação (admin)
+ */
 // models/Votacao.js - Modelo para votações de melhorias
 import mongoose from "mongoose";
 

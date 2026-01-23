@@ -1,3 +1,10 @@
+/**
+ * MODELO: DashboardActivity
+ * ENDPOINTS ASSOCIADOS:
+ * - GET /api/dashboard/stats - Estatísticas gerais
+ * - GET /api/dashboard/feed - Feed de atividades
+ * - POST /api/dashboard/suggestion - Nova sugestão
+ */
 import mongoose from "mongoose";
 
 const dashboardActivitySchema = new mongoose.Schema({

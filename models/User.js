@@ -1,3 +1,12 @@
+/**
+ * MODELO: User
+ * ENDPOINTS ASSOCIADOS:
+ * - GET /api/usuarios - Listar usuários com opção de filtro por loja
+ * - GET /api/usuarios/:id - Buscar usuário específico por ID
+ * - POST /api/usuarios/:id/foto - Upload de foto de perfil do usuário
+ * - PATCH /api/usuarios/:id/cover - Atualiza o cover/tema do perfil do usuário
+ * - DELETE /api/usuarios/:id/foto - Remove foto de perfil do usuário
+ */
 // models/User.js - UNIFICADO (substitui User, UserAudit, userRuptura)
 import mongoose from "mongoose";
 

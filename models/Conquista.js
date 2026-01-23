@@ -1,3 +1,17 @@
+/**
+ * MODELO: Conquista
+ * ENDPOINTS ASSOCIADOS:
+ * - GET /api/conquistas - Listar todas as conquistas (com filtros opcionais)
+ * - GET /api/conquistas/ativas - Listar apenas conquistas ativas
+ * - GET /api/conquistas/categoria/:category - Listar conquistas por categoria
+ * - GET /api/conquistas/:id - Buscar uma conquista específica por ID
+ * - POST /api/conquistas - Criar nova conquista
+ * - PUT /api/conquistas/:id - Atualizar conquista existente
+ * - DELETE /api/conquistas/:id - Deletar conquista (soft delete - apenas marca como inativa)
+ * - POST /api/conquistas/:id/ativar - Reativar conquista desativada
+ * - POST /api/conquistas/validar-usuario - Validar conquistas para um usuário específico
+ * - GET /api/conquistas/stats/resumo - Obter estatísticas gerais das conquistas
+ */
 // models/Conquista.js
 import mongoose from "mongoose";
 

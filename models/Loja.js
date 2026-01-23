@@ -1,3 +1,10 @@
+/**
+ * MODELO: Loja
+ * ENDPOINTS ASSOCIADOS:
+ * - GET /lojas - Buscar todas as lojas ativas do banco de dados
+ * - POST /lojas - Adicionar uma nova loja
+ * - POST /selecionar-loja - Selecionar loja na sessão
+ */
 // models/Loja.js
 import mongoose from "mongoose";
 

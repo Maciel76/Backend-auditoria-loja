@@ -1,3 +1,11 @@
+/**
+ * MODELO: Aviso
+ * ENDPOINTS ASSOCIADOS:
+ * - POST /api/avisos - Criar novo aviso
+ * - GET /api/avisos - Listar avisos
+ * - PUT /api/avisos/:id/status - Atualizar status do aviso (admin)
+ * - DELETE /api/avisos/:id - Deletar aviso (admin)
+ */
 // models/Aviso.js - Modelo para avisos importantes
 import mongoose from "mongoose";
 

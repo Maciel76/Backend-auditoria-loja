@@ -1,3 +1,20 @@
+/**
+ * MODELO: Article
+ * ENDPOINTS ASSOCIADOS:
+ * - POST /api/articles - Criar novo artigo
+ * - GET /api/articles - Listar artigos com filtros e paginação
+ * - GET /api/articles/featured - Obter artigo em destaque
+ * - GET /api/articles/:id - Obter detalhes de um artigo específico
+ * - GET /api/articles/slug/:slug - Buscar artigo por slug
+ * - GET /api/articles/:id/related - Buscar artigos relacionados
+ * - PUT /api/articles/:id - Atualizar artigo
+ * - PUT /api/articles/:id/publish - Publicar artigo
+ * - PUT /api/articles/:id/feature - Tornar artigo destaque
+ * - DELETE /api/articles/:id - Deletar artigo
+ * - POST /api/articles/:id/react - Reagir a um artigo
+ * - POST /api/articles/:id/comentarios - Adicionar comentário
+ * - GET /api/articles/stats/overview - Estatísticas gerais
+ */
 import mongoose from "mongoose";
 
 const articleSchema = new mongoose.Schema(

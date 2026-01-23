@@ -1,3 +1,11 @@
+/**
+ * MODELO: MetricasUsuario
+ * ENDPOINTS ASSOCIADOS:
+ * - GET /metricas/usuarios - Obtém métricas de usuários com filtros opcionais
+ * - GET /metricas/usuarios/:usuarioId - Obtém métricas de um usuário específico em uma loja
+ * - POST /metricas/usuarios/calcular - Recalcula métricas de todos os usuários (período completo)
+ * - GET /datas-auditoria - Obtém datas de auditoria disponíveis para uma loja
+ */
 // models/MetricasUsuario.js - VERSÃO ATUALIZADA
 import mongoose from "mongoose";
 

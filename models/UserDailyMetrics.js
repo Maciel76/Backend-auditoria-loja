@@ -1,3 +1,9 @@
+/**
+ * MODELO: UserDailyMetrics
+ * OBSERVAÇÃO: Este modelo é usado internamente pelo sistema para armazenar métricas diárias em tempo real
+ * do usuário. Não possui endpoints próprios, sendo atualizado principalmente durante o processo de upload
+ * e utilizado para cálculos de ranking e estatísticas.
+ */
 // models/UserDailyMetrics.js - Métricas diárias em tempo real do usuário (VERSÃO SIMPLIFICADA)
 import mongoose from "mongoose";
 

@@ -1,3 +1,10 @@
+/**
+ * MODELO: LojaDailyMetrics
+ * ENDPOINTS ASSOCIADOS:
+ * - GET /api/loja-daily-metrics/hoje - Buscar métricas do dia atual
+ * - POST /api/loja-daily-metrics/performance-map - Busca dados para o mapa de desempenho
+ * - GET /api/loja-daily-metrics/corredores/hoje - Buscar métricas de corredores do dia
+ */
 // models/LojaDailyMetrics.js - Métricas diárias da loja (período diário)
 import mongoose from "mongoose";
 

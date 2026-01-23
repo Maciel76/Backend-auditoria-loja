@@ -1,3 +1,10 @@
+/**
+ * MODELO: VotingItem
+ * ENDPOINTS ASSOCIADOS:
+ * - GET /api/dashboard/voting - Items de votação
+ * - POST /api/dashboard/vote/:id - Votar em item
+ * - GET /api/dashboard/stats - Estatísticas gerais (conta items em desenvolvimento)
+ */
 import mongoose from "mongoose";
 
 const votingItemSchema = new mongoose.Schema({

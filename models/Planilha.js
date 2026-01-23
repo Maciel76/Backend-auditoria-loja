@@ -1,3 +1,9 @@
+/**
+ * MODELO: Planilha
+ * ENDPOINTS ASSOCIADOS:
+ * - GET /dados-planilha - Buscar dados da planilha para uma loja
+ * - GET /planilha/:id - Detalhes de uma planilha específica
+ */
 // models/Planilha.js - Metadata de arquivos processados
 import mongoose from "mongoose";
 

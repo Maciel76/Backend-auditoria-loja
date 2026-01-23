@@ -1,3 +1,9 @@
+/**
+ * MODELO: MetricasAuditoria
+ * ENDPOINTS ASSOCIADOS:
+ * - GET /api/metricas/auditorias/:tipo - Buscar métricas de auditoria por tipo
+ * - GET /api/metricas/auditorias/comparacao - Comparar diferentes tipos de auditoria
+ */
 import mongoose from "mongoose";
 
 const metricasAuditoriaSchema = new mongoose.Schema(

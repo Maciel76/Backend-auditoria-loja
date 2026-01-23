@@ -50,6 +50,14 @@ const achievementProgressSchema = new mongoose.Schema(
   { _id: false }
 );
 
+/**
+ * MODELO: UserAchievement
+ * ENDPOINTS ASSOCIADOS:
+ * - GET /api/achievements - Obter todas as conquistas do usuário
+ * - POST /api/achievements/evaluate - Disparar manualmente avaliação de conquistas
+ * - GET /api/achievements/xp - Obter XP e nível do usuário
+ * - GET /api/achievements/ranking - Obter ranking por XP
+ */
 // Schema principal - UM REGISTRO POR USUÁRIO
 const userAchievementSchema = new mongoose.Schema({
   // Identificação do usuário

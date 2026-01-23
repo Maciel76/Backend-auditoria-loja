@@ -1,3 +1,13 @@
+/**
+ * MODELO: LojaAuditProducts
+ * ENDPOINTS ASSOCIADOS:
+ * - GET /api/audit-products/produtos-auditorias/:lojaId - Buscar produtos do modelo LojaAuditProducts
+ * - GET /api/audit-products/produtos/:lojaId/:tipo - Obter produtos por tipo de auditoria
+ * - GET /api/audit-products/produtos/:lojaId - Obter todos os produtos de uma loja
+ * - DELETE /api/audit-products/produtos/:lojaId/:tipo - Limpar produtos de auditoria de um tipo específico
+ * - DELETE /api/audit-products/produtos/:lojaId - Limpar todos os produtos de auditoria de uma loja
+ * - POST /api/audit-products/produtos/extrair/:lojaId/:tipo - Extrair produtos de auditorias existentes
+ */
 // models/LojaAuditProducts.js - Modelo para armazenar nomes de produtos por tipo de auditoria
 import mongoose from "mongoose";
 

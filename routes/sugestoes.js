@@ -1,5 +1,6 @@
 // routes/sugestoes.js - Rotas para gerenciar sugestões
 import express from "express";
+import mongoose from "mongoose";
 import Sugestao from "../models/Sugestao.js";
 import Loja from "../models/Loja.js";
 
@@ -59,7 +60,7 @@ router.post("/api/sugestoes/:id/react", async (req, res) => {
       // Remover reação
       sugestao.reactions[reaction].count = Math.max(
         0,
-        sugestao.reactions[reaction].count - 1
+        sugestao.reactions[reaction].count - 1,
       );
       sugestao.reactions[reaction].users = sugestao.reactions[
         reaction
@@ -324,7 +325,7 @@ router.post("/api/sugestoes/:id/votar", async (req, res) => {
 
     // Verificar se usuário já votou
     const votoExistente = sugestao.votosUsuarios.find(
-      (v) => v.usuario.toString() === usuarioId
+      (v) => v.usuario.toString() === usuarioId,
     );
 
     if (votoExistente) {
@@ -383,7 +384,7 @@ router.delete("/api/sugestoes/:id", async (req, res) => {
 router.post("/api/sugestoes/:id/comentarios", async (req, res) => {
   try {
     const { id } = req.params;
-    const { conteudo, autor, avatar } = req.body;
+    const { conteudo, userId } = req.body;
 
     // Validação básica
     if (!conteudo || conteudo.trim().length === 0) {
@@ -393,9 +394,9 @@ router.post("/api/sugestoes/:id/comentarios", async (req, res) => {
       });
     }
 
-    if (!autor || autor.trim().length === 0) {
+    if (!userId) {
       return res.status(400).json({
-        erro: "Autor do comentário é obrigatório",
+        erro: "ID do usuário é obrigatório",
         success: false,
       });
     }
@@ -403,6 +404,22 @@ router.post("/api/sugestoes/:id/comentarios", async (req, res) => {
     if (conteudo.trim().length > 1000) {
       return res.status(400).json({
         erro: "Comentário deve ter no máximo 1000 caracteres",
+        success: false,
+      });
+    }
+
+    // Buscar usuário para pegar dados (tenta primeiro por campo 'id', depois por '_id')
+    const User = mongoose.model("User");
+    let usuario = await User.findOne({ id: userId });
+
+    // Se não encontrar por id, tentar por _id (MongoDB ObjectId)
+    if (!usuario) {
+      usuario = await User.findById(userId);
+    }
+
+    if (!usuario) {
+      return res.status(404).json({
+        erro: "Usuário não encontrado",
         success: false,
       });
     }
@@ -415,24 +432,43 @@ router.post("/api/sugestoes/:id/comentarios", async (req, res) => {
       });
     }
 
-    // Criar novo comentário
+    // Criar novo comentário com dados do usuário (formato correto para o modelo Sugestao)
     const novoComentario = {
       conteudo: conteudo.trim(),
-      autor: autor.trim(),
+      userId: usuario._id, // Este é o campo obrigatório que estava faltando
+      autor: usuario.nome, // Salvar nome para compatibilidade
+      avatar: (usuario.foto || usuario.nome.charAt(0).toUpperCase()).substring(
+        0,
+        200,
+      ), // Limitar a 200 caracteres
       data: new Date(),
-      avatar: avatar || autor.charAt(0).toUpperCase(), // Usa avatar enviado ou primeira letra do nome
     };
 
     // Adicionar comentário ao array
     sugestao.comentarios.push(novoComentario);
-
     await sugestao.save();
+
+    // Popular dados do usuário para retorno (formato esperado pelo frontend)
+    const comentarioPopulado = {
+      _id: novoComentario._id,
+      conteudo: novoComentario.conteudo,
+      data: novoComentario.data,
+      userId: novoComentario.userId,
+      autor: novoComentario.autor,
+      avatar: novoComentario.avatar,
+      user: {
+        _id: usuario._id,
+        nome: usuario.nome,
+        foto: usuario.foto,
+        cargo: usuario.cargo,
+      },
+    };
 
     res.status(201).json({
       message: "Comentário adicionado com sucesso!",
       success: true,
-      commentId: novoComentario._id, // Retornar o ID do comentário
-      comentario: novoComentario,
+      commentId: novoComentario._id,
+      comentario: comentarioPopulado,
     });
   } catch (error) {
     console.error("Erro ao adicionar comentário:", error);
@@ -449,16 +485,39 @@ router.get("/api/sugestoes/:id/comentarios", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const sugestao = await Sugestao.findById(id);
+    const sugestao = await Sugestao.findById(id).populate({
+      path: "comentarios.userId",
+      select: "nome foto cargo",
+    });
+
     if (!sugestao) {
       return res.status(404).json({
         erro: "Sugestão não encontrada",
       });
     }
 
+    // Formatar comentários com dados do usuário populados
+    const comentariosFormatados = sugestao.comentarios.map((comentario) => ({
+      _id: comentario._id,
+      conteudo: comentario.conteudo,
+      data: comentario.data,
+      user: comentario.userId
+        ? {
+            _id: comentario.userId._id,
+            nome: comentario.userId.nome,
+            foto: comentario.userId.foto,
+            cargo: comentario.userId.cargo,
+          }
+        : {
+            nome: comentario.autor || "Anônimo",
+            foto: comentario.avatar,
+            cargo: null,
+          },
+    }));
+
     res.json({
-      comentarios: sugestao.comentarios || [],
-      total: (sugestao.comentarios || []).length,
+      comentarios: comentariosFormatados,
+      total: comentariosFormatados.length,
     });
   } catch (error) {
     console.error("Erro ao buscar comentários:", error);
@@ -486,7 +545,7 @@ router.delete(
       // Filtrar o comentário a ser removido
       const comentariosAntes = sugestao.comentarios.length;
       sugestao.comentarios = sugestao.comentarios.filter(
-        (comentario) => comentario._id.toString() !== comentarioId
+        (comentario) => comentario._id.toString() !== comentarioId,
       );
 
       if (sugestao.comentarios.length === comentariosAntes) {
@@ -508,7 +567,7 @@ router.delete(
         details: error.message,
       });
     }
-  }
+  },
 );
 
 export default router;

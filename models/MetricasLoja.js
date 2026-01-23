@@ -1,3 +1,9 @@
+/**
+ * MODELO: MetricasLoja
+ * ENDPOINTS ASSOCIADOS:
+ * - GET /metricas/lojas - Obter métricas resumidas de uma loja específica
+ * - GET /metricas/lojas/ranking - Obter ranking de todas as lojas
+ */
 // models/MetricasLoja.js - VERSÃO ATUALIZADA COM PERÍODO COMPLETO
 import mongoose from "mongoose";
 

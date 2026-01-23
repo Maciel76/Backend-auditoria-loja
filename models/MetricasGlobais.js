@@ -1,3 +1,10 @@
+/**
+ * MODELO: MetricasGlobais
+ * ENDPOINTS ASSOCIADOS:
+ * - GET /api/metricas/dashboard - Obter dashboard executivo (métricas globais)
+ * - GET /api/metricas/tendencias - Obter tendências históricas globais
+ * - GET /api/metricas/status - Status das métricas
+ */
 import mongoose from "mongoose";
 
 const metricasGlobaisSchema = new mongoose.Schema(

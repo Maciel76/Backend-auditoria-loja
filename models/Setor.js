@@ -1,3 +1,8 @@
+/**
+ * MODELO: Setor
+ * OBSERVAÇÃO: Este modelo foi descontinuado e unificado no modelo Auditoria.
+ * Não possui endpoints próprios, pois suas funcionalidades foram migradas para o modelo Auditoria.
+ */
 // models/Setor.js
 import mongoose from "mongoose";
 

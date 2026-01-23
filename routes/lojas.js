@@ -7,7 +7,23 @@ const router = express.Router();
 router.get("/lojas", async (req, res) => {
   try {
     const lojas = await Loja.find({ ativa: true }).sort({ codigo: 1 });
-    res.json(lojas);
+    // Transform the data to include only the fields needed by the frontend
+    const lojasComCover = lojas.map(loja => ({
+      _id: loja._id,
+      codigo: loja.codigo,
+      nome: loja.nome,
+      cidade: loja.cidade,
+      endereco: loja.endereco,
+      regiao: loja.regiao,
+      imagem: loja.imagem,
+      coverId: loja.coverId,  // Include the coverId
+      selectedBadges: loja.selectedBadges,  // Also include badges if needed
+      ativa: loja.ativa,
+      metadata: loja.metadata,
+      createdAt: loja.createdAt,
+      updatedAt: loja.updatedAt
+    }));
+    res.json(lojasComCover);
   } catch (error) {
     console.error("Erro ao buscar lojas:", error);
     res.status(500).json({ mensagem: "Erro interno do servidor ao buscar lojas." });

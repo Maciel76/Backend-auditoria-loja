@@ -1,3 +1,14 @@
+/**
+ * MODELO: Auditoria
+ * ENDPOINTS ASSOCIADOS:
+ * - POST /upload - Upload de planilhas de auditoria (etiqueta, ruptura, presenca)
+ * - GET /datas-auditoria - Buscar datas de auditoria disponíveis
+ * - GET /usuarios/:id/auditorias - Buscar auditorias detalhadas de um usuário
+ * - GET /api/auditorias/rupturas - Buscar dados de ruptura com paginação
+ * - GET /api/auditorias/presencas - Buscar dados de presença com paginação
+ * - GET /api/auditorias/colaboradores - Métricas de colaboradores
+ * - GET /datas-auditoria-colaboradores - Datas de auditoria disponíveis para colaboradores
+ */
 // models/Auditoria.js - UNIFICADO (substitui Setor, Presenca, Ruptura)
 import mongoose from "mongoose";
 
