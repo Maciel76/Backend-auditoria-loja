@@ -766,9 +766,20 @@ const metricasUsuarioSchema = new mongoose.Schema(
           unlockedAt: { type: Date },
           unlockedBy: { type: String }, // ID da ação que desbloqueou
           achievementData: { type: mongoose.Schema.Types.Mixed, default: {} },
+          rarity: {
+            type: String,
+            enum: ["Basica", "Comum", "Raro", "Epico", "Lendario", "Diamante", "Especial"],
+            default: "Comum"
+          },
+          fixedXpValue: {
+            type: Number,
+            default: 0
+          },
         }],
         default: function() {
           // Retornar array inicializado com todas as conquistas
+          // Usaremos os valores padrão definidos, mas o sistema irá atualizar os documentos existentes
+          // quando as configurações forem modificadas via endpoint
           const achievementRules = {
             "first-audit": {
               title: "Primeira Auditoria",
@@ -776,101 +787,313 @@ const metricasUsuarioSchema = new mongoose.Schema(
               icon: "🔍",
               category: "audits",
               difficulty: "easy",
+              rarity: "Basica", // Conquista mais fácil de obter
               points: 10,
               criteria: { type: "count", target: 1, description: "Realizar 1 auditoria atualizada" },
             },
             "audit-enthusiast": {
               title: "Entusiasta de Auditoria",
-              description: "Concluiu 10 auditorias atualizadas",
+              description: "Concluiu 5 auditorias atualizadas",
               icon: "📊",
               category: "audits",
               difficulty: "medium",
-              points: 25,
-              criteria: { type: "count", target: 10, description: "Realizar 10 auditorias atualizadas" },
+              rarity: "Raro", // Conquista mais difícil de obter
+              points: 150,
+              criteria: { type: "count", target: 5, description: "Realizar 5 auditorias atualizadas" },
             },
             "audit-master": {
               title: "Mestre de Auditoria",
-              description: "Concluiu 50 auditorias atualizadas",
+              description: "Concluiu 10 auditorias atualizadas",
               icon: "🏆",
               category: "audits",
               difficulty: "hard",
-              points: 50,
-              criteria: { type: "count", target: 50, description: "Realizar 50 auditorias atualizadas" },
+              rarity: "Epico", // Conquista difícil de obter
+              points: 1500,
+              criteria: { type: "count", target: 10, description: "Realizar 10 auditorias atualizadas" },
             },
             "consistent-auditor": {
               title: "Auditor Consistente",
-              description: "Realizou auditorias por 5 dias consecutivos",
+              description: "Realizou 20 auditorias atualizadas",
               icon: "📅",
               category: "consistency",
-              difficulty: "medium",
-              points: 30,
-              criteria: { type: "streak", target: 5, description: "Realizar auditorias por 5 dias consecutivos" },
+              difficulty: "hard",
+              rarity: "Lendario", // Manter consistência é desafiador
+              points: 5000,
+              criteria: { type: "count", target: 20, description: "Realizar 20 auditorias atualizadas" },
             },
             "weekly-warrior": {
-              title: "Guerreiro Semanal",
-              description: "Realizou 5 auditorias em uma semana",
-              icon: "🔥",
+              title: "Mestre das Auditorias",
+              description: "Realizou 50 auditorias atualizadas",
+              icon: "👑",
               category: "performance",
-              difficulty: "medium",
-              points: 20,
-              criteria: { type: "count", target: 5, period: 7, description: "Realizar 5 auditorias em uma semana" },
+              difficulty: "very-hard",
+              rarity: "Diamante", // Conquista extremamente rara
+              points: 25000,
+              criteria: { type: "count", target: 50, description: "Realizar 50 auditorias atualizadas" },
             },
             "item-collector-100": {
-              title: "Colecionador",
-              description: "Leu 100 itens",
+              title: "Colecionador 1",
+              description: "Alcançou 100 pontos totais",
               icon: "💯",
               category: "performance",
               difficulty: "easy",
-              points: 15,
-              criteria: { type: "count", target: 100, description: "Ler 100 itens" },
+              rarity: "Basica", // Meta inicial para coleta
+              points: 50,
+              criteria: { type: "count", target: 100, description: "Alcançar 100 pontos totais" },
             },
             "item-collector-500": {
-              title: "Meta Batida",
-              description: "Leu 500 itens",
+              title: "Colecionador 2",
+              description: "Alcançou 2000 pontos totais",
               icon: "🎯",
               category: "performance",
               difficulty: "medium",
-              points: 50,
-              criteria: { type: "count", target: 500, description: "Ler 500 itens" },
+              rarity: "Comum", // Meta intermediária
+              points: 100,
+              criteria: { type: "count", target: 2000, description: "Alcançar 2000 pontos totais" },
             },
             "item-collector-1000": {
-              title: "Maratona",
-              description: "Leu 1000 itens",
+              title: "Colecionador 3",
+              description: "Alcançou 5000 pontos totais",
               icon: "🏅",
               category: "performance",
               difficulty: "hard",
-              points: 100,
-              criteria: { type: "count", target: 1000, description: "Ler 1000 itens" },
+              rarity: "Raro", // Meta desafiadora
+              points: 250,
+              criteria: { type: "count", target: 5000, description: "Alcançar 5000 pontos totais" },
             },
-            "perfect-accuracy": {
-              title: "Precisão Perfeita",
-              description: "Manteve 95% de precisão",
+            "item-collector-2000": {
+              title: "Colecionador 4",
+              description: "Alcançou 15000 pontos totais",
+              icon: "🏆",
+              category: "performance",
+              difficulty: "hard",
+              rarity: "Epico", // Meta muito desafiadora
+              points: 500,
+              criteria: { type: "count", target: 15000, description: "Alcançar 15000 pontos totais" },
+            },
+            "item-collector-5000": {
+              title: "Colecionador 5",
+              description: "Alcançou 30000 pontos totais",
+              icon: "👑",
+              category: "performance",
+              difficulty: "very-hard",
+              rarity: "Lendario", // Meta extremamente desafiadora
+              points: 1000,
+              criteria: { type: "count", target: 30000, description: "Alcançar 30000 pontos totais" },
+            },
+            "item-collector-10000": {
+              title: "Colecionador 6",
+              description: "Alcançou 50000 pontos totais",
+              icon: "💎",
+              category: "performance",
+              difficulty: "extreme",
+              rarity: "Diamante", // Meta extremamente rara
+              points: 2000,
+              criteria: { type: "count", target: 50000, description: "Alcançar 50000 pontos totais" },
+            },
+            "detetive-1": {
+              title: "Detetive 1",
+              description: "Verificou 100 itens de ruptura",
+              icon: "🕵️",
+              category: "performance",
+              difficulty: "easy",
+              rarity: "Basica", // Primeiro nível de detetive
+              points: 50,
+              criteria: { type: "count", target: 100, description: "Verificar 100 itens de ruptura" },
+            },
+            "detetive-2": {
+              title: "Detetive 2",
+              description: "Verificou 1000 itens de ruptura",
+              icon: "🔎",
+              category: "performance",
+              difficulty: "medium",
+              rarity: "Comum", // Segundo nível de detetive
+              points: 500,
+              criteria: { type: "count", target: 1000, description: "Verificar 1000 itens de ruptura" },
+            },
+            "detetive-3": {
+              title: "Detetive 3",
+              description: "Verificou 5000 itens de ruptura",
+              icon: "🕵️‍♂️",
+              category: "performance",
+              difficulty: "hard",
+              rarity: "Raro", // Terceiro nível de detetive
+              points: 1000,
+              criteria: { type: "count", target: 5000, description: "Verificar 5000 itens de ruptura" },
+            },
+            "detetive-4": {
+              title: "Detetive 4",
+              description: "Verificou 10000 itens de ruptura",
+              icon: "🔦",
+              category: "performance",
+              difficulty: "hard",
+              rarity: "Epico", // Quarto nível de detetive
+              points: 2000,
+              criteria: { type: "count", target: 10000, description: "Verificar 10000 itens de ruptura" },
+            },
+            "detetive-5": {
+              title: "Detetive 5",
+              description: "Verificou 15000 itens de ruptura",
+              icon: "🕵️‍♀️",
+              category: "performance",
+              difficulty: "very-hard",
+              rarity: "Lendario", // Quinto nível de detetive
+              points: 3000,
+              criteria: { type: "count", target: 15000, description: "Verificar 15000 itens de ruptura" },
+            },
+            "detetive-6": {
+              title: "Detetive 6",
+              description: "Verificou 30000 itens de ruptura",
+              icon: "👑",
+              category: "performance",
+              difficulty: "extreme",
+              rarity: "Diamante", // Sexto nível de detetive
+              points: 6000,
+              criteria: { type: "count", target: 30000, description: "Verificar 30000 itens de ruptura" },
+            },
+            "auditor-etiqueta-1": {
+              title: "Auditor de Etiqueta 1",
+              description: "Leu 500 etiquetas",
+              icon: "🏷️",
+              category: "performance",
+              difficulty: "easy",
+              rarity: "Basica", // Primeiro nível de auditor de etiqueta
+              points: 75,
+              criteria: { type: "count", target: 500, description: "Ler 500 etiquetas" },
+            },
+            "auditor-etiqueta-2": {
+              title: "Auditor de Etiqueta 2",
+              description: "Leu 2000 etiquetas",
+              icon: "🔖",
+              category: "performance",
+              difficulty: "medium",
+              rarity: "Comum", // Segundo nível de auditor de etiqueta
+              points: 250,
+              criteria: { type: "count", target: 2000, description: "Ler 2000 etiquetas" },
+            },
+            "auditor-etiqueta-3": {
+              title: "Auditor de Etiqueta 3",
+              description: "Leu 5000 etiquetas",
+              icon: "📋",
+              category: "performance",
+              difficulty: "hard",
+              rarity: "Raro", // Terceiro nível de auditor de etiqueta
+              points: 750,
+              criteria: { type: "count", target: 5000, description: "Ler 5000 etiquetas" },
+            },
+            "auditor-etiqueta-4": {
+              title: "Auditor de Etiqueta 4",
+              description: "Leu 10000 etiquetas",
               icon: "🎯",
               category: "performance",
               difficulty: "hard",
-              points: 40,
-              criteria: { type: "percentage", target: 95, description: "Manter 95% de precisão" },
+              rarity: "Epico", // Quarto nível de auditor de etiqueta
+              points: 1500,
+              criteria: { type: "count", target: 10000, description: "Ler 10000 etiquetas" },
             },
-            "team-player": {
-              title: "Jogador de Equipe",
-              description: "Trabalhou em 3 setores diferentes",
-              icon: "🤝",
-              category: "participation",
+            "auditor-etiqueta-5": {
+              title: "Auditor de Etiqueta 5",
+              description: "Leu 20000 etiquetas",
+              icon: "🏆",
+              category: "performance",
+              difficulty: "very-hard",
+              rarity: "Lendario", // Quinto nível de auditor de etiqueta
+              points: 3000,
+              criteria: { type: "count", target: 20000, description: "Ler 20000 etiquetas" },
+            },
+            "auditor-etiqueta-6": {
+              title: "Auditor de Etiqueta 6",
+              description: "Leu 40000 etiquetas",
+              icon: "👑",
+              category: "performance",
+              difficulty: "extreme",
+              rarity: "Diamante", // Sexto nível de auditor de etiqueta
+              points: 6000,
+              criteria: { type: "count", target: 40000, description: "Ler 40000 etiquetas" },
+            },
+            "auditor-presenca-1": {
+              title: "Auditor de Presença 1",
+              description: "Verificou 300 presenças",
+              icon: "👁️",
+              category: "performance",
+              difficulty: "easy",
+              rarity: "Basica", // Primeiro nível de auditor de presença
+              points: 75,
+              criteria: { type: "count", target: 300, description: "Verificar 300 presenças" },
+            },
+            "auditor-presenca-2": {
+              title: "Auditor de Presença 2",
+              description: "Verificou 1500 presenças",
+              icon: "👀",
+              category: "performance",
               difficulty: "medium",
-              points: 20,
-              criteria: { type: "count", target: 3, description: "Trabalhar em 3 setores diferentes" },
-            }
+              rarity: "Comum", // Segundo nível de auditor de presença
+              points: 250,
+              criteria: { type: "count", target: 1500, description: "Verificar 1500 presenças" },
+            },
+            "auditor-presenca-3": {
+              title: "Auditor de Presença 3",
+              description: "Verificou 4000 presenças",
+              icon: "🔍",
+              category: "performance",
+              difficulty: "hard",
+              rarity: "Raro", // Terceiro nível de auditor de presença
+              points: 750,
+              criteria: { type: "count", target: 4000, description: "Verificar 4000 presenças" },
+            },
+            "auditor-presenca-4": {
+              title: "Auditor de Presença 4",
+              description: "Verificou 8000 presenças",
+              icon: "✅",
+              category: "performance",
+              difficulty: "hard",
+              rarity: "Epico", // Quarto nível de auditor de presença
+              points: 1500,
+              criteria: { type: "count", target: 8000, description: "Verificar 8000 presenças" },
+            },
+            "auditor-presenca-5": {
+              title: "Auditor de Presença 5",
+              description: "Verificou 16000 presenças",
+              icon: "🌟",
+              category: "performance",
+              difficulty: "very-hard",
+              rarity: "Lendario", // Quinto nível de auditor de presença
+              points: 3000,
+              criteria: { type: "count", target: 16000, description: "Verificar 16000 presenças" },
+            },
+            "auditor-presenca-6": {
+              title: "Auditor de Presença 6",
+              description: "Verificou 32000 presenças",
+              icon: "👑",
+              category: "performance",
+              difficulty: "extreme",
+              rarity: "Diamante", // Sexto nível de auditor de presença
+              points: 6000,
+              criteria: { type: "count", target: 32000, description: "Verificar 32000 presenças" },
+            },
           };
 
-          return Object.keys(achievementRules).map(achievementId => ({
+          // Removendo as conquistas "perfect-accuracy", "team-player" e versões antigas "mestre-etiqueta" do array
+          const filteredAchievementRules = {};
+          for (const [key, value] of Object.entries(achievementRules)) {
+            if (key !== "perfect-accuracy" && key !== "team-player" && !key.startsWith("mestre-etiqueta")) {
+              filteredAchievementRules[key] = value;
+            }
+          }
+
+          return Object.keys(filteredAchievementRules).map(achievementId => ({
             achievementId: achievementId,
             unlocked: false,
             progress: {
               current: 0,
-              target: achievementRules[achievementId].criteria.target,
+              target: filteredAchievementRules[achievementId].criteria.target,
               percentage: 0
             },
-            achievementData: achievementRules[achievementId]
+            unlockedAt: null,
+            unlockedBy: null,
+            achievementData: filteredAchievementRules[achievementId],
+            rarity: filteredAchievementRules[achievementId].rarity || "Comum",
+            fixedXpValue: filteredAchievementRules[achievementId].points || 0
           }));
         }
       },
@@ -919,6 +1142,306 @@ metricasUsuarioSchema.statics.obterRankingLoja = function (
   })
     .sort({ "totais.pontuacaoTotal": -1 })
     .limit(50);
+};
+
+
+// Método estático para obter as configurações padrão das conquistas
+metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
+  // Retorna as configurações padrão das conquistas
+  // Este método é usado principalmente para inicializar novos documentos
+  // As atualizações reais são feitas via AchievementUpdateService
+  return {
+    "first-audit": {
+      title: "Primeira Auditoria",
+      description: "Concluiu sua primeira auditoria",
+      icon: "🔍",
+      category: "audits",
+      difficulty: "easy",
+      rarity: "Basica", // Conquista mais fácil de obter
+      points: 10,
+      criteria: { type: "count", target: 1, description: "Realizar 1 auditoria atualizada" },
+    },
+    "audit-enthusiast": {
+      title: "Entusiasta de Auditoria",
+      description: "Concluiu 5 auditorias atualizadas",
+      icon: "📊",
+      category: "audits",
+      difficulty: "medium",
+      rarity: "Raro", // Conquista mais difícil de obter
+      points: 150,
+      criteria: { type: "count", target: 5, description: "Realizar 5 auditorias atualizadas" },
+    },
+    "audit-master": {
+      title: "Mestre de Auditoria",
+      description: "Concluiu 10 auditorias atualizadas",
+      icon: "🏆",
+      category: "audits",
+      difficulty: "hard",
+      rarity: "Epico", // Conquista difícil de obter
+      points: 1500,
+      criteria: { type: "count", target: 10, description: "Realizar 10 auditorias atualizadas" },
+    },
+    "consistent-auditor": {
+      title: "Auditor Consistente",
+      description: "Realizou 20 auditorias atualizadas",
+      icon: "📅",
+      category: "consistency",
+      difficulty: "hard",
+      rarity: "Lendario", // Manter consistência é desafiador
+      points: 5000,
+      criteria: { type: "count", target: 20, description: "Realizar 20 auditorias atualizadas" },
+    },
+    "weekly-warrior": {
+      title: "Mestre das Auditorias",
+      description: "Realizou 50 auditorias atualizadas",
+      icon: "👑",
+      category: "performance",
+      difficulty: "very-hard",
+      rarity: "Diamante", // Conquista extremamente rara
+      points: 25000,
+      criteria: { type: "count", target: 50, description: "Realizar 50 auditorias atualizadas" },
+    },
+    "item-collector-100": {
+      title: "Colecionador 1",
+      description: "Alcançou 100 pontos totais",
+      icon: "💯",
+      category: "performance",
+      difficulty: "easy",
+      rarity: "Basica", // Meta inicial para coleta
+      points: 50,
+      criteria: { type: "count", target: 100, description: "Alcançar 100 pontos totais" },
+    },
+    "item-collector-500": {
+      title: "Colecionador 2",
+      description: "Alcançou 2000 pontos totais",
+      icon: "🎯",
+      category: "performance",
+      difficulty: "medium",
+      rarity: "Comum", // Meta intermediária
+      points: 100,
+      criteria: { type: "count", target: 2000, description: "Alcançar 2000 pontos totais" },
+    },
+    "item-collector-1000": {
+      title: "Colecionador 3",
+      description: "Alcançou 5000 pontos totais",
+      icon: "🏅",
+      category: "performance",
+      difficulty: "hard",
+      rarity: "Raro", // Meta desafiadora
+      points: 250,
+      criteria: { type: "count", target: 5000, description: "Alcançar 5000 pontos totais" },
+    },
+    "item-collector-2000": {
+      title: "Colecionador 4",
+      description: "Alcançou 15000 pontos totais",
+      icon: "🏆",
+      category: "performance",
+      difficulty: "hard",
+      rarity: "Epico", // Meta muito desafiadora
+      points: 500,
+      criteria: { type: "count", target: 15000, description: "Alcançar 15000 pontos totais" },
+    },
+    "item-collector-5000": {
+      title: "Colecionador 5",
+      description: "Alcançou 30000 pontos totais",
+      icon: "👑",
+      category: "performance",
+      difficulty: "very-hard",
+      rarity: "Lendario", // Meta extremamente desafiadora
+      points: 1000,
+      criteria: { type: "count", target: 30000, description: "Alcançar 30000 pontos totais" },
+    },
+    "item-collector-10000": {
+      title: "Colecionador 6",
+      description: "Alcançou 50000 pontos totais",
+      icon: "💎",
+      category: "performance",
+      difficulty: "extreme",
+      rarity: "Diamante", // Meta extremamente rara
+      points: 2000,
+      criteria: { type: "count", target: 50000, description: "Alcançar 50000 pontos totais" },
+    },
+    "detetive-1": {
+      title: "Detetive 1",
+      description: "Verificou 100 itens de ruptura",
+      icon: "🕵️",
+      category: "performance",
+      difficulty: "easy",
+      rarity: "Basica", // Primeiro nível de detetive
+      points: 50,
+      criteria: { type: "count", target: 100, description: "Verificar 100 itens de ruptura" },
+    },
+    "detetive-2": {
+      title: "Detetive 2",
+      description: "Verificou 1000 itens de ruptura",
+      icon: "🔎",
+      category: "performance",
+      difficulty: "medium",
+      rarity: "Comum", // Segundo nível de detetive
+      points: 500,
+      criteria: { type: "count", target: 1000, description: "Verificar 1000 itens de ruptura" },
+    },
+    "detetive-3": {
+      title: "Detetive 3",
+      description: "Verificou 5000 itens de ruptura",
+      icon: "🕵️‍♂️",
+      category: "performance",
+      difficulty: "hard",
+      rarity: "Raro", // Terceiro nível de detetive
+      points: 1000,
+      criteria: { type: "count", target: 5000, description: "Verificar 5000 itens de ruptura" },
+    },
+    "detetive-4": {
+      title: "Detetive 4",
+      description: "Verificou 10000 itens de ruptura",
+      icon: "🔦",
+      category: "performance",
+      difficulty: "hard",
+      rarity: "Epico", // Quarto nível de detetive
+      points: 2000,
+      criteria: { type: "count", target: 10000, description: "Verificar 10000 itens de ruptura" },
+    },
+    "detetive-5": {
+      title: "Detetive 5",
+      description: "Verificou 15000 itens de ruptura",
+      icon: "🕵️‍♀️",
+      category: "performance",
+      difficulty: "very-hard",
+      rarity: "Lendario", // Quinto nível de detetive
+      points: 3000,
+      criteria: { type: "count", target: 15000, description: "Verificar 15000 itens de ruptura" },
+    },
+    "detetive-6": {
+      title: "Detetive 6",
+      description: "Verificou 30000 itens de ruptura",
+      icon: "👑",
+      category: "performance",
+      difficulty: "extreme",
+      rarity: "Diamante", // Sexto nível de detetive
+      points: 6000,
+      criteria: { type: "count", target: 30000, description: "Verificar 30000 itens de ruptura" },
+    },
+    "auditor-etiqueta-1": {
+      title: "Auditor de Etiqueta 1",
+      description: "Leu 500 etiquetas",
+      icon: "🏷️",
+      category: "performance",
+      difficulty: "easy",
+      rarity: "Basica", // Primeiro nível de auditor de etiqueta
+      points: 75,
+      criteria: { type: "count", target: 500, description: "Ler 500 etiquetas" },
+    },
+    "auditor-etiqueta-2": {
+      title: "Auditor de Etiqueta 2",
+      description: "Leu 2000 etiquetas",
+      icon: "🔖",
+      category: "performance",
+      difficulty: "medium",
+      rarity: "Comum", // Segundo nível de auditor de etiqueta
+      points: 250,
+      criteria: { type: "count", target: 2000, description: "Ler 2000 etiquetas" },
+    },
+    "auditor-etiqueta-3": {
+      title: "Auditor de Etiqueta 3",
+      description: "Leu 5000 etiquetas",
+      icon: "📋",
+      category: "performance",
+      difficulty: "hard",
+      rarity: "Raro", // Terceiro nível de auditor de etiqueta
+      points: 750,
+      criteria: { type: "count", target: 5000, description: "Ler 5000 etiquetas" },
+    },
+    "auditor-etiqueta-4": {
+      title: "Auditor de Etiqueta 4",
+      description: "Leu 10000 etiquetas",
+      icon: "🎯",
+      category: "performance",
+      difficulty: "hard",
+      rarity: "Epico", // Quarto nível de auditor de etiqueta
+      points: 1500,
+      criteria: { type: "count", target: 10000, description: "Ler 10000 etiquetas" },
+    },
+    "auditor-etiqueta-5": {
+      title: "Auditor de Etiqueta 5",
+      description: "Leu 20000 etiquetas",
+      icon: "🏆",
+      category: "performance",
+      difficulty: "very-hard",
+      rarity: "Lendario", // Quinto nível de auditor de etiqueta
+      points: 3000,
+      criteria: { type: "count", target: 20000, description: "Ler 20000 etiquetas" },
+    },
+    "auditor-etiqueta-6": {
+      title: "Auditor de Etiqueta 6",
+      description: "Leu 40000 etiquetas",
+      icon: "👑",
+      category: "performance",
+      difficulty: "extreme",
+      rarity: "Diamante", // Sexto nível de auditor de etiqueta
+      points: 6000,
+      criteria: { type: "count", target: 40000, description: "Ler 40000 etiquetas" },
+    },
+    "auditor-presenca-1": {
+      title: "Auditor de Presença 1",
+      description: "Verificou 300 presenças",
+      icon: "👁️",
+      category: "performance",
+      difficulty: "easy",
+      rarity: "Basica", // Primeiro nível de auditor de presença
+      points: 75,
+      criteria: { type: "count", target: 300, description: "Verificar 300 presenças" },
+    },
+    "auditor-presenca-2": {
+      title: "Auditor de Presença 2",
+      description: "Verificou 1500 presenças",
+      icon: "👀",
+      category: "performance",
+      difficulty: "medium",
+      rarity: "Comum", // Segundo nível de auditor de presença
+      points: 250,
+      criteria: { type: "count", target: 1500, description: "Verificar 1500 presenças" },
+    },
+    "auditor-presenca-3": {
+      title: "Auditor de Presença 3",
+      description: "Verificou 4000 presenças",
+      icon: "🔍",
+      category: "performance",
+      difficulty: "hard",
+      rarity: "Raro", // Terceiro nível de auditor de presença
+      points: 750,
+      criteria: { type: "count", target: 4000, description: "Verificar 4000 presenças" },
+    },
+    "auditor-presenca-4": {
+      title: "Auditor de Presença 4",
+      description: "Verificou 8000 presenças",
+      icon: "✅",
+      category: "performance",
+      difficulty: "hard",
+      rarity: "Epico", // Quarto nível de auditor de presença
+      points: 1500,
+      criteria: { type: "count", target: 8000, description: "Verificar 8000 presenças" },
+    },
+    "auditor-presenca-5": {
+      title: "Auditor de Presença 5",
+      description: "Verificou 16000 presenças",
+      icon: "🌟",
+      category: "performance",
+      difficulty: "very-hard",
+      rarity: "Lendario", // Quinto nível de auditor de presença
+      points: 3000,
+      criteria: { type: "count", target: 16000, description: "Verificar 16000 presenças" },
+    },
+    "auditor-presenca-6": {
+      title: "Auditor de Presença 6",
+      description: "Verificou 32000 presenças",
+      icon: "👑",
+      category: "performance",
+      difficulty: "extreme",
+      rarity: "Diamante", // Sexto nível de auditor de presença
+      points: 6000,
+      criteria: { type: "count", target: 32000, description: "Verificar 32000 presenças" },
+    },
+  };
 };
 
 metricasUsuarioSchema.statics.obterMetricasUsuario = function (
@@ -1024,6 +1547,8 @@ metricasUsuarioSchema.methods.atualizarAchievements = function (userAchievementD
       unlockedAt: ach.unlockedAt,
       unlockedBy: ach.unlockedBy,
       achievementData: ach.achievementData || {},
+      rarity: ach.rarity || ach.achievementData?.rarity || "Comum",
+      fixedXpValue: ach.achievementData?.points || ach.fixedXpValue || ach.achievementData?.fixedXpValue || 0,
     }));
   }
 
@@ -1056,26 +1581,51 @@ metricasUsuarioSchema.methods.calcularAchievements = function () {
     // Calcular progresso com base nas métricas atuais
     switch (achievement.achievementId) {
       case "first-audit":
+        currentProgress = this.contadoresAuditorias.totalGeral;
+        break;
       case "audit-enthusiast":
+        currentProgress = this.contadoresAuditorias.totalGeral;
+        break;
       case "audit-master":
-        currentProgress = this.totais.itensAtualizados;
+        currentProgress = this.contadoresAuditorias.totalGeral;
         break;
       case "item-collector-100":
       case "item-collector-500":
       case "item-collector-1000":
-        currentProgress = this.totais.itensAtualizados; // Itens lidos são os itens atualizados
+      case "item-collector-2000":
+      case "item-collector-5000":
+      case "item-collector-10000":
+        currentProgress = this.totais.pontuacaoTotal; // Agora usando pontuação total em vez de itens lidos
         break;
-      case "perfect-accuracy":
-        currentProgress = precisaoGeral;
+      case "detetive-1":
+      case "detetive-2":
+      case "detetive-3":
+      case "detetive-4":
+      case "detetive-5":
+      case "detetive-6":
+        currentProgress = this.rupturas.totalItens; // Usando total de itens de ruptura
         break;
-      case "team-player":
-        currentProgress = setoresUnicos;
+      case "auditor-etiqueta-1":
+      case "auditor-etiqueta-2":
+      case "auditor-etiqueta-3":
+      case "auditor-etiqueta-4":
+      case "auditor-etiqueta-5":
+      case "auditor-etiqueta-6":
+        currentProgress = this.totaisAcumulados.itensLidosEtiquetas; // Usando total de etiquetas lidas
+        break;
+      case "auditor-presenca-1":
+      case "auditor-presenca-2":
+      case "auditor-presenca-3":
+      case "auditor-presenca-4":
+      case "auditor-presenca-5":
+      case "auditor-presenca-6":
+        currentProgress = this.totaisAcumulados.itensLidosPresencas; // Usando total de presenças lidas
         break;
       case "consistent-auditor":
+        currentProgress = this.contadoresAuditorias.totalGeral;
+        break;
       case "weekly-warrior":
-        // Para conquistas de dias consecutivos e semanais, usar os dados atuais como 0 por enquanto
-        // Estas podem precisar de lógica adicional baseada em histórico
-        currentProgress = 0;
+        currentProgress = this.contadoresAuditorias.totalGeral;
         break;
       default:
         currentProgress = 0;
@@ -1096,6 +1646,21 @@ metricasUsuarioSchema.methods.calcularAchievements = function () {
       achievement.unlockedAt = new Date();
     }
     // Se já estava desbloqueado, manter o status e a data
+
+    // Garantir que os campos de raridade e XP fixo estejam presentes
+    if (!achievement.rarity && achievement.achievementData?.rarity) {
+      achievement.rarity = achievement.achievementData.rarity;
+    } else if (!achievement.rarity) {
+      achievement.rarity = "Comum"; // valor padrão
+    }
+
+    if (achievement.achievementData?.points !== undefined && achievement.achievementData?.points !== null) {
+      achievement.fixedXpValue = achievement.achievementData.points;
+    } else if (achievement.achievementData?.fixedXpValue !== undefined && achievement.achievementData?.fixedXpValue !== null) {
+      achievement.fixedXpValue = achievement.achievementData.fixedXpValue;
+    } else if (achievement.fixedXpValue === undefined || achievement.fixedXpValue === null) {
+      achievement.fixedXpValue = 0; // valor padrão
+    }
   }
 
   // Calcular estatísticas de conquistas
@@ -1108,8 +1673,10 @@ metricasUsuarioSchema.methods.calcularAchievements = function () {
   // Calcular XP baseado em conquistas desbloqueadas
   let xpFromAchievements = 0;
   this.achievements.achievements.forEach(achievement => {
-    if (achievement.unlocked && achievement.achievementData?.points) {
-      xpFromAchievements += achievement.achievementData.points;
+    if (achievement.unlocked) {
+      // fixedXpValue agora é igual a points do achievementData
+      const xpValue = achievement.fixedXpValue || (achievement.achievementData?.points || 0);
+      xpFromAchievements += xpValue;
     }
   });
 

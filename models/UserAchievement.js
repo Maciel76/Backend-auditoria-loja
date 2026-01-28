@@ -46,6 +46,19 @@ const achievementProgressSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
+
+    // Raridade da conquista
+    rarity: {
+      type: String,
+      enum: ["Basica", "Comum", "Raro", "Epico", "Lendario", "Diamante", "Especial"],
+      default: "Comum",
+    },
+
+    // Valor fixo de XP concedido ao desbloquear a conquista
+    fixedXpValue: {
+      type: Number,
+      default: 0,
+    },
   },
   { _id: false }
 );

@@ -21,6 +21,8 @@ import achievementsRouter from "./routes/achievements.js";
 import conquistasRoutes from "./routes/conquistasRoutes.js";
 import metricasUsuariosRoutes from "./routes/metricasUsuarios.js";
 import metricasLojasRoutes from "./routes/metricasLojas.js";
+import achievementsConfigRoutes from "./routes/achievementsConfig.js";
+import debugAchievementsRoutes from "./routes/debugAchievements.js";
 import lojaDailyMetricsRoutes from "./routes/lojaDailyMetrics.js";
 import performanceMapRoutes from "./routes/performanceMap.js";
 import perfilLojaRoutes from "./routes/perfilLoja.js";
@@ -206,6 +208,15 @@ try {
   console.log("❌ Erro nas rotas de conquistas (pt-br):", error.message);
 }
 
+// Adicionando a nova rota de conquistas para o agente de conquistas
+try {
+  const conquistasAgentRouter = require('./routes/conquistas.js');
+  app.use('/api/conquistas-agent', conquistasAgentRouter);
+  console.log("✅ Rotas de agente de conquistas carregadas");
+} catch (error) {
+  console.log("❌ Erro nas rotas de agente de conquistas:", error.message);
+}
+
 try {
   app.use("/", metricasUsuariosRoutes);
   console.log("✅ Rotas de métricas de usuários carregadas");
@@ -219,6 +230,21 @@ try {
 } catch (error) {
   console.log("❌ Erro nas rotas de métricas de lojas:", error.message);
 }
+
+try {
+  app.use("/api/achievements", achievementsConfigRoutes);
+  console.log("✅ Rotas de configuração de conquistas carregadas");
+} catch (error) {
+  console.log("❌ Erro nas rotas de configuração de conquistas:", error.message);
+}
+
+try {
+  app.use("/api/debug", debugAchievementsRoutes);
+  console.log("✅ Rotas de debug de conquistas carregadas");
+} catch (error) {
+  console.log("❌ Erro nas rotas de debug de conquistas:", error.message);
+}
+
 app.use("/api/loja-daily-metrics", lojaDailyMetricsRoutes);
 app.use("/api/perfil-loja", perfilLojaRoutes);
 app.use("/api/performance-map", performanceMapRoutes);

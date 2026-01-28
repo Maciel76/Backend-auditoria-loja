@@ -61,6 +61,21 @@ const conquistaSchema = new mongoose.Schema(
       enum: ["easy", "medium", "hard"],
       index: true,
     },
+    // Raridade da conquista
+    rarity: {
+      type: String,
+      required: true,
+      enum: ["Basica", "Comum", "Raro", "Epico", "Lendario", "Diamante", "Especial"],
+      default: "Comum",
+      index: true,
+    },
+    // Valor fixo de XP concedido ao desbloquear a conquista
+    fixedXpValue: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: 0,
+    },
     points: {
       type: Number,
       required: true,

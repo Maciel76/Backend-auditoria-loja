@@ -12,7 +12,9 @@ class AchievementRulesService {
         icon: "🔍",
         category: "audits",
         difficulty: "easy",
+        rarity: "Basica", // Conquista mais fácil de obter
         points: 10,
+        fixedXpValue: 10, // Valor fixo de XP para esta conquista
         criteria: {
           type: "count",
           target: 1,
@@ -25,7 +27,9 @@ class AchievementRulesService {
         icon: "📊",
         category: "audits",
         difficulty: "medium",
+        rarity: "Comum", // Conquista razoavelmente atingível
         points: 25,
+        fixedXpValue: 25, // Valor fixo de XP para esta conquista
         criteria: {
           type: "count",
           target: 10,
@@ -38,7 +42,9 @@ class AchievementRulesService {
         icon: "🏆",
         category: "audits",
         difficulty: "hard",
+        rarity: "Raro", // Conquista difícil de obter
         points: 50,
+        fixedXpValue: 75, // Valor fixo de XP para esta conquista mais difícil
         criteria: {
           type: "count",
           target: 50,
@@ -51,7 +57,9 @@ class AchievementRulesService {
         icon: "📅",
         category: "consistency",
         difficulty: "medium",
+        rarity: "Raro", // Manter consistência é desafiador
         points: 30,
+        fixedXpValue: 50, // Valor fixo de XP para esta conquista de consistência
         criteria: {
           type: "streak",
           target: 5,
@@ -64,7 +72,9 @@ class AchievementRulesService {
         icon: "🔥",
         category: "performance",
         difficulty: "medium",
+        rarity: "Comum", // Meta razoável para uma semana
         points: 20,
+        fixedXpValue: 30, // Valor fixo de XP para esta conquista semanal
         criteria: {
           type: "count",
           target: 5,
@@ -78,7 +88,9 @@ class AchievementRulesService {
         icon: "💯",
         category: "performance",
         difficulty: "easy",
+        rarity: "Basica", // Meta inicial para coleta
         points: 15,
+        fixedXpValue: 15, // Valor fixo de XP para esta conquista inicial
         criteria: {
           type: "count",
           target: 100,
@@ -91,7 +103,9 @@ class AchievementRulesService {
         icon: "🎯",
         category: "performance",
         difficulty: "medium",
+        rarity: "Comum", // Meta intermediária
         points: 50,
+        fixedXpValue: 50, // Valor fixo de XP para esta conquista intermediária
         criteria: {
           type: "count",
           target: 500,
@@ -104,7 +118,9 @@ class AchievementRulesService {
         icon: "🏅",
         category: "performance",
         difficulty: "hard",
+        rarity: "Raro", // Meta desafiadora
         points: 100,
+        fixedXpValue: 120, // Valor fixo de XP para esta conquista desafiadora
         criteria: {
           type: "count",
           target: 1000,
@@ -117,7 +133,9 @@ class AchievementRulesService {
         icon: "🎯",
         category: "performance",
         difficulty: "hard",
+        rarity: "Epico", // Altíssima precisão é excepcional
         points: 40,
+        fixedXpValue: 150, // Valor fixo de XP para esta conquista épica
         criteria: {
           type: "percentage",
           target: 95,
@@ -130,7 +148,9 @@ class AchievementRulesService {
         icon: "🤝",
         category: "participation",
         difficulty: "medium",
+        rarity: "Comum", // Participação em múltiplos setores
         points: 20,
+        fixedXpValue: 25, // Valor fixo de XP para esta conquista de participação
         criteria: {
           type: "count",
           target: 3,
@@ -162,6 +182,8 @@ class AchievementRulesService {
           percentage: 0,
         },
         achievementData: this.achievementRules[achievementId],
+        rarity: this.achievementRules[achievementId].rarity,
+        fixedXpValue: this.achievementRules[achievementId].fixedXpValue,
       })
     );
 
@@ -260,6 +282,8 @@ class AchievementRulesService {
             percentage: 0,
           },
           achievementData: rule,
+          rarity: rule.rarity,
+          fixedXpValue: rule.fixedXpValue,
         };
         userAchievementDoc.achievements.push(achievement);
         hasChanges = true;
