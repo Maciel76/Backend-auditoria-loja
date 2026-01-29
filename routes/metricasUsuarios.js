@@ -1,5 +1,6 @@
 import express from 'express';
 import metricasUsuariosService from '../services/metricasUsuariosService.js';
+import MetricasUsuario from '../models/MetricasUsuario.js';
 import Loja from '../models/Loja.js';
 import User from '../models/User.js';
 
@@ -289,6 +290,55 @@ router.get('/datas-auditoria', async (req, res) => {
 
   } catch (error) {
     console.error("❌ [MetricasUsuarios] Erro ao buscar datas de auditoria:", error);
+    res.status(500).json({
+      erro: "Erro interno do servidor",
+      detalhes: error.message
+    });
+  }
+});
+
+/**
+ * GET /metricas/conquistas/:usuarioId
+ * Obtém as conquistas de um usuário específico diretamente do modelo MetricasUsuario
+ * Headers:
+ *   - x-loja: código da loja (obrigatório)
+ */
+router.get('/metricas/conquistas/:usuarioId', async (req, res) => {
+  try {
+    const lojaCodigo = req.headers['x-loja'];
+    const { usuarioId } = req.params;
+
+    if (!lojaCodigo) {
+      return res.status(400).json({ erro: "Código da loja é obrigatório" });
+    }
+
+    // Buscar a loja
+    const loja = await Loja.findOne({ codigo: lojaCodigo });
+    if (!loja) {
+      return res.status(404).json({ erro: "Loja não encontrada" });
+    }
+
+    // Buscar métricas do usuário (que contém as conquistas)
+    const metricasUsuario = await MetricasUsuario.findOne({
+      usuarioId: usuarioId,
+      loja: loja._id
+    });
+
+    if (!metricasUsuario) {
+      return res.status(404).json({ erro: "Métricas do usuário não encontradas" });
+    }
+
+    // Retornar apenas as conquistas do usuário
+    res.json({
+      usuarioId: metricasUsuario.usuarioId,
+      usuarioNome: metricasUsuario.usuarioNome,
+      lojaNome: metricasUsuario.lojaNome,
+      achievements: metricasUsuario.achievements,
+      ultimaAtualizacao: metricasUsuario.ultimaAtualizacao
+    });
+
+  } catch (error) {
+    console.error("❌ [MetricasUsuarios] Erro ao buscar conquistas do usuário:", error);
     res.status(500).json({
       erro: "Erro interno do servidor",
       detalhes: error.message
