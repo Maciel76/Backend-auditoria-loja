@@ -57,58 +57,58 @@ const metricasUsuarioSchema = new mongoose.Schema(
       totalItens: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensLidos: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensAtualizados: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensDesatualizado: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensSemEstoque: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensNaopertence: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       percentualConclusao: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       }, // % em relação ao total da loja
     },
 
@@ -116,74 +116,74 @@ const metricasUsuarioSchema = new mongoose.Schema(
       totalItens: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensLidos: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensAtualizados: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensDesatualizado: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensSemEstoque: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensNaopertence: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       percentualConclusao: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       }, // % em relação ao total da loja
       custoTotalRuptura: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       custoMedioRuptura: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
     },
 
@@ -191,74 +191,74 @@ const metricasUsuarioSchema = new mongoose.Schema(
       totalItens: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensLidos: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensAtualizados: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensDesatualizado: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensSemEstoque: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensNaopertence: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       percentualConclusao: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       }, // % em relação ao total da loja
       presencasConfirmadas: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       percentualPresenca: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
     },
 
@@ -358,42 +358,42 @@ const metricasUsuarioSchema = new mongoose.Schema(
       totalItens: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensLidos: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensAtualizados: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       percentualConclusaoGeral: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       pontuacaoTotal: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
     },
 
@@ -402,34 +402,34 @@ const metricasUsuarioSchema = new mongoose.Schema(
       posicaoLoja: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       posicaoGeral: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       pontosPorItem: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       bonusConsistencia: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
     },
 
@@ -438,34 +438,34 @@ const metricasUsuarioSchema = new mongoose.Schema(
       melhoriaPercentual: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       diasAtivos: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       mediaItensPerDia: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       regularidade: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
     },
 
@@ -474,34 +474,34 @@ const metricasUsuarioSchema = new mongoose.Schema(
       totalEtiquetas: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       totalRupturas: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       totalPresencas: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       totalGeral: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
     },
 
@@ -510,34 +510,34 @@ const metricasUsuarioSchema = new mongoose.Schema(
       itensLidosEtiquetas: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensLidosRupturas: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensLidosPresencas: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       itensLidosTotal: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
     },
 
@@ -546,106 +546,106 @@ const metricasUsuarioSchema = new mongoose.Schema(
       posicao1: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       posicao2: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       posicao3: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       posicao4: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       posicao5: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       posicao6: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       posicao7: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       posicao8: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       posicao9: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       posicao10: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       ACIMA10: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        } // NOVO CAMPO
+        }, // NOVO CAMPO
       },
       totalTop10: {
         type: Number,
         default: 0,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+        },
       },
       melhorPosicao: {
         type: Number,
         default: null,
-        set: function(value) {
+        set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? null : numValue;
-        }
+        },
       },
     },
 
@@ -655,128 +655,138 @@ const metricasUsuarioSchema = new mongoose.Schema(
         total: {
           type: Number,
           default: 0,
-          set: function(value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+          set: function (value) {
+            const numValue = Number(value);
+            return value == null || isNaN(numValue) ? 0 : numValue;
+          },
         },
         fromAchievements: {
           type: Number,
           default: 0,
-          set: function(value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+          set: function (value) {
+            const numValue = Number(value);
+            return value == null || isNaN(numValue) ? 0 : numValue;
+          },
         },
         fromActivities: {
           type: Number,
           default: 0,
-          set: function(value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+          set: function (value) {
+            const numValue = Number(value);
+            return value == null || isNaN(numValue) ? 0 : numValue;
+          },
         },
       },
       level: {
         current: {
           type: Number,
           default: 1,
-          set: function(value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 1 : numValue;
-        }
+          set: function (value) {
+            const numValue = Number(value);
+            return value == null || isNaN(numValue) ? 1 : numValue;
+          },
         },
         title: { type: String, default: "Novato" },
         xpForNextLevel: {
           type: Number,
           default: 100,
-          set: function(value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 100 : numValue;
-        }
+          set: function (value) {
+            const numValue = Number(value);
+            return value == null || isNaN(numValue) ? 100 : numValue;
+          },
         },
         progressPercentage: {
           type: Number,
           default: 0,
-          set: function(value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+          set: function (value) {
+            const numValue = Number(value);
+            return value == null || isNaN(numValue) ? 0 : numValue;
+          },
         },
       },
       stats: {
         totalUnlockedAchievements: {
           type: Number,
           default: 0,
-          set: function(value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+          set: function (value) {
+            const numValue = Number(value);
+            return value == null || isNaN(numValue) ? 0 : numValue;
+          },
         },
         totalAudits: {
           type: Number,
           default: 0,
-          set: function(value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+          set: function (value) {
+            const numValue = Number(value);
+            return value == null || isNaN(numValue) ? 0 : numValue;
+          },
         },
         totalItems: {
           type: Number,
           default: 0,
-          set: function(value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        }
+          set: function (value) {
+            const numValue = Number(value);
+            return value == null || isNaN(numValue) ? 0 : numValue;
+          },
         },
         lastActivityAt: { type: Date },
       },
       achievements: {
-        type: [{
-          achievementId: { type: String, required: true },
-          unlocked: { type: Boolean, default: false },
-          progress: {
-            current: {
+        type: [
+          {
+            achievementId: { type: String, required: true },
+            unlocked: { type: Boolean, default: false },
+            progress: {
+              current: {
+                type: Number,
+                default: 0,
+                set: function (value) {
+                  const numValue = Number(value);
+                  return value == null || isNaN(numValue) ? 0 : numValue;
+                },
+              },
+              target: {
+                type: Number,
+                required: true,
+                set: function (value) {
+                  const numValue = Number(value);
+                  return value == null || isNaN(numValue) ? 0 : numValue;
+                },
+              },
+              percentage: {
+                type: Number,
+                default: 0,
+                min: 0,
+                max: 100,
+                set: function (value) {
+                  const numValue = Number(value);
+                  return value == null || isNaN(numValue) ? 0 : numValue;
+                },
+              },
+            },
+            unlockedAt: { type: Date },
+            unlockedBy: { type: String }, // ID da ação que desbloqueou
+            achievementData: { type: mongoose.Schema.Types.Mixed, default: {} },
+            rarity: {
+              type: String,
+              enum: [
+                "Basica",
+                "Comum",
+                "Raro",
+                "Epico",
+                "Lendario",
+                "Diamante",
+                "Especial",
+              ],
+              default: "Comum",
+            },
+            fixedXpValue: {
               type: Number,
               default: 0,
-              set: function(value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        }
-            },
-            target: {
-              type: Number,
-              required: true,
-              set: function(value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        }
-            },
-            percentage: {
-              type: Number,
-              default: 0,
-              min: 0,
-              max: 100,
-              set: function(value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        }
             },
           },
-          unlockedAt: { type: Date },
-          unlockedBy: { type: String }, // ID da ação que desbloqueou
-          achievementData: { type: mongoose.Schema.Types.Mixed, default: {} },
-          rarity: {
-            type: String,
-            enum: ["Basica", "Comum", "Raro", "Epico", "Lendario", "Diamante", "Especial"],
-            default: "Comum"
-          },
-          fixedXpValue: {
-            type: Number,
-            default: 0
-          },
-        }],
-        default: function() {
+        ],
+        default: function () {
           // Retornar array inicializado com todas as conquistas
           // Usaremos os valores padrão definidos, mas o sistema irá atualizar os documentos existentes
           // quando as configurações forem modificadas via endpoint
@@ -789,7 +799,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "easy",
               rarity: "Basica", // Conquista mais fácil de obter
               points: 10,
-              criteria: { type: "count", target: 1, description: "Realizar 1 auditoria atualizada" },
+              criteria: {
+                type: "count",
+                target: 1,
+                description: "Realizar 1 auditoria atualizada",
+              },
             },
             "audit-enthusiast": {
               title: "Entusiasta de Auditoria",
@@ -799,7 +813,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "medium",
               rarity: "Raro", // Conquista mais difícil de obter
               points: 150,
-              criteria: { type: "count", target: 5, description: "Realizar 5 auditorias atualizadas" },
+              criteria: {
+                type: "count",
+                target: 5,
+                description: "Realizar 5 auditorias atualizadas",
+              },
             },
             "audit-master": {
               title: "Mestre de Auditoria",
@@ -809,7 +827,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "hard",
               rarity: "Epico", // Conquista difícil de obter
               points: 1500,
-              criteria: { type: "count", target: 10, description: "Realizar 10 auditorias atualizadas" },
+              criteria: {
+                type: "count",
+                target: 10,
+                description: "Realizar 10 auditorias atualizadas",
+              },
             },
             "consistent-auditor": {
               title: "Auditor Consistente",
@@ -819,7 +841,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "hard",
               rarity: "Lendario", // Manter consistência é desafiador
               points: 5000,
-              criteria: { type: "count", target: 20, description: "Realizar 20 auditorias atualizadas" },
+              criteria: {
+                type: "count",
+                target: 20,
+                description: "Realizar 20 auditorias atualizadas",
+              },
             },
             "weekly-warrior": {
               title: "Mestre das Auditorias",
@@ -829,7 +855,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "very-hard",
               rarity: "Diamante", // Conquista extremamente rara
               points: 25000,
-              criteria: { type: "count", target: 50, description: "Realizar 50 auditorias atualizadas" },
+              criteria: {
+                type: "count",
+                target: 50,
+                description: "Realizar 50 auditorias atualizadas",
+              },
             },
             "item-collector-100": {
               title: "Colecionador 1",
@@ -839,7 +869,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "easy",
               rarity: "Basica", // Meta inicial para coleta
               points: 50,
-              criteria: { type: "count", target: 100, description: "Alcançar 100 pontos totais" },
+              criteria: {
+                type: "count",
+                target: 100,
+                description: "Alcançar 100 pontos totais",
+              },
             },
             "item-collector-500": {
               title: "Colecionador 2",
@@ -849,7 +883,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "medium",
               rarity: "Comum", // Meta intermediária
               points: 100,
-              criteria: { type: "count", target: 2000, description: "Alcançar 2000 pontos totais" },
+              criteria: {
+                type: "count",
+                target: 2000,
+                description: "Alcançar 2000 pontos totais",
+              },
             },
             "item-collector-1000": {
               title: "Colecionador 3",
@@ -859,7 +897,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "hard",
               rarity: "Raro", // Meta desafiadora
               points: 250,
-              criteria: { type: "count", target: 5000, description: "Alcançar 5000 pontos totais" },
+              criteria: {
+                type: "count",
+                target: 5000,
+                description: "Alcançar 5000 pontos totais",
+              },
             },
             "item-collector-2000": {
               title: "Colecionador 4",
@@ -869,7 +911,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "hard",
               rarity: "Epico", // Meta muito desafiadora
               points: 500,
-              criteria: { type: "count", target: 15000, description: "Alcançar 15000 pontos totais" },
+              criteria: {
+                type: "count",
+                target: 15000,
+                description: "Alcançar 15000 pontos totais",
+              },
             },
             "item-collector-5000": {
               title: "Colecionador 5",
@@ -879,7 +925,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "very-hard",
               rarity: "Lendario", // Meta extremamente desafiadora
               points: 1000,
-              criteria: { type: "count", target: 30000, description: "Alcançar 30000 pontos totais" },
+              criteria: {
+                type: "count",
+                target: 30000,
+                description: "Alcançar 30000 pontos totais",
+              },
             },
             "item-collector-10000": {
               title: "Colecionador 6",
@@ -889,7 +939,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "extreme",
               rarity: "Diamante", // Meta extremamente rara
               points: 2000,
-              criteria: { type: "count", target: 50000, description: "Alcançar 50000 pontos totais" },
+              criteria: {
+                type: "count",
+                target: 50000,
+                description: "Alcançar 50000 pontos totais",
+              },
             },
             "detetive-1": {
               title: "Detetive 1",
@@ -899,7 +953,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "easy",
               rarity: "Basica", // Primeiro nível de detetive
               points: 50,
-              criteria: { type: "count", target: 100, description: "Verificar 100 itens de ruptura" },
+              criteria: {
+                type: "count",
+                target: 100,
+                description: "Verificar 100 itens de ruptura",
+              },
             },
             "detetive-2": {
               title: "Detetive 2",
@@ -909,7 +967,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "medium",
               rarity: "Comum", // Segundo nível de detetive
               points: 500,
-              criteria: { type: "count", target: 1000, description: "Verificar 1000 itens de ruptura" },
+              criteria: {
+                type: "count",
+                target: 1000,
+                description: "Verificar 1000 itens de ruptura",
+              },
             },
             "detetive-3": {
               title: "Detetive 3",
@@ -919,7 +981,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "hard",
               rarity: "Raro", // Terceiro nível de detetive
               points: 1000,
-              criteria: { type: "count", target: 5000, description: "Verificar 5000 itens de ruptura" },
+              criteria: {
+                type: "count",
+                target: 5000,
+                description: "Verificar 5000 itens de ruptura",
+              },
             },
             "detetive-4": {
               title: "Detetive 4",
@@ -929,7 +995,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "hard",
               rarity: "Epico", // Quarto nível de detetive
               points: 2000,
-              criteria: { type: "count", target: 10000, description: "Verificar 10000 itens de ruptura" },
+              criteria: {
+                type: "count",
+                target: 10000,
+                description: "Verificar 10000 itens de ruptura",
+              },
             },
             "detetive-5": {
               title: "Detetive 5",
@@ -939,7 +1009,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "very-hard",
               rarity: "Lendario", // Quinto nível de detetive
               points: 3000,
-              criteria: { type: "count", target: 15000, description: "Verificar 15000 itens de ruptura" },
+              criteria: {
+                type: "count",
+                target: 15000,
+                description: "Verificar 15000 itens de ruptura",
+              },
             },
             "detetive-6": {
               title: "Detetive 6",
@@ -949,7 +1023,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "extreme",
               rarity: "Diamante", // Sexto nível de detetive
               points: 6000,
-              criteria: { type: "count", target: 30000, description: "Verificar 30000 itens de ruptura" },
+              criteria: {
+                type: "count",
+                target: 30000,
+                description: "Verificar 30000 itens de ruptura",
+              },
             },
             "auditor-etiqueta-1": {
               title: "Auditor de Etiqueta 1",
@@ -959,7 +1037,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "easy",
               rarity: "Basica", // Primeiro nível de auditor de etiqueta
               points: 75,
-              criteria: { type: "count", target: 500, description: "Ler 500 etiquetas" },
+              criteria: {
+                type: "count",
+                target: 500,
+                description: "Ler 500 etiquetas",
+              },
             },
             "auditor-etiqueta-2": {
               title: "Auditor de Etiqueta 2",
@@ -969,7 +1051,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "medium",
               rarity: "Comum", // Segundo nível de auditor de etiqueta
               points: 250,
-              criteria: { type: "count", target: 2000, description: "Ler 2000 etiquetas" },
+              criteria: {
+                type: "count",
+                target: 2000,
+                description: "Ler 2000 etiquetas",
+              },
             },
             "auditor-etiqueta-3": {
               title: "Auditor de Etiqueta 3",
@@ -979,7 +1065,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "hard",
               rarity: "Raro", // Terceiro nível de auditor de etiqueta
               points: 750,
-              criteria: { type: "count", target: 5000, description: "Ler 5000 etiquetas" },
+              criteria: {
+                type: "count",
+                target: 5000,
+                description: "Ler 5000 etiquetas",
+              },
             },
             "auditor-etiqueta-4": {
               title: "Auditor de Etiqueta 4",
@@ -989,7 +1079,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "hard",
               rarity: "Epico", // Quarto nível de auditor de etiqueta
               points: 1500,
-              criteria: { type: "count", target: 10000, description: "Ler 10000 etiquetas" },
+              criteria: {
+                type: "count",
+                target: 10000,
+                description: "Ler 10000 etiquetas",
+              },
             },
             "auditor-etiqueta-5": {
               title: "Auditor de Etiqueta 5",
@@ -999,7 +1093,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "very-hard",
               rarity: "Lendario", // Quinto nível de auditor de etiqueta
               points: 3000,
-              criteria: { type: "count", target: 20000, description: "Ler 20000 etiquetas" },
+              criteria: {
+                type: "count",
+                target: 20000,
+                description: "Ler 20000 etiquetas",
+              },
             },
             "auditor-etiqueta-6": {
               title: "Auditor de Etiqueta 6",
@@ -1009,7 +1107,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "extreme",
               rarity: "Diamante", // Sexto nível de auditor de etiqueta
               points: 6000,
-              criteria: { type: "count", target: 40000, description: "Ler 40000 etiquetas" },
+              criteria: {
+                type: "count",
+                target: 40000,
+                description: "Ler 40000 etiquetas",
+              },
             },
             "auditor-presenca-1": {
               title: "Auditor de Presença 1",
@@ -1019,7 +1121,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "easy",
               rarity: "Basica", // Primeiro nível de auditor de presença
               points: 75,
-              criteria: { type: "count", target: 300, description: "Verificar 300 presenças" },
+              criteria: {
+                type: "count",
+                target: 300,
+                description: "Verificar 300 presenças",
+              },
             },
             "auditor-presenca-2": {
               title: "Auditor de Presença 2",
@@ -1029,7 +1135,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "medium",
               rarity: "Comum", // Segundo nível de auditor de presença
               points: 250,
-              criteria: { type: "count", target: 1500, description: "Verificar 1500 presenças" },
+              criteria: {
+                type: "count",
+                target: 1500,
+                description: "Verificar 1500 presenças",
+              },
             },
             "auditor-presenca-3": {
               title: "Auditor de Presença 3",
@@ -1039,7 +1149,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "hard",
               rarity: "Raro", // Terceiro nível de auditor de presença
               points: 750,
-              criteria: { type: "count", target: 4000, description: "Verificar 4000 presenças" },
+              criteria: {
+                type: "count",
+                target: 4000,
+                description: "Verificar 4000 presenças",
+              },
             },
             "auditor-presenca-4": {
               title: "Auditor de Presença 4",
@@ -1049,7 +1163,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "hard",
               rarity: "Epico", // Quarto nível de auditor de presença
               points: 1500,
-              criteria: { type: "count", target: 8000, description: "Verificar 8000 presenças" },
+              criteria: {
+                type: "count",
+                target: 8000,
+                description: "Verificar 8000 presenças",
+              },
             },
             "auditor-presenca-5": {
               title: "Auditor de Presença 5",
@@ -1059,7 +1177,11 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "very-hard",
               rarity: "Lendario", // Quinto nível de auditor de presença
               points: 3000,
-              criteria: { type: "count", target: 16000, description: "Verificar 16000 presenças" },
+              criteria: {
+                type: "count",
+                target: 16000,
+                description: "Verificar 16000 presenças",
+              },
             },
             "auditor-presenca-6": {
               title: "Auditor de Presença 6",
@@ -1069,33 +1191,41 @@ const metricasUsuarioSchema = new mongoose.Schema(
               difficulty: "extreme",
               rarity: "Diamante", // Sexto nível de auditor de presença
               points: 6000,
-              criteria: { type: "count", target: 32000, description: "Verificar 32000 presenças" },
+              criteria: {
+                type: "count",
+                target: 32000,
+                description: "Verificar 32000 presenças",
+              },
             },
           };
 
           // Removendo as conquistas "perfect-accuracy", "team-player" e versões antigas "mestre-etiqueta" do array
           const filteredAchievementRules = {};
           for (const [key, value] of Object.entries(achievementRules)) {
-            if (key !== "perfect-accuracy" && key !== "team-player" && !key.startsWith("mestre-etiqueta")) {
+            if (
+              key !== "perfect-accuracy" &&
+              key !== "team-player" &&
+              !key.startsWith("mestre-etiqueta")
+            ) {
               filteredAchievementRules[key] = value;
             }
           }
 
-          return Object.keys(filteredAchievementRules).map(achievementId => ({
+          return Object.keys(filteredAchievementRules).map((achievementId) => ({
             achievementId: achievementId,
             unlocked: false,
             progress: {
               current: 0,
               target: filteredAchievementRules[achievementId].criteria.target,
-              percentage: 0
+              percentage: 0,
             },
             unlockedAt: null,
             unlockedBy: null,
             achievementData: filteredAchievementRules[achievementId],
             rarity: filteredAchievementRules[achievementId].rarity || "Comum",
-            fixedXpValue: filteredAchievementRules[achievementId].points || 0
+            fixedXpValue: filteredAchievementRules[achievementId].points || 0,
           }));
-        }
+        },
       },
     },
 
@@ -1111,7 +1241,7 @@ const metricasUsuarioSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Índices compostos - ATUALIZADOS PARA PERÍODO COMPLETO
@@ -1126,14 +1256,14 @@ metricasUsuarioSchema.index({ loja: 1, "ranking.posicaoLoja": 1 });
 // Índice único para evitar duplicatas - REMOVER PERÍODO
 metricasUsuarioSchema.index(
   { loja: 1, usuarioId: 1, dataInicio: 1 },
-  { unique: true }
+  { unique: true },
 );
 
 // Métodos estáticos - ATUALIZADOS PARA PERÍODO COMPLETO
 metricasUsuarioSchema.statics.obterRankingLoja = function (
   lojaId,
   dataInicio,
-  dataFim
+  dataFim,
 ) {
   return this.find({
     loja: lojaId,
@@ -1143,7 +1273,6 @@ metricasUsuarioSchema.statics.obterRankingLoja = function (
     .sort({ "totais.pontuacaoTotal": -1 })
     .limit(50);
 };
-
 
 // Método estático para obter as configurações padrão das conquistas
 metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
@@ -1159,7 +1288,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "easy",
       rarity: "Basica", // Conquista mais fácil de obter
       points: 10,
-      criteria: { type: "count", target: 1, description: "Realizar 1 auditoria atualizada" },
+      criteria: {
+        type: "count",
+        target: 1,
+        description: "Realizar 1 auditoria atualizada",
+      },
     },
     "audit-enthusiast": {
       title: "Entusiasta de Auditoria",
@@ -1169,7 +1302,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "medium",
       rarity: "Raro", // Conquista mais difícil de obter
       points: 150,
-      criteria: { type: "count", target: 5, description: "Realizar 5 auditorias atualizadas" },
+      criteria: {
+        type: "count",
+        target: 5,
+        description: "Realizar 5 auditorias atualizadas",
+      },
     },
     "audit-master": {
       title: "Mestre de Auditoria",
@@ -1179,7 +1316,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "hard",
       rarity: "Epico", // Conquista difícil de obter
       points: 1500,
-      criteria: { type: "count", target: 10, description: "Realizar 10 auditorias atualizadas" },
+      criteria: {
+        type: "count",
+        target: 10,
+        description: "Realizar 10 auditorias atualizadas",
+      },
     },
     "consistent-auditor": {
       title: "Auditor Consistente",
@@ -1189,7 +1330,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "hard",
       rarity: "Lendario", // Manter consistência é desafiador
       points: 5000,
-      criteria: { type: "count", target: 20, description: "Realizar 20 auditorias atualizadas" },
+      criteria: {
+        type: "count",
+        target: 20,
+        description: "Realizar 20 auditorias atualizadas",
+      },
     },
     "weekly-warrior": {
       title: "Mestre das Auditorias",
@@ -1199,7 +1344,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "very-hard",
       rarity: "Diamante", // Conquista extremamente rara
       points: 25000,
-      criteria: { type: "count", target: 50, description: "Realizar 50 auditorias atualizadas" },
+      criteria: {
+        type: "count",
+        target: 50,
+        description: "Realizar 50 auditorias atualizadas",
+      },
     },
     "item-collector-100": {
       title: "Colecionador 1",
@@ -1209,7 +1358,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "easy",
       rarity: "Basica", // Meta inicial para coleta
       points: 50,
-      criteria: { type: "count", target: 100, description: "Alcançar 100 pontos totais" },
+      criteria: {
+        type: "count",
+        target: 100,
+        description: "Alcançar 100 pontos totais",
+      },
     },
     "item-collector-500": {
       title: "Colecionador 2",
@@ -1219,7 +1372,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "medium",
       rarity: "Comum", // Meta intermediária
       points: 100,
-      criteria: { type: "count", target: 2000, description: "Alcançar 2000 pontos totais" },
+      criteria: {
+        type: "count",
+        target: 2000,
+        description: "Alcançar 2000 pontos totais",
+      },
     },
     "item-collector-1000": {
       title: "Colecionador 3",
@@ -1229,7 +1386,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "hard",
       rarity: "Raro", // Meta desafiadora
       points: 250,
-      criteria: { type: "count", target: 5000, description: "Alcançar 5000 pontos totais" },
+      criteria: {
+        type: "count",
+        target: 5000,
+        description: "Alcançar 5000 pontos totais",
+      },
     },
     "item-collector-2000": {
       title: "Colecionador 4",
@@ -1239,7 +1400,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "hard",
       rarity: "Epico", // Meta muito desafiadora
       points: 500,
-      criteria: { type: "count", target: 15000, description: "Alcançar 15000 pontos totais" },
+      criteria: {
+        type: "count",
+        target: 15000,
+        description: "Alcançar 15000 pontos totais",
+      },
     },
     "item-collector-5000": {
       title: "Colecionador 5",
@@ -1249,7 +1414,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "very-hard",
       rarity: "Lendario", // Meta extremamente desafiadora
       points: 1000,
-      criteria: { type: "count", target: 30000, description: "Alcançar 30000 pontos totais" },
+      criteria: {
+        type: "count",
+        target: 30000,
+        description: "Alcançar 30000 pontos totais",
+      },
     },
     "item-collector-10000": {
       title: "Colecionador 6",
@@ -1259,7 +1428,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "extreme",
       rarity: "Diamante", // Meta extremamente rara
       points: 2000,
-      criteria: { type: "count", target: 50000, description: "Alcançar 50000 pontos totais" },
+      criteria: {
+        type: "count",
+        target: 50000,
+        description: "Alcançar 50000 pontos totais",
+      },
     },
     "detetive-1": {
       title: "Detetive 1",
@@ -1269,7 +1442,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "easy",
       rarity: "Basica", // Primeiro nível de detetive
       points: 50,
-      criteria: { type: "count", target: 100, description: "Verificar 100 itens de ruptura" },
+      criteria: {
+        type: "count",
+        target: 100,
+        description: "Verificar 100 itens de ruptura",
+      },
     },
     "detetive-2": {
       title: "Detetive 2",
@@ -1279,7 +1456,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "medium",
       rarity: "Comum", // Segundo nível de detetive
       points: 500,
-      criteria: { type: "count", target: 1000, description: "Verificar 1000 itens de ruptura" },
+      criteria: {
+        type: "count",
+        target: 1000,
+        description: "Verificar 1000 itens de ruptura",
+      },
     },
     "detetive-3": {
       title: "Detetive 3",
@@ -1289,7 +1470,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "hard",
       rarity: "Raro", // Terceiro nível de detetive
       points: 1000,
-      criteria: { type: "count", target: 5000, description: "Verificar 5000 itens de ruptura" },
+      criteria: {
+        type: "count",
+        target: 5000,
+        description: "Verificar 5000 itens de ruptura",
+      },
     },
     "detetive-4": {
       title: "Detetive 4",
@@ -1299,7 +1484,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "hard",
       rarity: "Epico", // Quarto nível de detetive
       points: 2000,
-      criteria: { type: "count", target: 10000, description: "Verificar 10000 itens de ruptura" },
+      criteria: {
+        type: "count",
+        target: 10000,
+        description: "Verificar 10000 itens de ruptura",
+      },
     },
     "detetive-5": {
       title: "Detetive 5",
@@ -1309,7 +1498,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "very-hard",
       rarity: "Lendario", // Quinto nível de detetive
       points: 3000,
-      criteria: { type: "count", target: 15000, description: "Verificar 15000 itens de ruptura" },
+      criteria: {
+        type: "count",
+        target: 15000,
+        description: "Verificar 15000 itens de ruptura",
+      },
     },
     "detetive-6": {
       title: "Detetive 6",
@@ -1319,7 +1512,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "extreme",
       rarity: "Diamante", // Sexto nível de detetive
       points: 6000,
-      criteria: { type: "count", target: 30000, description: "Verificar 30000 itens de ruptura" },
+      criteria: {
+        type: "count",
+        target: 30000,
+        description: "Verificar 30000 itens de ruptura",
+      },
     },
     "auditor-etiqueta-1": {
       title: "Auditor de Etiqueta 1",
@@ -1329,7 +1526,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "easy",
       rarity: "Basica", // Primeiro nível de auditor de etiqueta
       points: 75,
-      criteria: { type: "count", target: 500, description: "Ler 500 etiquetas" },
+      criteria: {
+        type: "count",
+        target: 500,
+        description: "Ler 500 etiquetas",
+      },
     },
     "auditor-etiqueta-2": {
       title: "Auditor de Etiqueta 2",
@@ -1339,7 +1540,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "medium",
       rarity: "Comum", // Segundo nível de auditor de etiqueta
       points: 250,
-      criteria: { type: "count", target: 2000, description: "Ler 2000 etiquetas" },
+      criteria: {
+        type: "count",
+        target: 2000,
+        description: "Ler 2000 etiquetas",
+      },
     },
     "auditor-etiqueta-3": {
       title: "Auditor de Etiqueta 3",
@@ -1349,7 +1554,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "hard",
       rarity: "Raro", // Terceiro nível de auditor de etiqueta
       points: 750,
-      criteria: { type: "count", target: 5000, description: "Ler 5000 etiquetas" },
+      criteria: {
+        type: "count",
+        target: 5000,
+        description: "Ler 5000 etiquetas",
+      },
     },
     "auditor-etiqueta-4": {
       title: "Auditor de Etiqueta 4",
@@ -1359,7 +1568,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "hard",
       rarity: "Epico", // Quarto nível de auditor de etiqueta
       points: 1500,
-      criteria: { type: "count", target: 10000, description: "Ler 10000 etiquetas" },
+      criteria: {
+        type: "count",
+        target: 10000,
+        description: "Ler 10000 etiquetas",
+      },
     },
     "auditor-etiqueta-5": {
       title: "Auditor de Etiqueta 5",
@@ -1369,7 +1582,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "very-hard",
       rarity: "Lendario", // Quinto nível de auditor de etiqueta
       points: 3000,
-      criteria: { type: "count", target: 20000, description: "Ler 20000 etiquetas" },
+      criteria: {
+        type: "count",
+        target: 20000,
+        description: "Ler 20000 etiquetas",
+      },
     },
     "auditor-etiqueta-6": {
       title: "Auditor de Etiqueta 6",
@@ -1379,7 +1596,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "extreme",
       rarity: "Diamante", // Sexto nível de auditor de etiqueta
       points: 6000,
-      criteria: { type: "count", target: 40000, description: "Ler 40000 etiquetas" },
+      criteria: {
+        type: "count",
+        target: 40000,
+        description: "Ler 40000 etiquetas",
+      },
     },
     "auditor-presenca-1": {
       title: "Auditor de Presença 1",
@@ -1389,7 +1610,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "easy",
       rarity: "Basica", // Primeiro nível de auditor de presença
       points: 75,
-      criteria: { type: "count", target: 300, description: "Verificar 300 presenças" },
+      criteria: {
+        type: "count",
+        target: 300,
+        description: "Verificar 300 presenças",
+      },
     },
     "auditor-presenca-2": {
       title: "Auditor de Presença 2",
@@ -1399,7 +1624,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "medium",
       rarity: "Comum", // Segundo nível de auditor de presença
       points: 250,
-      criteria: { type: "count", target: 1500, description: "Verificar 1500 presenças" },
+      criteria: {
+        type: "count",
+        target: 1500,
+        description: "Verificar 1500 presenças",
+      },
     },
     "auditor-presenca-3": {
       title: "Auditor de Presença 3",
@@ -1409,7 +1638,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "hard",
       rarity: "Raro", // Terceiro nível de auditor de presença
       points: 750,
-      criteria: { type: "count", target: 4000, description: "Verificar 4000 presenças" },
+      criteria: {
+        type: "count",
+        target: 4000,
+        description: "Verificar 4000 presenças",
+      },
     },
     "auditor-presenca-4": {
       title: "Auditor de Presença 4",
@@ -1419,7 +1652,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "hard",
       rarity: "Epico", // Quarto nível de auditor de presença
       points: 1500,
-      criteria: { type: "count", target: 8000, description: "Verificar 8000 presenças" },
+      criteria: {
+        type: "count",
+        target: 8000,
+        description: "Verificar 8000 presenças",
+      },
     },
     "auditor-presenca-5": {
       title: "Auditor de Presença 5",
@@ -1429,7 +1666,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "very-hard",
       rarity: "Lendario", // Quinto nível de auditor de presença
       points: 3000,
-      criteria: { type: "count", target: 16000, description: "Verificar 16000 presenças" },
+      criteria: {
+        type: "count",
+        target: 16000,
+        description: "Verificar 16000 presenças",
+      },
     },
     "auditor-presenca-6": {
       title: "Auditor de Presença 6",
@@ -1439,7 +1680,11 @@ metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
       difficulty: "extreme",
       rarity: "Diamante", // Sexto nível de auditor de presença
       points: 6000,
-      criteria: { type: "count", target: 32000, description: "Verificar 32000 presenças" },
+      criteria: {
+        type: "count",
+        target: 32000,
+        description: "Verificar 32000 presenças",
+      },
     },
   };
 };
@@ -1448,7 +1693,7 @@ metricasUsuarioSchema.statics.obterMetricasUsuario = function (
   usuarioId,
   lojaId,
   dataInicio,
-  dataFim
+  dataFim,
 ) {
   return this.findOne({
     usuarioId: usuarioId,
@@ -1456,8 +1701,13 @@ metricasUsuarioSchema.statics.obterMetricasUsuario = function (
     $or: [
       { dataInicio: { $gte: dataInicio, $lte: dataFim } },
       { dataFim: { $gte: dataInicio, $lte: dataFim } },
-      { $and: [{ dataInicio: { $lte: dataInicio } }, { dataFim: { $gte: dataFim } }] }
-    ]
+      {
+        $and: [
+          { dataInicio: { $lte: dataInicio } },
+          { dataFim: { $gte: dataFim } },
+        ],
+      },
+    ],
   });
 };
 
@@ -1508,7 +1758,7 @@ metricasUsuarioSchema.methods.atualizarTotais = function () {
 
   if (this.totais.totalItens > 0) {
     this.totais.percentualConclusaoGeral = Math.round(
-      (this.totais.itensAtualizados / this.totais.totalItens) * 100
+      (this.totais.itensAtualizados / this.totais.totalItens) * 100,
     );
   }
 
@@ -1520,7 +1770,9 @@ metricasUsuarioSchema.methods.atualizarTotais = function () {
 };
 
 // Método para atualizar os dados de conquistas a partir do UserAchievement
-metricasUsuarioSchema.methods.atualizarAchievements = function (userAchievementDoc) {
+metricasUsuarioSchema.methods.atualizarAchievements = function (
+  userAchievementDoc,
+) {
   if (!userAchievementDoc) return;
 
   // Atualizar dados de XP e nível
@@ -1535,21 +1787,30 @@ metricasUsuarioSchema.methods.atualizarAchievements = function (userAchievementD
   };
 
   // Atualizar lista de conquistas
-  if (userAchievementDoc.achievements && Array.isArray(userAchievementDoc.achievements)) {
-    this.achievements.achievements = userAchievementDoc.achievements.map(ach => ({
-      achievementId: ach.achievementId,
-      unlocked: ach.unlocked,
-      progress: {
-        current: ach.progress?.current || 0,
-        target: ach.progress?.target || 0,
-        percentage: ach.progress?.percentage || 0,
-      },
-      unlockedAt: ach.unlockedAt,
-      unlockedBy: ach.unlockedBy,
-      achievementData: ach.achievementData || {},
-      rarity: ach.rarity || ach.achievementData?.rarity || "Comum",
-      fixedXpValue: ach.achievementData?.points || ach.fixedXpValue || ach.achievementData?.fixedXpValue || 0,
-    }));
+  if (
+    userAchievementDoc.achievements &&
+    Array.isArray(userAchievementDoc.achievements)
+  ) {
+    this.achievements.achievements = userAchievementDoc.achievements.map(
+      (ach) => ({
+        achievementId: ach.achievementId,
+        unlocked: ach.unlocked,
+        progress: {
+          current: ach.progress?.current || 0,
+          target: ach.progress?.target || 0,
+          percentage: ach.progress?.percentage || 0,
+        },
+        unlockedAt: ach.unlockedAt,
+        unlockedBy: ach.unlockedBy,
+        achievementData: ach.achievementData || {},
+        rarity: ach.rarity || ach.achievementData?.rarity || "Comum",
+        fixedXpValue:
+          ach.achievementData?.points ||
+          ach.fixedXpValue ||
+          ach.achievementData?.fixedXpValue ||
+          0,
+      }),
+    );
   }
 
   // Atualizar data de última atualização
@@ -1565,13 +1826,16 @@ metricasUsuarioSchema.methods.calcularAchievements = function () {
   // Obter total de setores únicos a partir do ContadorLocais
   let setoresUnicos = 0;
   if (this.ContadorLocais) {
-    setoresUnicos = Array.from(this.ContadorLocais.values()).filter(value => value > 0).length;
+    setoresUnicos = Array.from(this.ContadorLocais.values()).filter(
+      (value) => value > 0,
+    ).length;
   }
 
   // Calcular precisão geral
-  const precisaoGeral = this.totais.totalItens > 0
-    ? (this.totais.itensAtualizados / this.totais.totalItens) * 100
-    : 0;
+  const precisaoGeral =
+    this.totais.totalItens > 0
+      ? (this.totais.itensAtualizados / this.totais.totalItens) * 100
+      : 0;
 
   // Atualizar o array de conquistas existente com base nos dados atuais
   for (let i = 0; i < this.achievements.achievements.length; i++) {
@@ -1632,7 +1896,10 @@ metricasUsuarioSchema.methods.calcularAchievements = function () {
     }
 
     const target = achievement.achievementData?.criteria?.target || 0;
-    const percentage = target > 0 ? Math.min(Math.round((currentProgress / target) * 100), 100) : 0;
+    const percentage =
+      target > 0
+        ? Math.min(Math.round((currentProgress / target) * 100), 100)
+        : 0;
     const shouldUnlock = currentProgress >= target;
 
     // Atualizar apenas os campos de progresso e status, mantendo os dados existentes
@@ -1654,17 +1921,28 @@ metricasUsuarioSchema.methods.calcularAchievements = function () {
       achievement.rarity = "Comum"; // valor padrão
     }
 
-    if (achievement.achievementData?.points !== undefined && achievement.achievementData?.points !== null) {
+    if (
+      achievement.achievementData?.points !== undefined &&
+      achievement.achievementData?.points !== null
+    ) {
       achievement.fixedXpValue = achievement.achievementData.points;
-    } else if (achievement.achievementData?.fixedXpValue !== undefined && achievement.achievementData?.fixedXpValue !== null) {
+    } else if (
+      achievement.achievementData?.fixedXpValue !== undefined &&
+      achievement.achievementData?.fixedXpValue !== null
+    ) {
       achievement.fixedXpValue = achievement.achievementData.fixedXpValue;
-    } else if (achievement.fixedXpValue === undefined || achievement.fixedXpValue === null) {
+    } else if (
+      achievement.fixedXpValue === undefined ||
+      achievement.fixedXpValue === null
+    ) {
       achievement.fixedXpValue = 0; // valor padrão
     }
   }
 
   // Calcular estatísticas de conquistas
-  const unlockedCount = this.achievements.achievements.filter(ach => ach.unlocked).length;
+  const unlockedCount = this.achievements.achievements.filter(
+    (ach) => ach.unlocked,
+  ).length;
   this.achievements.stats.totalUnlockedAchievements = unlockedCount;
   this.achievements.stats.totalAudits = this.totais.itensAtualizados;
   this.achievements.stats.totalItems = this.totais.itensAtualizados;
@@ -1672,16 +1950,18 @@ metricasUsuarioSchema.methods.calcularAchievements = function () {
 
   // Calcular XP baseado em conquistas desbloqueadas
   let xpFromAchievements = 0;
-  this.achievements.achievements.forEach(achievement => {
+  this.achievements.achievements.forEach((achievement) => {
     if (achievement.unlocked) {
       // fixedXpValue agora é igual a points do achievementData
-      const xpValue = achievement.fixedXpValue || (achievement.achievementData?.points || 0);
+      const xpValue =
+        achievement.fixedXpValue || achievement.achievementData?.points || 0;
       xpFromAchievements += xpValue;
     }
   });
 
   // Calcular XP total (mantendo o XP anterior de atividades se existir)
-  const xpFromActivities = this.achievements.xp.fromActivities || currentItensLidos; // Usar itens lidos como XP base
+  const xpFromActivities =
+    this.achievements.xp.fromActivities || currentItensLidos; // Usar itens lidos como XP base
   this.achievements.xp.fromAchievements = xpFromAchievements;
   this.achievements.xp.fromActivities = xpFromActivities;
   this.achievements.xp.total = xpFromAchievements + xpFromActivities;
@@ -1698,7 +1978,7 @@ metricasUsuarioSchema.methods.calcularAchievements = function () {
 };
 
 // Helper: Calcular nível baseado no XP (mesma lógica do UserAchievement)
-metricasUsuarioSchema.methods.calcularLevel = function(xp) {
+metricasUsuarioSchema.methods.calcularLevel = function (xp) {
   if (xp < 100) return 1;
   if (xp < 300) return 2;
   if (xp < 600) return 3;
@@ -1718,20 +1998,29 @@ metricasUsuarioSchema.methods.calcularLevel = function(xp) {
 };
 
 // Helper: Obter título baseado no nível (mesma lógica do UserAchievement)
-metricasUsuarioSchema.methods.getLevelTitle = function(level) {
+metricasUsuarioSchema.methods.getLevelTitle = function (level) {
   const titles = {
     1: "Novato",
-    2: "Iniciante",
-    3: "Aprendiz",
-    5: "Competente",
-    8: "Experiente",
-    12: "Veterano",
-    16: "Especialista",
-    20: "Mestre",
-    25: "Auditor Senior",
-    30: "Lenda",
-    40: "Elite",
-    50: "Supremo",
+    5: "Aprendiz",
+    10: "Iniciante",
+    15: "Competente",
+    20: "Profissional",
+    25: "Experiente",
+    30: "Avançado",
+    35: "Especialista",
+    40: "Veterano",
+    45: "Mestre",
+    50: "Auditor Sênior",
+    60: "Auditor Pleno",
+    70: "Auditor Master",
+    80: "Lenda",
+    90: "Elite",
+    100: "Campeão",
+    120: "Supremo",
+    140: "Imortal",
+    160: "Ascendido",
+    180: "Divino",
+    200: "Infinito",
   };
 
   const sortedLevels = Object.keys(titles)
@@ -1748,13 +2037,17 @@ metricasUsuarioSchema.methods.getLevelTitle = function(level) {
 };
 
 // Middleware to ensure numeric fields are always numbers
-metricasUsuarioSchema.pre('save', function(next) {
+metricasUsuarioSchema.pre("save", function (next) {
   // Ensure contadoresAuditorias fields are numbers
   if (this.contadoresAuditorias) {
-    this.contadoresAuditorias.totalEtiquetas = Number(this.contadoresAuditorias.totalEtiquetas) || 0;
-    this.contadoresAuditorias.totalRupturas = Number(this.contadoresAuditorias.totalRupturas) || 0;
-    this.contadoresAuditorias.totalPresencas = Number(this.contadoresAuditorias.totalPresencas) || 0;
-    this.contadoresAuditorias.totalGeral = Number(this.contadoresAuditorias.totalGeral) || 0;
+    this.contadoresAuditorias.totalEtiquetas =
+      Number(this.contadoresAuditorias.totalEtiquetas) || 0;
+    this.contadoresAuditorias.totalRupturas =
+      Number(this.contadoresAuditorias.totalRupturas) || 0;
+    this.contadoresAuditorias.totalPresencas =
+      Number(this.contadoresAuditorias.totalPresencas) || 0;
+    this.contadoresAuditorias.totalGeral =
+      Number(this.contadoresAuditorias.totalGeral) || 0;
   }
 
   // Ensure totais fields are numbers
@@ -1762,15 +2055,18 @@ metricasUsuarioSchema.pre('save', function(next) {
     this.totais.totalItens = Number(this.totais.totalItens) || 0;
     this.totais.itensLidos = Number(this.totais.itensLidos) || 0;
     this.totais.itensAtualizados = Number(this.totais.itensAtualizados) || 0;
-    this.totais.percentualConclusaoGeral = Number(this.totais.percentualConclusaoGeral) || 0;
+    this.totais.percentualConclusaoGeral =
+      Number(this.totais.percentualConclusaoGeral) || 0;
     this.totais.pontuacaoTotal = Number(this.totais.pontuacaoTotal) || 0;
   }
 
   // Ensure other numeric fields are numbers
   if (this.tendencias) {
-    this.tendencias.melhoriaPercentual = Number(this.tendencias.melhoriaPercentual) || 0;
+    this.tendencias.melhoriaPercentual =
+      Number(this.tendencias.melhoriaPercentual) || 0;
     this.tendencias.diasAtivos = Number(this.tendencias.diasAtivos) || 0;
-    this.tendencias.mediaItensPerDia = Number(this.tendencias.mediaItensPerDia) || 0;
+    this.tendencias.mediaItensPerDia =
+      Number(this.tendencias.mediaItensPerDia) || 0;
     this.tendencias.regularidade = Number(this.tendencias.regularidade) || 0;
   }
 
@@ -1778,85 +2074,128 @@ metricasUsuarioSchema.pre('save', function(next) {
     this.ranking.posicaoLoja = Number(this.ranking.posicaoLoja) || 0;
     this.ranking.posicaoGeral = Number(this.ranking.posicaoGeral) || 0;
     this.ranking.pontosPorItem = Number(this.ranking.pontosPorItem) || 0;
-    this.ranking.bonusConsistencia = Number(this.ranking.bonusConsistencia) || 0;
+    this.ranking.bonusConsistencia =
+      Number(this.ranking.bonusConsistencia) || 0;
   }
 
   if (this.historicoRanking) {
-    this.historicoRanking.posicao1 = Number(this.historicoRanking.posicao1) || 0;
-    this.historicoRanking.posicao2 = Number(this.historicoRanking.posicao2) || 0;
-    this.historicoRanking.posicao3 = Number(this.historicoRanking.posicao3) || 0;
-    this.historicoRanking.posicao4 = Number(this.historicoRanking.posicao4) || 0;
-    this.historicoRanking.posicao5 = Number(this.historicoRanking.posicao5) || 0;
-    this.historicoRanking.posicao6 = Number(this.historicoRanking.posicao6) || 0;
-    this.historicoRanking.posicao7 = Number(this.historicoRanking.posicao7) || 0;
-    this.historicoRanking.posicao8 = Number(this.historicoRanking.posicao8) || 0;
-    this.historicoRanking.posicao9 = Number(this.historicoRanking.posicao9) || 0;
-    this.historicoRanking.posicao10 = Number(this.historicoRanking.posicao10) || 0;
+    this.historicoRanking.posicao1 =
+      Number(this.historicoRanking.posicao1) || 0;
+    this.historicoRanking.posicao2 =
+      Number(this.historicoRanking.posicao2) || 0;
+    this.historicoRanking.posicao3 =
+      Number(this.historicoRanking.posicao3) || 0;
+    this.historicoRanking.posicao4 =
+      Number(this.historicoRanking.posicao4) || 0;
+    this.historicoRanking.posicao5 =
+      Number(this.historicoRanking.posicao5) || 0;
+    this.historicoRanking.posicao6 =
+      Number(this.historicoRanking.posicao6) || 0;
+    this.historicoRanking.posicao7 =
+      Number(this.historicoRanking.posicao7) || 0;
+    this.historicoRanking.posicao8 =
+      Number(this.historicoRanking.posicao8) || 0;
+    this.historicoRanking.posicao9 =
+      Number(this.historicoRanking.posicao9) || 0;
+    this.historicoRanking.posicao10 =
+      Number(this.historicoRanking.posicao10) || 0;
     this.historicoRanking.ACIMA10 = Number(this.historicoRanking.ACIMA10) || 0;
-    this.historicoRanking.totalTop10 = Number(this.historicoRanking.totalTop10) || 0;
-    this.historicoRanking.melhorPosicao = Number(this.historicoRanking.melhorPosicao) || null;
+    this.historicoRanking.totalTop10 =
+      Number(this.historicoRanking.totalTop10) || 0;
+    this.historicoRanking.melhorPosicao =
+      Number(this.historicoRanking.melhorPosicao) || null;
   }
 
   if (this.totaisAcumulados) {
-    this.totaisAcumulados.itensLidosEtiquetas = Number(this.totaisAcumulados.itensLidosEtiquetas) || 0;
-    this.totaisAcumulados.itensLidosRupturas = Number(this.totaisAcumulados.itensLidosRupturas) || 0;
-    this.totaisAcumulados.itensLidosPresencas = Number(this.totaisAcumulados.itensLidosPresencas) || 0;
-    this.totaisAcumulados.itensLidosTotal = Number(this.totaisAcumulados.itensLidosTotal) || 0;
+    this.totaisAcumulados.itensLidosEtiquetas =
+      Number(this.totaisAcumulados.itensLidosEtiquetas) || 0;
+    this.totaisAcumulados.itensLidosRupturas =
+      Number(this.totaisAcumulados.itensLidosRupturas) || 0;
+    this.totaisAcumulados.itensLidosPresencas =
+      Number(this.totaisAcumulados.itensLidosPresencas) || 0;
+    this.totaisAcumulados.itensLidosTotal =
+      Number(this.totaisAcumulados.itensLidosTotal) || 0;
   }
 
   // Ensure achievement XP and level fields are numbers
   if (this.achievements && this.achievements.xp) {
     this.achievements.xp.total = Number(this.achievements.xp.total) || 0;
-    this.achievements.xp.fromAchievements = Number(this.achievements.xp.fromAchievements) || 0;
-    this.achievements.xp.fromActivities = Number(this.achievements.xp.fromActivities) || 0;
+    this.achievements.xp.fromAchievements =
+      Number(this.achievements.xp.fromAchievements) || 0;
+    this.achievements.xp.fromActivities =
+      Number(this.achievements.xp.fromActivities) || 0;
   }
 
   if (this.achievements && this.achievements.level) {
-    this.achievements.level.current = Number(this.achievements.level.current) || 1;
-    this.achievements.level.xpForNextLevel = Number(this.achievements.level.xpForNextLevel) || 100;
-    this.achievements.level.progressPercentage = Number(this.achievements.level.progressPercentage) || 0;
+    this.achievements.level.current =
+      Number(this.achievements.level.current) || 1;
+    this.achievements.level.xpForNextLevel =
+      Number(this.achievements.level.xpForNextLevel) || 100;
+    this.achievements.level.progressPercentage =
+      Number(this.achievements.level.progressPercentage) || 0;
   }
 
   // Ensure stat fields are numbers
   if (this.achievements && this.achievements.stats) {
-    this.achievements.stats.totalUnlockedAchievements = Number(this.achievements.stats.totalUnlockedAchievements) || 0;
-    this.achievements.stats.totalAudits = Number(this.achievements.stats.totalAudits) || 0;
-    this.achievements.stats.totalItems = Number(this.achievements.stats.totalItems) || 0;
+    this.achievements.stats.totalUnlockedAchievements =
+      Number(this.achievements.stats.totalUnlockedAchievements) || 0;
+    this.achievements.stats.totalAudits =
+      Number(this.achievements.stats.totalAudits) || 0;
+    this.achievements.stats.totalItems =
+      Number(this.achievements.stats.totalItems) || 0;
   }
 
   // Ensure tipo-specific metrics are numbers
   if (this.etiquetas) {
     this.etiquetas.totalItens = Number(this.etiquetas.totalItens) || 0;
     this.etiquetas.itensLidos = Number(this.etiquetas.itensLidos) || 0;
-    this.etiquetas.itensAtualizados = Number(this.etiquetas.itensAtualizados) || 0;
-    this.etiquetas.itensDesatualizado = Number(this.etiquetas.itensDesatualizado) || 0;
-    this.etiquetas.itensSemEstoque = Number(this.etiquetas.itensSemEstoque) || 0;
-    this.etiquetas.itensNaopertence = Number(this.etiquetas.itensNaopertence) || 0;
-    this.etiquetas.percentualConclusao = Number(this.etiquetas.percentualConclusao) || 0;
+    this.etiquetas.itensAtualizados =
+      Number(this.etiquetas.itensAtualizados) || 0;
+    this.etiquetas.itensDesatualizado =
+      Number(this.etiquetas.itensDesatualizado) || 0;
+    this.etiquetas.itensSemEstoque =
+      Number(this.etiquetas.itensSemEstoque) || 0;
+    this.etiquetas.itensNaopertence =
+      Number(this.etiquetas.itensNaopertence) || 0;
+    this.etiquetas.percentualConclusao =
+      Number(this.etiquetas.percentualConclusao) || 0;
   }
 
   if (this.rupturas) {
     this.rupturas.totalItens = Number(this.rupturas.totalItens) || 0;
     this.rupturas.itensLidos = Number(this.rupturas.itensLidos) || 0;
-    this.rupturas.itensAtualizados = Number(this.rupturas.itensAtualizados) || 0;
-    this.rupturas.itensDesatualizado = Number(this.rupturas.itensDesatualizado) || 0;
+    this.rupturas.itensAtualizados =
+      Number(this.rupturas.itensAtualizados) || 0;
+    this.rupturas.itensDesatualizado =
+      Number(this.rupturas.itensDesatualizado) || 0;
     this.rupturas.itensSemEstoque = Number(this.rupturas.itensSemEstoque) || 0;
-    this.rupturas.itensNaopertence = Number(this.rupturas.itensNaopertence) || 0;
-    this.rupturas.percentualConclusao = Number(this.rupturas.percentualConclusao) || 0;
-    this.rupturas.custoTotalRuptura = Number(this.rupturas.custoTotalRuptura) || 0;
-    this.rupturas.custoMedioRuptura = Number(this.rupturas.custoMedioRuptura) || 0;
+    this.rupturas.itensNaopertence =
+      Number(this.rupturas.itensNaopertence) || 0;
+    this.rupturas.percentualConclusao =
+      Number(this.rupturas.percentualConclusao) || 0;
+    this.rupturas.custoTotalRuptura =
+      Number(this.rupturas.custoTotalRuptura) || 0;
+    this.rupturas.custoMedioRuptura =
+      Number(this.rupturas.custoMedioRuptura) || 0;
   }
 
   if (this.presencas) {
     this.presencas.totalItens = Number(this.presencas.totalItens) || 0;
     this.presencas.itensLidos = Number(this.presencas.itensLidos) || 0;
-    this.presencas.itensAtualizados = Number(this.presencas.itensAtualizados) || 0;
-    this.presencas.itensDesatualizado = Number(this.presencas.itensDesatualizado) || 0;
-    this.presencas.itensSemEstoque = Number(this.presencas.itensSemEstoque) || 0;
-    this.presencas.itensNaopertence = Number(this.presencas.itensNaopertence) || 0;
-    this.presencas.percentualConclusao = Number(this.presencas.percentualConclusao) || 0;
-    this.presencas.presencasConfirmadas = Number(this.presencas.presencasConfirmadas) || 0;
-    this.presencas.percentualPresenca = Number(this.presencas.percentualPresenca) || 0;
+    this.presencas.itensAtualizados =
+      Number(this.presencas.itensAtualizados) || 0;
+    this.presencas.itensDesatualizado =
+      Number(this.presencas.itensDesatualizado) || 0;
+    this.presencas.itensSemEstoque =
+      Number(this.presencas.itensSemEstoque) || 0;
+    this.presencas.itensNaopertence =
+      Number(this.presencas.itensNaopertence) || 0;
+    this.presencas.percentualConclusao =
+      Number(this.presencas.percentualConclusao) || 0;
+    this.presencas.presencasConfirmadas =
+      Number(this.presencas.presencasConfirmadas) || 0;
+    this.presencas.percentualPresenca =
+      Number(this.presencas.percentualPresenca) || 0;
   }
 
   next();

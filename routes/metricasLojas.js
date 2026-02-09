@@ -82,6 +82,12 @@ router.get('/metricas/lojas', async (req, res) => {
       colaboradorDestaque: colaboradorDestaque, // Usar o valor buscado do MetricasUsuario
       totalColaboradores: metricasLoja.totais.usuariosAtivos || 0,
       totalItensAuditados: metricasLoja.totais.itensLidos || 0, // Adicionando o campo itensLidos
+      auditoriasPorTipo: metricasLoja.auditoriasPorTipo || {
+        geral: 0,
+        etiqueta: 0,
+        ruptura: 0,
+        presenca: 0
+      }, // Adicionando o campo de quantidade de auditorias por tipo
       loja: {
         codigo: metricasLoja.loja.codigo,
         nome: metricasLoja.loja.nome,

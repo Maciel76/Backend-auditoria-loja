@@ -89,6 +89,14 @@ const metricasLojaSchema = new mongoose.Schema(
       planilhasProcessadas: { type: Number, default: 0 },
     },
 
+    // Quantidade de auditorias por tipo (número de planilhas processadas)
+    auditoriasPorTipo: {
+      geral: { type: Number, default: 0 },
+      etiqueta: { type: Number, default: 0 },
+      ruptura: { type: Number, default: 0 },
+      presenca: { type: Number, default: 0 },
+    },
+
     // Ranking e desempenho
     ranking: {
       posicaoGeral: { type: Number, default: 0 },
@@ -290,6 +298,35 @@ metricasLojaSchema.methods.calcularPontuacaoTotal = function () {
   return this.ranking.pontuacaoTotal;
 };
 
+// Método para atualizar a contagem de planilhas por tipo
+// Contabiliza 1 por tipo independentemente de quantas planilhas foram processadas
+metricasLojaSchema.methods.atualizarContagemPlanilhasPorTipo = async function (lojaId) {
+  // Importar o modelo Planilha dentro do método para evitar ciclos de importação
+  const Planilha = (await import('./Planilha.js')).default;
+  
+  // Verificar se há planilhas de cada tipo para esta loja (contabiliza 1 por tipo, não importa quantas)
+  const [etiquetaCount, rupturaCount, presencaCount] = await Promise.all([
+    Planilha.countDocuments({ loja: lojaId, tipoAuditoria: 'etiqueta' }),
+    Planilha.countDocuments({ loja: lojaId, tipoAuditoria: 'ruptura' }),
+    Planilha.countDocuments({ loja: lojaId, tipoAuditoria: 'presenca' })
+  ]);
+  
+  // Contabilizar 1 por tipo se houver pelo menos 1 planilha desse tipo
+  const contagem = {
+    etiqueta: etiquetaCount > 0 ? 1 : 0,
+    ruptura: rupturaCount > 0 ? 1 : 0,
+    presenca: presencaCount > 0 ? 1 : 0
+  };
+  
+  // Atualizar o campo auditoriasPorTipo
+  this.auditoriasPorTipo.etiqueta = contagem.etiqueta;
+  this.auditoriasPorTipo.ruptura = contagem.ruptura;
+  this.auditoriasPorTipo.presenca = contagem.presenca;
+  this.auditoriasPorTipo.geral = contagem.etiqueta + contagem.ruptura + contagem.presenca;
+  
+  return this;
+};
+
 metricasLojaSchema.methods.atualizarTotais = function () {
   this.totais.totalItens =
     this.etiquetas.totalItens +
@@ -324,6 +361,7 @@ metricasLojaSchema.methods.atualizarTotais = function () {
   this.etiquetas.percentualRestante = 100 - this.etiquetas.percentualConclusao;
   this.rupturas.percentualRestante = 100 - this.rupturas.percentualConclusao;
   this.presencas.percentualRestante = 100 - this.presencas.percentualConclusao;
+
 
   this.calcularPontuacaoTotal();
   this.ultimaAtualizacao = new Date();

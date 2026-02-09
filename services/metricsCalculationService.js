@@ -917,6 +917,7 @@ class MetricsCalculationService {
 
         // Calcular totais e detectar alertas
         metricasLoja.atualizarTotais();
+        await metricasLoja.atualizarContagemPlanilhasPorTipo(loja._id);
         metricasLoja.detectarAlertas();
 
         console.log(`💾 Salvando MetricasLoja para ${loja.nome}...`);
