@@ -47,7 +47,6 @@ const metricasDiariasSchema = new mongoose.Schema(
       itensAtualizados: { type: Number, default: 0 },
       itensDesatualizado: { type: Number, default: 0 },
       itensSemEstoque: { type: Number, default: 0 },
-      itensNaopertence: { type: Number, default: 0 },
       percentualConclusao: { type: Number, default: 0 }, // % em relação ao total da loja
     },
 
@@ -55,9 +54,6 @@ const metricasDiariasSchema = new mongoose.Schema(
       totalItens: { type: Number, default: 0 },
       itensLidos: { type: Number, default: 0 },
       itensAtualizados: { type: Number, default: 0 },
-      itensDesatualizado: { type: Number, default: 0 },
-      itensSemEstoque: { type: Number, default: 0 },
-      itensNaopertence: { type: Number, default: 0 },
       percentualConclusao: { type: Number, default: 0 }, // % em relação ao total da loja
       custoTotalRuptura: { type: Number, default: 0 },
       custoMedioRuptura: { type: Number, default: 0 },
@@ -65,14 +61,11 @@ const metricasDiariasSchema = new mongoose.Schema(
 
     presencas: {
       totalItens: { type: Number, default: 0 },
-      itensLidos: { type: Number, default: 0 },
       itensAtualizados: { type: Number, default: 0 },
-      itensDesatualizado: { type: Number, default: 0 },
       itensSemEstoque: { type: Number, default: 0 },
       itensNaopertence: { type: Number, default: 0 },
       percentualConclusao: { type: Number, default: 0 }, // % em relação ao total da loja
       presencasConfirmadas: { type: Number, default: 0 },
-      percentualPresenca: { type: Number, default: 0 },
     },
 
     // CONTADORES PARA FILTROS - ATUALIZADOS A CADA UPLOAD
@@ -140,7 +133,7 @@ const metricasDiariasSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // ÍNDICE ÚNICO: Garante apenas um registro por usuário/loja/data/tipo
@@ -154,7 +147,7 @@ metricasDiariasSchema.index(
   {
     unique: true,
     name: "unique_metricas_diarias",
-  }
+  },
 );
 
 // Índices para performance
@@ -170,9 +163,9 @@ metricasDiariasSchema.methods.atualizarTotais = function () {
     this.rupturas.totalItens +
     this.presencas.totalItens;
   this.totais.itensLidos =
-    this.etiquetas.itensLidos +
-    this.rupturas.itensLidos +
-    this.presencas.itensLidos;
+    (this.etiquetas.itensLidos || 0) +
+    (this.rupturas.itensLidos || 0) +
+    (this.presencas.totalItens || 0);
   this.totais.itensAtualizados =
     this.etiquetas.itensAtualizados +
     this.rupturas.itensAtualizados +
@@ -180,7 +173,7 @@ metricasDiariasSchema.methods.atualizarTotais = function () {
 
   if (this.totais.totalItens > 0) {
     this.totais.percentualConclusaoGeral = Math.round(
-      (this.totais.itensAtualizados / this.totais.totalItens) * 100
+      (this.totais.itensAtualizados / this.totais.totalItens) * 100,
     );
   }
 

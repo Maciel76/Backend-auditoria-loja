@@ -162,13 +162,14 @@ class MetricasUsuariosService {
       itensAtualizados: 0,
       itensDesatualizado: 0,
       itensSemEstoque: 0,
-      itensNaopertence: 0,
       percentualConclusao: 0,
     };
 
     if (tipo === "ruptura") {
       return {
         ...base,
+        // rupturas não usa itensDesatualizado, itensSemEstoque no modelo final,
+        // mas mantemos na estrutura interna para compatibilidade de cálculo
         custoTotal: 0,
         custoTotalRuptura: 0,
         custoMedioRuptura: 0,
@@ -176,7 +177,14 @@ class MetricasUsuariosService {
     }
 
     if (tipo === "presenca") {
-      return { ...base, presencasConfirmadas: 0, percentualPresenca: 0 };
+      return {
+        totalItens: 0,
+        itensAtualizados: 0,
+        itensSemEstoque: 0,
+        itensNaopertence: 0,
+        presencasConfirmadas: 0,
+        percentualConclusao: 0,
+      };
     }
 
     return base;
@@ -202,25 +210,47 @@ class MetricasUsuariosService {
     // Incrementar total
     metricas.totalItens++;
 
-    // Contar itens lidos
-    if (auditoria.situacao && auditoria.situacao !== "Não lido") {
+    // Contar itens lidos (para etiquetas e rupturas)
+    if (
+      auditoria.tipo !== "presenca" &&
+      auditoria.situacao &&
+      auditoria.situacao !== "Não lido"
+    ) {
       metricas.itensLidos++;
     }
 
-    // Contar por situação específica
-    switch (auditoria.situacao) {
-      case "Atualizado":
-        metricas.itensAtualizados++;
-        break;
-      case "Desatualizado":
-        metricas.itensDesatualizado++;
-        break;
-      case "Sem estoque":
-        metricas.itensSemEstoque++;
-        break;
-      case "Não pertence":
-        metricas.itensNaopertence++;
-        break;
+    // Contar por situação específica baseado no tipo
+    if (auditoria.tipo === "etiqueta") {
+      switch (auditoria.situacao) {
+        case "Atualizado":
+          metricas.itensAtualizados++;
+          break;
+        case "Desatualizado":
+          metricas.itensDesatualizado++;
+          break;
+        case "Lido sem estoque":
+        case "Sem estoque":
+          metricas.itensSemEstoque++;
+          break;
+      }
+    } else if (auditoria.tipo === "ruptura") {
+      switch (auditoria.situacao) {
+        case "Atualizado":
+          metricas.itensAtualizados++;
+          break;
+      }
+    } else if (auditoria.tipo === "presenca") {
+      switch (auditoria.situacao) {
+        case "Atualizado":
+          metricas.itensAtualizados++;
+          break;
+        case "Com Presença e sem Estoque":
+          metricas.itensSemEstoque++;
+          break;
+        case "Lido não pertence":
+          metricas.itensNaopertence++;
+          break;
+      }
     }
 
     // Campos específicos por tipo
@@ -306,14 +336,6 @@ class MetricasUsuariosService {
         totaisDaLoja.presencas.itensLidos > 0
           ? Math.round(
               (dados.presencas.itensLidos / totaisDaLoja.presencas.itensLidos) *
-                100,
-            )
-          : 0,
-      percentualPresenca:
-        dados.presencas.totalItens > 0
-          ? Math.round(
-              (dados.presencas.presencasConfirmadas /
-                dados.presencas.totalItens) *
                 100,
             )
           : 0,
@@ -786,31 +808,20 @@ class MetricasUsuariosService {
         dadosNovos.etiquetas.itensDesatualizado;
       metricasUsuario.etiquetas.itensSemEstoque +=
         dadosNovos.etiquetas.itensSemEstoque;
-      metricasUsuario.etiquetas.itensNaopertence +=
-        dadosNovos.etiquetas.itensNaopertence;
 
       // Somar métricas de rupturas
       metricasUsuario.rupturas.totalItens += dadosNovos.rupturas.totalItens;
       metricasUsuario.rupturas.itensLidos += dadosNovos.rupturas.itensLidos;
       metricasUsuario.rupturas.itensAtualizados +=
         dadosNovos.rupturas.itensAtualizados;
-      metricasUsuario.rupturas.itensDesatualizado +=
-        dadosNovos.rupturas.itensDesatualizado;
-      metricasUsuario.rupturas.itensSemEstoque +=
-        dadosNovos.rupturas.itensSemEstoque;
-      metricasUsuario.rupturas.itensNaopertence +=
-        dadosNovos.rupturas.itensNaopertence;
       metricasUsuario.rupturas.custoTotalRuptura =
         (metricasUsuario.rupturas.custoTotalRuptura || 0) +
         (dadosNovos.rupturas.custoTotal || 0);
 
       // Somar métricas de presenças
       metricasUsuario.presencas.totalItens += dadosNovos.presencas.totalItens;
-      metricasUsuario.presencas.itensLidos += dadosNovos.presencas.itensLidos;
       metricasUsuario.presencas.itensAtualizados +=
         dadosNovos.presencas.itensAtualizados;
-      metricasUsuario.presencas.itensDesatualizado +=
-        dadosNovos.presencas.itensDesatualizado;
       metricasUsuario.presencas.itensSemEstoque +=
         dadosNovos.presencas.itensSemEstoque;
       metricasUsuario.presencas.itensNaopertence +=
@@ -876,16 +887,8 @@ class MetricasUsuariosService {
       metricasUsuario.presencas.percentualConclusao =
         totaisDaLoja.presencas.itensLidos > 0
           ? Math.round(
-              (metricasUsuario.presencas.itensLidos /
+              ((metricasUsuario.presencas.totalItens || 0) /
                 totaisDaLoja.presencas.itensLidos) *
-                100,
-            )
-          : 0;
-      metricasUsuario.presencas.percentualPresenca =
-        metricasUsuario.presencas.totalItens > 0
-          ? Math.round(
-              (metricasUsuario.presencas.presencasConfirmadas /
-                metricasUsuario.presencas.totalItens) *
                 100,
             )
           : 0;
@@ -902,11 +905,11 @@ class MetricasUsuariosService {
     metricasUsuario.totaisAcumulados = {
       itensLidosEtiquetas: metricasUsuario.etiquetas.itensLidos,
       itensLidosRupturas: metricasUsuario.rupturas.itensLidos,
-      itensLidosPresencas: metricasUsuario.presencas.itensLidos,
+      itensLidosPresencas: metricasUsuario.presencas.totalItens || 0,
       itensLidosTotal:
         metricasUsuario.etiquetas.itensLidos +
         metricasUsuario.rupturas.itensLidos +
-        metricasUsuario.presencas.itensLidos,
+        (metricasUsuario.presencas.totalItens || 0),
     };
 
     // 6. Calcular tendências

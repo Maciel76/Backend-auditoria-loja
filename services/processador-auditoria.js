@@ -76,17 +76,27 @@ function normalizarSituacao(situacao) {
     "precisa atualizar": "Desatualizado",
     "atualização necessária": "Desatualizado",
 
-    // Sem estoque
-    "sem estoque": "Sem estoque",
-    "estoque zerado": "Sem estoque",
-    "zero estoque": "Sem estoque",
-    "lido sem estoque": "Sem estoque",
+    // Sem estoque / Lido sem estoque (etiquetas)
+    "sem estoque": "Lido sem estoque",
+    "estoque zerado": "Lido sem estoque",
+    "zero estoque": "Lido sem estoque",
+    "lido sem estoque": "Lido sem estoque",
 
-    // Não pertence
+    // Não pertence (etiquetas genérico)
     "não pertence": "Não pertence",
     "nao pertence": "Não pertence",
     "local errado": "Não pertence",
     "setor incorreto": "Não pertence",
+
+    // Presenças - situações específicas
+    "com presença e com estoque": "Atualizado",
+    "com presença e sem estoque": "Com Presença e sem Estoque",
+    "sem presença e com estoque": "Com problema",
+    "sem presença e sem estoque": "Com problema",
+    "com presença": "Atualizado",
+    "sem presença": "Com problema",
+    "lido não pertence": "Lido não pertence",
+    "lido nao pertence": "Lido não pertence",
 
     // Com problema
     "com problema": "Com problema",
@@ -118,7 +128,7 @@ export async function processarParaAuditoria(planilhaData) {
           (key) =>
             key &&
             (key.toLowerCase().includes("usuário") ||
-              key.toLowerCase().includes("usuario"))
+              key.toLowerCase().includes("usuario")),
         );
 
         if (!usuarioKey || !item[usuarioKey]) {
@@ -133,36 +143,41 @@ export async function processarParaAuditoria(planilhaData) {
           (key) =>
             key &&
             (key.toLowerCase().includes("situação") ||
-              key.toLowerCase().includes("situacao"))
+              key.toLowerCase().includes("situacao")),
         );
         const situacaoAtualKey = Object.keys(item).find(
           (key) =>
-            key && key.toLowerCase().includes("situação") &&
+            key &&
+            key.toLowerCase().includes("situação") &&
             key.toLowerCase().includes("atual") &&
-            key.toLowerCase().includes("auditoria")
+            key.toLowerCase().includes("auditoria"),
         );
         const localKey = Object.keys(item).find(
-          (key) => key && key.toLowerCase().includes("local")
+          (key) => key && key.toLowerCase().includes("local"),
         );
         const produtoKey = Object.keys(item).find(
-          (key) => key && key.toLowerCase().includes("produto")
+          (key) => key && key.toLowerCase().includes("produto"),
         );
         const codigoKey = Object.keys(item).find(
           (key) =>
             key &&
             (key.toLowerCase().includes("código") ||
-              key.toLowerCase().includes("codigo"))
+              key.toLowerCase().includes("codigo")),
         );
         const estoqueKey = Object.keys(item).find(
-          (key) => key && key.toLowerCase().includes("estoque")
+          (key) => key && key.toLowerCase().includes("estoque"),
         );
         const classeProdutoKey = Object.keys(item).find(
-          (key) => key && key.toLowerCase().includes("classe") &&
-          key.toLowerCase().includes("produto")
+          (key) =>
+            key &&
+            key.toLowerCase().includes("classe") &&
+            key.toLowerCase().includes("produto"),
         );
         const auditadoEmKey = Object.keys(item).find(
-          (key) => key && key.toLowerCase().includes("auditado") &&
-          key.toLowerCase().includes("em")
+          (key) =>
+            key &&
+            key.toLowerCase().includes("auditado") &&
+            key.toLowerCase().includes("em"),
         );
 
         // Valores com fallback e normalização
@@ -287,7 +302,7 @@ export async function sincronizarAuditoriaesParaAuditoria() {
 
     console.log(
       "📋 Auditoriaes encontrados para sincronização:",
-      setores.length
+      setores.length,
     );
 
     for (const setor of setores) {

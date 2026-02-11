@@ -16,16 +16,19 @@ class MetricasDiariasService {
     tipoAuditoria,
     dataAuditoria,
     loja,
-    nomeArquivo
+    nomeArquivo,
   ) {
     try {
       console.log(
-        `🔄 Processando métricas diárias para ${tipoAuditoria} - ${dataAuditoria.toLocaleDateString()}`
+        `🔄 Processando métricas diárias para ${tipoAuditoria} - ${dataAuditoria.toLocaleDateString()}`,
       );
       console.log(`📊 DEBUG: Recebidas ${auditorias.length} auditorias`);
 
       if (auditorias.length > 0) {
-        console.log(`🔍 DEBUG: Primeira auditoria:`, JSON.stringify(auditorias[0], null, 2));
+        console.log(
+          `🔍 DEBUG: Primeira auditoria:`,
+          JSON.stringify(auditorias[0], null, 2),
+        );
       }
 
       // Agrupar auditorias por usuário
@@ -43,12 +46,12 @@ class MetricasDiariasService {
           dataAuditoria,
           loja,
           totaisLoja,
-          nomeArquivo
+          nomeArquivo,
         );
       }
 
       console.log(
-        `✅ Métricas diárias atualizadas para ${auditoriasPorUsuario.size} usuários`
+        `✅ Métricas diárias atualizadas para ${auditoriasPorUsuario.size} usuários`,
       );
       return { success: true, totalUsuarios: auditoriasPorUsuario.size };
     } catch (error) {
@@ -63,7 +66,9 @@ class MetricasDiariasService {
   agruparPorUsuario(auditorias, loja) {
     const usuariosMap = new Map();
 
-    console.log(`🔍 DEBUG: Agrupando ${auditorias.length} auditorias por usuário`);
+    console.log(
+      `🔍 DEBUG: Agrupando ${auditorias.length} auditorias por usuário`,
+    );
 
     for (const auditoria of auditorias) {
       const usuarioId = auditoria.usuarioId;
@@ -77,7 +82,9 @@ class MetricasDiariasService {
           ContadorClassesProduto: new Map(),
           ContadorLocais: new Map(),
         });
-        console.log(`👤 DEBUG: Novo usuário encontrado: ${usuarioId} - ${auditoria.usuarioNome}`);
+        console.log(
+          `👤 DEBUG: Novo usuário encontrado: ${usuarioId} - ${auditoria.usuarioNome}`,
+        );
       }
 
       const dadosUsuario = usuariosMap.get(usuarioId);
@@ -88,11 +95,14 @@ class MetricasDiariasService {
         const classe = auditoria.ClasseProduto.toUpperCase().trim();
         dadosUsuario.ContadorClassesProduto.set(
           classe,
-          (dadosUsuario.ContadorClassesProduto.get(classe) || 0) + 1
+          (dadosUsuario.ContadorClassesProduto.get(classe) || 0) + 1,
         );
         console.log(`🏷️ DEBUG: Classe produto adicionada: ${classe}`);
       } else {
-        console.log(`⚠️ DEBUG: Auditoria sem ClasseProduto:`, auditoria.usuarioNome);
+        console.log(
+          `⚠️ DEBUG: Auditoria sem ClasseProduto:`,
+          auditoria.usuarioNome,
+        );
       }
 
       // Contar locais
@@ -100,14 +110,16 @@ class MetricasDiariasService {
         const local = auditoria.local.trim();
         dadosUsuario.ContadorLocais.set(
           local,
-          (dadosUsuario.ContadorLocais.get(local) || 0) + 1
+          (dadosUsuario.ContadorLocais.get(local) || 0) + 1,
         );
       }
     }
 
     console.log(`📊 DEBUG: Total de usuários agrupados: ${usuariosMap.size}`);
     for (const [userId, dados] of usuariosMap) {
-      console.log(`👤 DEBUG: ${dados.usuarioNome} (${userId}): ${dados.auditorias.length} auditorias`);
+      console.log(
+        `👤 DEBUG: ${dados.usuarioNome} (${userId}): ${dados.auditorias.length} auditorias`,
+      );
     }
 
     return usuariosMap;
@@ -119,7 +131,7 @@ class MetricasDiariasService {
   calcularTotaisLoja(auditorias, tipoAuditoria) {
     // Contar total de itens lidos da loja (para calcular percentuais individuais)
     const totalItensLidosLoja = auditorias.filter(
-      (a) => a.situacao && a.situacao !== "Não lido"
+      (a) => a.situacao && a.situacao !== "Não lido",
     ).length;
 
     return {
@@ -138,7 +150,7 @@ class MetricasDiariasService {
     dataAuditoria,
     loja,
     totaisLoja,
-    nomeArquivo
+    nomeArquivo,
   ) {
     try {
       // 🔥 LÓGICA IGUAL AO USER: Buscar ou criar registro único para usuário/data/tipo
@@ -165,20 +177,23 @@ class MetricasDiariasService {
       const metricasCalculadas = this.calcularMetricasTipo(
         dadosUsuario.auditorias,
         tipoAuditoria,
-        totaisLoja
+        totaisLoja,
       );
 
-      console.log(`🔄 DEBUG: Métricas calculadas para ${dadosUsuario.usuarioNome}:`, metricasCalculadas);
+      console.log(
+        `🔄 DEBUG: Métricas calculadas para ${dadosUsuario.usuarioNome}:`,
+        metricasCalculadas,
+      );
 
       // 🔥 ATRIBUIR VALORES CALCULADOS DIRETAMENTE (sem reset duplo)
       metricasDiarias[tipoAuditoria] = metricasCalculadas;
 
       // Atualizar contadores de locais e classes (resetar também)
       metricasDiarias.ContadorClassesProduto = Object.fromEntries(
-        dadosUsuario.ContadorClassesProduto
+        dadosUsuario.ContadorClassesProduto,
       );
       metricasDiarias.ContadorLocais = Object.fromEntries(
-        dadosUsuario.ContadorLocais
+        dadosUsuario.ContadorLocais,
       );
       metricasDiarias.nomeArquivo = nomeArquivo;
 
@@ -188,13 +203,13 @@ class MetricasDiariasService {
       console.log(`💾 DEBUG: Antes de salvar - ${dadosUsuario.usuarioNome}:`, {
         tipoAuditoria: tipoAuditoria,
         etiquetas: metricasDiarias.etiquetas,
-        totais: metricasDiarias.totais
+        totais: metricasDiarias.totais,
       });
 
       await metricasDiarias.save();
 
       console.log(
-        `✅ ${dadosUsuario.usuarioNome}: ${metricasCalculadas.itensLidos} ${tipoAuditoria} lidos`
+        `✅ ${dadosUsuario.usuarioNome}: ${metricasCalculadas.itensLidos} ${tipoAuditoria} lidos`,
       );
     } catch (error) {
       console.error(`❌ Erro ao atualizar métricas de ${usuarioId}:`, error);
@@ -207,7 +222,9 @@ class MetricasDiariasService {
    * Agora apenas conta os dados da planilha atual (igual ao modelo User)
    */
   calcularMetricasTipo(auditorias, tipoAuditoria, totaisLoja) {
-    console.log(`🔢 DEBUG: calcularMetricasTipo para ${auditorias.length} auditorias do tipo ${tipoAuditoria}`);
+    console.log(
+      `🔢 DEBUG: calcularMetricasTipo para ${auditorias.length} auditorias do tipo ${tipoAuditoria}`,
+    );
 
     const metricas = {
       totalItens: auditorias.length,
@@ -219,45 +236,55 @@ class MetricasDiariasService {
       percentualConclusao: 0,
     };
 
-    // Contagem simples e direta (igual ao User)
+    // Contagem simples e direta
     console.log(`🔍 DEBUG: Vou processar ${auditorias.length} auditorias`);
 
     for (let i = 0; i < auditorias.length; i++) {
       const auditoria = auditorias[i];
 
-      // Log detalhado apenas para as primeiras 3 auditorias para não poluir
       if (i < 3) {
-        console.log(`🔍 DEBUG: Auditoria ${i+1} - situacao: "${auditoria.situacao}" | local: "${auditoria.local}" | usuario: "${auditoria.usuarioNome}"`);
+        console.log(
+          `🔍 DEBUG: Auditoria ${i + 1} - situacao: "${auditoria.situacao}" | local: "${auditoria.local}" | usuario: "${auditoria.usuarioNome}"`,
+        );
       }
 
       // Contar itens lidos (qualquer situação diferente de "Não lido")
       if (auditoria.situacao && auditoria.situacao !== "Não lido") {
         metricas.itensLidos++;
-        if (i < 3) console.log(`✅ DEBUG: Item ${i+1} contado como lido`);
-      } else {
-        if (i < 3) console.log(`❌ DEBUG: Item ${i+1} NÃO contado (situacao: "${auditoria.situacao}")`);
       }
 
-      // Contar por situação específica
-      switch (auditoria.situacao) {
-        case "Atualizado":
-          metricas.itensAtualizados++;
-          if (i < 3) console.log(`🔄 DEBUG: Item ${i+1} contado como ATUALIZADO`);
-          break;
-        case "Desatualizado":
-          metricas.itensDesatualizado++;
-          if (i < 3) console.log(`🔄 DEBUG: Item ${i+1} contado como DESATUALIZADO`);
-          break;
-        case "Sem estoque":
-          metricas.itensSemEstoque++;
-          if (i < 3) console.log(`🔄 DEBUG: Item ${i+1} contado como SEM ESTOQUE`);
-          break;
-        case "Não pertence":
-          metricas.itensNaopertence++;
-          if (i < 3) console.log(`🔄 DEBUG: Item ${i+1} contado como NÃO PERTENCE`);
-          break;
-        default:
-          if (i < 3) console.log(`⚠️ DEBUG: Item ${i+1} com situacao não reconhecida: "${auditoria.situacao}"`);
+      // Contar por situação específica baseado no tipo de auditoria
+      if (tipoAuditoria === "etiqueta") {
+        switch (auditoria.situacao) {
+          case "Atualizado":
+            metricas.itensAtualizados++;
+            break;
+          case "Desatualizado":
+            metricas.itensDesatualizado++;
+            break;
+          case "Lido sem estoque":
+          case "Sem estoque":
+            metricas.itensSemEstoque++;
+            break;
+        }
+      } else if (tipoAuditoria === "ruptura") {
+        switch (auditoria.situacao) {
+          case "Atualizado":
+            metricas.itensAtualizados++;
+            break;
+        }
+      } else if (tipoAuditoria === "presenca") {
+        switch (auditoria.situacao) {
+          case "Atualizado":
+            metricas.itensAtualizados++;
+            break;
+          case "Com Presença e sem Estoque":
+            metricas.itensSemEstoque++;
+            break;
+          case "Lido não pertence":
+            metricas.itensNaopertence++;
+            break;
+        }
       }
     }
 
@@ -266,7 +293,7 @@ class MetricasDiariasService {
     // Calcular percentual em relação à loja
     if (totaisLoja.totalItensLidos > 0) {
       metricas.percentualConclusao = Math.round(
-        (metricas.itensLidos / totaisLoja.totalItensLidos) * 100
+        (metricas.itensLidos / totaisLoja.totalItensLidos) * 100,
       );
     }
 
@@ -274,7 +301,7 @@ class MetricasDiariasService {
     if (tipoAuditoria === "ruptura") {
       const custoTotal = auditorias.reduce(
         (total, aud) => total + (aud.custoRuptura || 0),
-        0
+        0,
       );
       metricas.custoTotalRuptura = custoTotal;
       metricas.custoMedioRuptura =
@@ -284,10 +311,6 @@ class MetricasDiariasService {
     if (tipoAuditoria === "presenca") {
       const presencasConfirmadas = auditorias.filter((a) => a.presenca).length;
       metricas.presencasConfirmadas = presencasConfirmadas;
-      metricas.percentualPresenca =
-        auditorias.length > 0
-          ? Math.round((presencasConfirmadas / auditorias.length) * 100)
-          : 0;
     }
 
     return metricas;
@@ -328,7 +351,10 @@ class MetricasDiariasService {
         resultado[metrica.tipoAuditoria] = metrica[metrica.tipoAuditoria];
 
         // Mesclar contadores (últimos dados prevalecem)
-        Object.assign(resultado.ContadorClassesProduto, metrica.ContadorClassesProduto);
+        Object.assign(
+          resultado.ContadorClassesProduto,
+          metrica.ContadorClassesProduto,
+        );
         Object.assign(resultado.ContadorLocais, metrica.ContadorLocais);
       }
 

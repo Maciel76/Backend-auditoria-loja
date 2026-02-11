@@ -13,15 +13,14 @@ const metricasEtiquetasSchema = new mongoose.Schema({
   itensAtualizados: { type: Number, default: 0 },
   itensDesatualizado: { type: Number, default: 0 },
   itensSemEstoque: { type: Number, default: 0 },
-  itensNaopertence: { type: Number, default: 0 },
   percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensLidos) * 100
   percentualDesatualizado: { type: Number, default: 0 }, // % etiquetas desatualizadas = (itens desatualizados / itensLidos) * 100
 
   // Contadores de leitura por classe de produto
   classesLeitura: {
     "A CLASSIFICAR": {
-      total: { type: Number, default: 0 },  // Total itens da classe
-      lidos: { type: Number, default: 0 },  // Quantidade de itens lidos (atualizados + desatualizado + nao_pertence)
+      total: { type: Number, default: 0 }, // Total itens da classe
+      lidos: { type: Number, default: 0 }, // Quantidade de itens lidos (atualizados + desatualizado + nao_pertence)
       percentual: { type: Number, default: 0 }, // Percentual (lidos/total)
     },
     "ALTO GIRO": {
@@ -181,9 +180,6 @@ const metricasRupturasSchema = new mongoose.Schema({
   totalItens: { type: Number, default: 0 },
   itensLidos: { type: Number, default: 0 },
   itensAtualizados: { type: Number, default: 0 },
-  itensDesatualizado: { type: Number, default: 0 },
-  itensSemEstoque: { type: Number, default: 0 },
-  itensNaopertence: { type: Number, default: 0 },
   percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensLidos) * 100
   percentualDesatualizado: { type: Number, default: 0 }, // % rupturas desatualizadas (não aplicável na maioria dos casos)
   custoTotalRuptura: { type: Number, default: 0 },
@@ -192,8 +188,8 @@ const metricasRupturasSchema = new mongoose.Schema({
   // Contadores de leitura por classe de produto
   classesLeitura: {
     "A CLASSIFICAR": {
-      total: { type: Number, default: 0 },  // Total itens da classe
-      lidos: { type: Number, default: 0 },  // Quantidade de itens lidos (atualizados + desatualizado + nao_pertence)
+      total: { type: Number, default: 0 }, // Total itens da classe
+      lidos: { type: Number, default: 0 }, // Quantidade de itens lidos (atualizados + desatualizado + nao_pertence)
       percentual: { type: Number, default: 0 }, // Percentual (lidos/total)
     },
     "ALTO GIRO": {
@@ -351,21 +347,18 @@ const metricasRupturasSchema = new mongoose.Schema({
 
 const metricasPresencasSchema = new mongoose.Schema({
   totalItens: { type: Number, default: 0 },
-  itensLidos: { type: Number, default: 0 },
   itensAtualizados: { type: Number, default: 0 },
-  itensDesatualizado: { type: Number, default: 0 },
   itensSemEstoque: { type: Number, default: 0 },
   itensNaopertence: { type: Number, default: 0 },
-  percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensLidos) * 100
+  percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / totalItens) * 100
   percentualDesatualizado: { type: Number, default: 0 }, // % presencas desatualizadas (não aplicável na maioria dos casos)
   presencasConfirmadas: { type: Number, default: 0 },
-  percentualPresenca: { type: Number, default: 0 },
 
   // Contadores de leitura por classe de produto
   classesLeitura: {
     "A CLASSIFICAR": {
-      total: { type: Number, default: 0 },  // Total itens da classe
-      lidos: { type: Number, default: 0 },  // Quantidade de itens lidos (atualizados + desatualizado + nao_pertence)
+      total: { type: Number, default: 0 }, // Total itens da classe
+      lidos: { type: Number, default: 0 }, // Quantidade de itens lidos (atualizados + desatualizado + nao_pertence)
       percentual: { type: Number, default: 0 }, // Percentual (lidos/total)
     },
     "ALTO GIRO": {
@@ -521,7 +514,6 @@ const metricasPresencasSchema = new mongoose.Schema({
   },
 });
 
-
 const metricasSchema = new mongoose.Schema({
   // Data da última atualização
   data: {
@@ -602,7 +594,7 @@ const userDailyMetricsSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Índices compostos para queries otimizadas
@@ -617,7 +609,7 @@ userDailyMetricsSchema.index({ loja: 1, usuarioId: 1 }, { unique: true });
 // Métodos estáticos ATUALIZADOS
 userDailyMetricsSchema.statics.obterMetricasAtuais = function (
   lojaId,
-  usuarioId
+  usuarioId,
 ) {
   return this.findOne({
     loja: lojaId,
@@ -663,16 +655,18 @@ userDailyMetricsSchema.methods.calcularPontuacaoTotal = function () {
   return Math.round(pontuacao);
 };
 
-userDailyMetricsSchema.methods.calcularContadorClassesProduto = function (auditorias) {
+userDailyMetricsSchema.methods.calcularContadorClassesProduto = function (
+  auditorias,
+) {
   const contadores = {
     "A CLASSIFICAR": 0,
     "ALTO GIRO": 0,
-    "BAZAR": 0,
-    "DIVERSOS": 0,
-    "DPH": 0,
-    "FLV": 0,
+    BAZAR: 0,
+    DIVERSOS: 0,
+    DPH: 0,
+    FLV: 0,
     "LATICINIOS 1": 0,
-    "LIQUIDA": 0,
+    LIQUIDA: 0,
     "PERECIVEL 1": 0,
     "PERECIVEL 2": 0,
     "PERECIVEL 2 B": 0,
@@ -775,7 +769,7 @@ userDailyMetricsSchema.methods.atualizarTotais = function () {
   this.metricas.totais.itensLidos =
     (this.metricas.etiquetas?.itensLidos || 0) +
     (this.metricas.rupturas?.itensLidos || 0) +
-    (this.metricas.presencas?.itensLidos || 0);
+    (this.metricas.presencas?.totalItens || 0);
 
   this.metricas.totais.itensAtualizados =
     (this.metricas.etiquetas?.itensAtualizados || 0) +
@@ -786,7 +780,7 @@ userDailyMetricsSchema.methods.atualizarTotais = function () {
     this.metricas.totais.percentualConclusaoGeral =
       (this.metricas.totais.itensAtualizados /
         this.metricas.totais.totalItens) *
-        100;
+      100;
   }
 
   this.metricas.totais.pontuacaoTotal = this.calcularPontuacaoTotal();

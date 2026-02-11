@@ -65,20 +65,43 @@ export function normalizarSituacao(situacao) {
 
   const situacaoLower = situacao.toLowerCase().trim();
   const mapeamento = {
+    // Atualizado
     atualizado: "Atualizado",
     atualizada: "Atualizado",
     ok: "Atualizado",
+    concluído: "Atualizado",
+    concluido: "Atualizado",
+
+    // Não lido
     "não lido": "Não lido",
     "nao lido": "Não lido",
     pendente: "Não lido",
+
+    // Desatualizado
+    desatualizado: "Desatualizado",
+    desatualizada: "Desatualizado",
+
+    // Sem estoque / Lido sem estoque (etiquetas)
     "lido sem estoque": "Lido sem estoque",
     "sem estoque": "Lido sem estoque",
-    "com problema": "Com problema",
-    problema: "Com problema",
+
+    // Presenças - situações específicas
     "com presença e com estoque": "Atualizado",
+    "com presença e sem estoque": "Com Presença e sem Estoque",
     "sem presença e com estoque": "Com problema",
+    "sem presença e sem estoque": "Com problema",
     "com presença": "Atualizado",
     "sem presença": "Com problema",
+    "lido não pertence": "Lido não pertence",
+    "lido nao pertence": "Lido não pertence",
+
+    // Não pertence (etiquetas genérico)
+    "não pertence": "Não pertence",
+    "nao pertence": "Não pertence",
+
+    // Com problema
+    "com problema": "Com problema",
+    problema: "Com problema",
   };
 
   return mapeamento[situacaoLower] || situacao;

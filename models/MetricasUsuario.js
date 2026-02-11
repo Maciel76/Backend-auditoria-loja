@@ -94,14 +94,6 @@ const metricasUsuarioSchema = new mongoose.Schema(
           return value == null || isNaN(numValue) ? 0 : numValue;
         },
       },
-      itensNaopertence: {
-        type: Number,
-        default: 0,
-        set: function (value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        },
-      },
       percentualConclusao: {
         type: Number,
         default: 0,
@@ -130,30 +122,6 @@ const metricasUsuarioSchema = new mongoose.Schema(
         },
       },
       itensAtualizados: {
-        type: Number,
-        default: 0,
-        set: function (value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        },
-      },
-      itensDesatualizado: {
-        type: Number,
-        default: 0,
-        set: function (value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        },
-      },
-      itensSemEstoque: {
-        type: Number,
-        default: 0,
-        set: function (value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        },
-      },
-      itensNaopertence: {
         type: Number,
         default: 0,
         set: function (value) {
@@ -196,23 +164,7 @@ const metricasUsuarioSchema = new mongoose.Schema(
           return value == null || isNaN(numValue) ? 0 : numValue;
         },
       },
-      itensLidos: {
-        type: Number,
-        default: 0,
-        set: function (value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        },
-      },
       itensAtualizados: {
-        type: Number,
-        default: 0,
-        set: function (value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        },
-      },
-      itensDesatualizado: {
         type: Number,
         default: 0,
         set: function (value) {
@@ -245,14 +197,6 @@ const metricasUsuarioSchema = new mongoose.Schema(
         },
       }, // % em relação ao total da loja
       presencasConfirmadas: {
-        type: Number,
-        default: 0,
-        set: function (value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        },
-      },
-      percentualPresenca: {
         type: Number,
         default: 0,
         set: function (value) {
@@ -1750,7 +1694,7 @@ metricasUsuarioSchema.methods.atualizarTotais = function () {
   this.totais.itensLidos =
     this.etiquetas.itensLidos +
     this.rupturas.itensLidos +
-    this.presencas.itensLidos;
+    (this.presencas.totalItens || 0);
   this.totais.itensAtualizados =
     this.etiquetas.itensAtualizados +
     this.rupturas.itensAtualizados +
@@ -2155,8 +2099,6 @@ metricasUsuarioSchema.pre("save", function (next) {
       Number(this.etiquetas.itensDesatualizado) || 0;
     this.etiquetas.itensSemEstoque =
       Number(this.etiquetas.itensSemEstoque) || 0;
-    this.etiquetas.itensNaopertence =
-      Number(this.etiquetas.itensNaopertence) || 0;
     this.etiquetas.percentualConclusao =
       Number(this.etiquetas.percentualConclusao) || 0;
   }
@@ -2166,11 +2108,6 @@ metricasUsuarioSchema.pre("save", function (next) {
     this.rupturas.itensLidos = Number(this.rupturas.itensLidos) || 0;
     this.rupturas.itensAtualizados =
       Number(this.rupturas.itensAtualizados) || 0;
-    this.rupturas.itensDesatualizado =
-      Number(this.rupturas.itensDesatualizado) || 0;
-    this.rupturas.itensSemEstoque = Number(this.rupturas.itensSemEstoque) || 0;
-    this.rupturas.itensNaopertence =
-      Number(this.rupturas.itensNaopertence) || 0;
     this.rupturas.percentualConclusao =
       Number(this.rupturas.percentualConclusao) || 0;
     this.rupturas.custoTotalRuptura =
@@ -2181,11 +2118,8 @@ metricasUsuarioSchema.pre("save", function (next) {
 
   if (this.presencas) {
     this.presencas.totalItens = Number(this.presencas.totalItens) || 0;
-    this.presencas.itensLidos = Number(this.presencas.itensLidos) || 0;
     this.presencas.itensAtualizados =
       Number(this.presencas.itensAtualizados) || 0;
-    this.presencas.itensDesatualizado =
-      Number(this.presencas.itensDesatualizado) || 0;
     this.presencas.itensSemEstoque =
       Number(this.presencas.itensSemEstoque) || 0;
     this.presencas.itensNaopertence =
@@ -2194,8 +2128,6 @@ metricasUsuarioSchema.pre("save", function (next) {
       Number(this.presencas.percentualConclusao) || 0;
     this.presencas.presencasConfirmadas =
       Number(this.presencas.presencasConfirmadas) || 0;
-    this.presencas.percentualPresenca =
-      Number(this.presencas.percentualPresenca) || 0;
   }
 
   next();
