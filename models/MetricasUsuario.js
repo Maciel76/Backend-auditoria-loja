@@ -94,14 +94,14 @@ const metricasUsuarioSchema = new mongoose.Schema(
           return value == null || isNaN(numValue) ? 0 : numValue;
         },
       },
-      percentualConclusao: {
+      itensNaopertence: {
         type: Number,
         default: 0,
         set: function (value) {
           const numValue = Number(value);
           return value == null || isNaN(numValue) ? 0 : numValue;
         },
-      }, // % em relação ao total da loja
+      },
     },
 
     rupturas: {
@@ -129,14 +129,6 @@ const metricasUsuarioSchema = new mongoose.Schema(
           return value == null || isNaN(numValue) ? 0 : numValue;
         },
       },
-      percentualConclusao: {
-        type: Number,
-        default: 0,
-        set: function (value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        },
-      }, // % em relação ao total da loja
       custoTotalRuptura: {
         type: Number,
         default: 0,
@@ -188,14 +180,6 @@ const metricasUsuarioSchema = new mongoose.Schema(
           return value == null || isNaN(numValue) ? 0 : numValue;
         },
       },
-      percentualConclusao: {
-        type: Number,
-        default: 0,
-        set: function (value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        },
-      }, // % em relação ao total da loja
       presencasConfirmadas: {
         type: Number,
         default: 0,
@@ -2099,8 +2083,8 @@ metricasUsuarioSchema.pre("save", function (next) {
       Number(this.etiquetas.itensDesatualizado) || 0;
     this.etiquetas.itensSemEstoque =
       Number(this.etiquetas.itensSemEstoque) || 0;
-    this.etiquetas.percentualConclusao =
-      Number(this.etiquetas.percentualConclusao) || 0;
+    this.etiquetas.itensNaopertence =
+      Number(this.etiquetas.itensNaopertence) || 0;
   }
 
   if (this.rupturas) {
@@ -2108,8 +2092,6 @@ metricasUsuarioSchema.pre("save", function (next) {
     this.rupturas.itensLidos = Number(this.rupturas.itensLidos) || 0;
     this.rupturas.itensAtualizados =
       Number(this.rupturas.itensAtualizados) || 0;
-    this.rupturas.percentualConclusao =
-      Number(this.rupturas.percentualConclusao) || 0;
     this.rupturas.custoTotalRuptura =
       Number(this.rupturas.custoTotalRuptura) || 0;
     this.rupturas.custoMedioRuptura =
@@ -2124,8 +2106,6 @@ metricasUsuarioSchema.pre("save", function (next) {
       Number(this.presencas.itensSemEstoque) || 0;
     this.presencas.itensNaopertence =
       Number(this.presencas.itensNaopertence) || 0;
-    this.presencas.percentualConclusao =
-      Number(this.presencas.percentualConclusao) || 0;
     this.presencas.presencasConfirmadas =
       Number(this.presencas.presencasConfirmadas) || 0;
   }

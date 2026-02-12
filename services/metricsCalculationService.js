@@ -130,14 +130,13 @@ class MetricsCalculationService {
             itensAtualizados: 0,
             itensDesatualizado: 0,
             itensSemEstoque: 0,
-            percentualConclusao: 0
+            itensNaopertence: 0
           },
           rupturas: {
             totalItens: 0,
             itensLidos: 0,
             itensAtualizados: 0,
             custoTotal: 0,
-            percentualConclusao: 0,
             custoTotalRuptura: 0,
             custoMedioRuptura: 0
           },
@@ -146,8 +145,7 @@ class MetricsCalculationService {
             itensAtualizados: 0,
             presencasConfirmadas: 0,
             itensSemEstoque: 0,
-            itensNaopertence: 0,
-            percentualConclusao: 0
+            itensNaopertence: 0
           },
           // NOVOS CONTADORES
           ContadorClassesProduto: new Map([
@@ -253,6 +251,10 @@ class MetricsCalculationService {
           case "Sem estoque":
             dadosUsuario.etiquetas.itensSemEstoque++;
             break;
+          case "Lido não pertence":
+          case "Não pertence":
+            dadosUsuario.etiquetas.itensNaopertence++;
+            break;
         }
 
       } else if (auditoria.tipo === "ruptura") {
@@ -325,19 +327,12 @@ class MetricsCalculationService {
           presencas: { itensLidos: 0 }
         };
 
-        // CALCULAR PERCENTUAIS EM RELAÇÃO AO TOTAL DA LOJA
         const etiquetas = {
           ...dados.etiquetas,
-          percentualConclusao: totaisDaLoja.etiquetas.itensLidos > 0
-            ? Math.round((dados.etiquetas.itensLidos / totaisDaLoja.etiquetas.itensLidos) * 100)
-            : 0,
         };
 
         const rupturas = {
           ...dados.rupturas,
-          percentualConclusao: totaisDaLoja.rupturas.itensLidos > 0
-            ? Math.round((dados.rupturas.itensLidos / totaisDaLoja.rupturas.itensLidos) * 100)
-            : 0,
           custoTotalRuptura: dados.rupturas.custoTotal,
           custoMedioRuptura: dados.rupturas.totalItens > 0
             ? dados.rupturas.custoTotal / dados.rupturas.totalItens
@@ -346,9 +341,6 @@ class MetricsCalculationService {
 
         const presencas = {
           ...dados.presencas,
-          percentualConclusao: totaisDaLoja.presencas.itensLidos > 0
-            ? Math.round((dados.presencas.itensLidos / totaisDaLoja.presencas.itensLidos) * 100)
-            : 0,
         };
 
         // Buscar ou criar métricas do usuário - PERÍODO COMPLETO

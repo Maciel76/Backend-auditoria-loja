@@ -233,7 +233,6 @@ class MetricasDiariasService {
       itensDesatualizado: 0,
       itensSemEstoque: 0,
       itensNaopertence: 0,
-      percentualConclusao: 0,
     };
 
     // Contagem simples e direta
@@ -266,6 +265,10 @@ class MetricasDiariasService {
           case "Sem estoque":
             metricas.itensSemEstoque++;
             break;
+          case "Lido não pertence":
+          case "Não pertence":
+            metricas.itensNaopertence++;
+            break;
         }
       } else if (tipoAuditoria === "ruptura") {
         switch (auditoria.situacao) {
@@ -289,13 +292,6 @@ class MetricasDiariasService {
     }
 
     console.log(`📊 DEBUG: Métricas calculadas:`, metricas);
-
-    // Calcular percentual em relação à loja
-    if (totaisLoja.totalItensLidos > 0) {
-      metricas.percentualConclusao = Math.round(
-        (metricas.itensLidos / totaisLoja.totalItensLidos) * 100,
-      );
-    }
 
     // Adicionar campos específicos por tipo
     if (tipoAuditoria === "ruptura") {

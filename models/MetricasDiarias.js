@@ -47,14 +47,13 @@ const metricasDiariasSchema = new mongoose.Schema(
       itensAtualizados: { type: Number, default: 0 },
       itensDesatualizado: { type: Number, default: 0 },
       itensSemEstoque: { type: Number, default: 0 },
-      percentualConclusao: { type: Number, default: 0 }, // % em relação ao total da loja
+      itensNaopertence: { type: Number, default: 0 },
     },
 
     rupturas: {
       totalItens: { type: Number, default: 0 },
       itensLidos: { type: Number, default: 0 },
       itensAtualizados: { type: Number, default: 0 },
-      percentualConclusao: { type: Number, default: 0 }, // % em relação ao total da loja
       custoTotalRuptura: { type: Number, default: 0 },
       custoMedioRuptura: { type: Number, default: 0 },
     },
@@ -64,7 +63,6 @@ const metricasDiariasSchema = new mongoose.Schema(
       itensAtualizados: { type: Number, default: 0 },
       itensSemEstoque: { type: Number, default: 0 },
       itensNaopertence: { type: Number, default: 0 },
-      percentualConclusao: { type: Number, default: 0 }, // % em relação ao total da loja
       presencasConfirmadas: { type: Number, default: 0 },
     },
 

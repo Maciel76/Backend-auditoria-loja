@@ -13,7 +13,7 @@ const metricasEtiquetasSchema = new mongoose.Schema({
   itensAtualizados: { type: Number, default: 0 },
   itensDesatualizado: { type: Number, default: 0 },
   itensSemEstoque: { type: Number, default: 0 },
-  percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensLidos) * 100
+  itensNaopertence: { type: Number, default: 0 },
   percentualDesatualizado: { type: Number, default: 0 }, // % etiquetas desatualizadas = (itens desatualizados / itensLidos) * 100
 
   // Contadores de leitura por classe de produto
@@ -180,7 +180,6 @@ const metricasRupturasSchema = new mongoose.Schema({
   totalItens: { type: Number, default: 0 },
   itensLidos: { type: Number, default: 0 },
   itensAtualizados: { type: Number, default: 0 },
-  percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / itensLidos) * 100
   percentualDesatualizado: { type: Number, default: 0 }, // % rupturas desatualizadas (não aplicável na maioria dos casos)
   custoTotalRuptura: { type: Number, default: 0 },
   custoMedioRuptura: { type: Number, default: 0 },
@@ -350,7 +349,6 @@ const metricasPresencasSchema = new mongoose.Schema({
   itensAtualizados: { type: Number, default: 0 },
   itensSemEstoque: { type: Number, default: 0 },
   itensNaopertence: { type: Number, default: 0 },
-  percentualConclusao: { type: Number, default: 0 }, // % de conclusão = (itensAtualizados / totalItens) * 100
   percentualDesatualizado: { type: Number, default: 0 }, // % presencas desatualizadas (não aplicável na maioria dos casos)
   presencasConfirmadas: { type: Number, default: 0 },
 
