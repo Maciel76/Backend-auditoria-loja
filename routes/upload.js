@@ -2126,8 +2126,6 @@ router.get(
             },
             eficiencia: usuario.totais?.percentualConclusaoGeral || 0,
             pontuacao: usuario.totais?.pontuacaoTotal || 0,
-            posicaoLoja: usuario.ranking?.posicaoLoja || 0,
-            posicaoGeral: usuario.ranking?.posicaoGeral || 0,
             totalAuditorias: usuario.contadoresAuditorias?.totalGeral || 0,
           });
         }

@@ -325,78 +325,6 @@ const metricasUsuarioSchema = new mongoose.Schema(
       },
     },
 
-    // Desempenho e ranking
-    ranking: {
-      posicaoLoja: {
-        type: Number,
-        default: 0,
-        set: function (value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        },
-      },
-      posicaoGeral: {
-        type: Number,
-        default: 0,
-        set: function (value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        },
-      },
-      pontosPorItem: {
-        type: Number,
-        default: 0,
-        set: function (value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        },
-      },
-      bonusConsistencia: {
-        type: Number,
-        default: 0,
-        set: function (value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        },
-      },
-    },
-
-    // Análise temporal
-    tendencias: {
-      melhoriaPercentual: {
-        type: Number,
-        default: 0,
-        set: function (value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        },
-      },
-      diasAtivos: {
-        type: Number,
-        default: 0,
-        set: function (value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        },
-      },
-      mediaItensPerDia: {
-        type: Number,
-        default: 0,
-        set: function (value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        },
-      },
-      regularidade: {
-        type: Number,
-        default: 0,
-        set: function (value) {
-          const numValue = Number(value);
-          return value == null || isNaN(numValue) ? 0 : numValue;
-        },
-      },
-    },
-
     // Contadores de auditorias por tipo
     contadoresAuditorias: {
       totalEtiquetas: {
@@ -1177,9 +1105,12 @@ metricasUsuarioSchema.index({ loja: 1, dataInicio: -1 });
 metricasUsuarioSchema.index({ loja: 1, usuarioId: 1 });
 metricasUsuarioSchema.index({
   dataInicio: -1,
-  "totais.pontuacaoTotal": -1,
+  "totaisAcumulados.itensLidosTotal": -1,
 });
-metricasUsuarioSchema.index({ loja: 1, "ranking.posicaoLoja": 1 });
+metricasUsuarioSchema.index({
+  loja: 1,
+  "totaisAcumulados.itensLidosTotal": -1,
+});
 
 // Índice único para evitar duplicatas - REMOVER PERÍODO
 metricasUsuarioSchema.index(
@@ -1198,7 +1129,7 @@ metricasUsuarioSchema.statics.obterRankingLoja = function (
     dataInicio: { $gte: dataInicio },
     dataFim: { $lte: dataFim },
   })
-    .sort({ "totais.pontuacaoTotal": -1 })
+    .sort({ "totaisAcumulados.itensLidosTotal": -1 })
     .limit(50);
 };
 
@@ -1690,6 +1621,15 @@ metricasUsuarioSchema.methods.atualizarTotais = function () {
     );
   }
 
+  // Atualizar totais acumulados automaticamente
+  this.totaisAcumulados.itensLidosEtiquetas = this.etiquetas.itensLidos || 0;
+  this.totaisAcumulados.itensLidosRupturas = this.rupturas.itensLidos || 0;
+  this.totaisAcumulados.itensLidosPresencas = this.presencas.totalItens || 0;
+  this.totaisAcumulados.itensLidosTotal =
+    (this.totaisAcumulados.itensLidosEtiquetas || 0) +
+    (this.totaisAcumulados.itensLidosRupturas || 0) +
+    (this.totaisAcumulados.itensLidosPresencas || 0);
+
   this.calcularPontuacaoTotal();
   this.ultimaAtualizacao = new Date();
 
@@ -1986,24 +1926,6 @@ metricasUsuarioSchema.pre("save", function (next) {
     this.totais.percentualConclusaoGeral =
       Number(this.totais.percentualConclusaoGeral) || 0;
     this.totais.pontuacaoTotal = Number(this.totais.pontuacaoTotal) || 0;
-  }
-
-  // Ensure other numeric fields are numbers
-  if (this.tendencias) {
-    this.tendencias.melhoriaPercentual =
-      Number(this.tendencias.melhoriaPercentual) || 0;
-    this.tendencias.diasAtivos = Number(this.tendencias.diasAtivos) || 0;
-    this.tendencias.mediaItensPerDia =
-      Number(this.tendencias.mediaItensPerDia) || 0;
-    this.tendencias.regularidade = Number(this.tendencias.regularidade) || 0;
-  }
-
-  if (this.ranking) {
-    this.ranking.posicaoLoja = Number(this.ranking.posicaoLoja) || 0;
-    this.ranking.posicaoGeral = Number(this.ranking.posicaoGeral) || 0;
-    this.ranking.pontosPorItem = Number(this.ranking.pontosPorItem) || 0;
-    this.ranking.bonusConsistencia =
-      Number(this.ranking.bonusConsistencia) || 0;
   }
 
   if (this.historicoRanking) {

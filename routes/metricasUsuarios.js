@@ -1,8 +1,8 @@
-import express from 'express';
-import metricasUsuariosService from '../services/metricasUsuariosService.js';
-import MetricasUsuario from '../models/MetricasUsuario.js';
-import Loja from '../models/Loja.js';
-import User from '../models/User.js';
+import express from "express";
+import metricasUsuariosService from "../services/metricasUsuariosService.js";
+import MetricasUsuario from "../models/MetricasUsuario.js";
+import Loja from "../models/Loja.js";
+import User from "../models/User.js";
 
 const router = express.Router();
 
@@ -15,21 +15,21 @@ const router = express.Router();
  * Headers:
  *   - x-loja: código da loja (obrigatório se todos !== 'true')
  */
-router.get('/metricas/usuarios', async (req, res) => {
+router.get("/metricas/usuarios", async (req, res) => {
   try {
-    const lojaCodigo = req.headers['x-loja'];
+    const lojaCodigo = req.headers["x-loja"];
     const { dataAuditoria, todos } = req.query;
 
     // Validação: se não for "todos", precisa do código da loja
-    if (!lojaCodigo && todos !== 'true') {
+    if (!lojaCodigo && todos !== "true") {
       return res.status(400).json({
-        erro: "Código da loja é obrigatório ou use ?todos=true"
+        erro: "Código da loja é obrigatório ou use ?todos=true",
       });
     }
 
     let metricas;
 
-    if (todos === 'true') {
+    if (todos === "true") {
       // Buscar métricas de todas as lojas
       const filtros = {};
       if (dataAuditoria) {
@@ -38,7 +38,6 @@ router.get('/metricas/usuarios', async (req, res) => {
       }
 
       metricas = await metricasUsuariosService.obterTodasMetricas(filtros);
-
     } else {
       // Buscar métricas de uma loja específica
       const loja = await Loja.findOne({ codigo: lojaCodigo });
@@ -52,83 +51,101 @@ router.get('/metricas/usuarios', async (req, res) => {
         filtros.dataFim = dataAuditoria;
       }
 
-      metricas = await metricasUsuariosService.obterMetricasLoja(loja._id, filtros);
+      metricas = await metricasUsuariosService.obterMetricasLoja(
+        loja._id,
+        filtros,
+      );
     }
 
     // Filtrar apenas usuários válidos com dados úteis
-    const usuariosValidos = metricas.filter(metrica => {
-      const isValid = metrica.usuarioNome &&
+    const usuariosValidos = metricas.filter((metrica) => {
+      const isValid =
+        metrica.usuarioNome &&
         metrica.usuarioId &&
         !metrica.usuarioNome.toLowerCase().includes("produto não auditado") &&
-        !metrica.usuarioNome.toLowerCase().includes("usuário não identificado") &&
+        !metrica.usuarioNome
+          .toLowerCase()
+          .includes("usuário não identificado") &&
         !metrica.usuarioId.toLowerCase().includes("produto não auditado") &&
         !metrica.usuarioId.toLowerCase().includes("usuário não identificado") &&
-        (metrica.totaisAcumulados?.itensLidosTotal > 0 || metrica.totais?.itensAtualizados > 0);
+        (metrica.totaisAcumulados?.itensLidosTotal > 0 ||
+          metrica.totais?.itensAtualizados > 0);
 
       return isValid;
     });
 
     // Buscar os dados de foto para todos os usuários de uma vez para melhorar performance
-    const idsUsuarios = [...new Set(usuariosValidos.map(m => m.usuarioId))];
+    const idsUsuarios = [...new Set(usuariosValidos.map((m) => m.usuarioId))];
     const usuariosDocs = await User.find({ id: { $in: idsUsuarios } });
-    const usuariosMap = new Map(usuariosDocs.map(u => [u.id, u]));
+    const usuariosMap = new Map(usuariosDocs.map((u) => [u.id, u]));
 
     // Mapear os dados para o formato esperado pelo frontend
-    const usuarios = usuariosValidos.map(metrica => {
+    const usuarios = usuariosValidos.map((metrica) => {
       const usuarioDoc = usuariosMap.get(metrica.usuarioId);
 
       return {
         id: metrica.usuarioId,
         nome: metrica.usuarioNome,
-        iniciais: metrica.usuarioNome ?
-          metrica.usuarioNome.split(' ')
-            .map(part => part[0])
-            .join('')
-            .toUpperCase()
-            .substring(0, 2) : '??',
-        contador: metrica.totaisAcumulados?.itensLidosTotal || metrica.totais?.itensAtualizados || 0,
+        iniciais: metrica.usuarioNome
+          ? metrica.usuarioNome
+              .split(" ")
+              .map((part) => part[0])
+              .join("")
+              .toUpperCase()
+              .substring(0, 2)
+          : "??",
+        contador:
+          metrica.totaisAcumulados?.itensLidosTotal ||
+          metrica.totais?.itensAtualizados ||
+          0,
         totalAuditorias: metrica.contadoresAuditorias?.totalGeral || 0,
-        loja: metrica.loja?.codigo || lojaCodigo || 'N/A',
-        lojaCompleta: metrica.loja?.nome || metrica.lojaNome || 'Nome da Loja',
+        loja: metrica.loja?.codigo || lojaCodigo || "N/A",
+        lojaCompleta: metrica.loja?.nome || metrica.lojaNome || "Nome da Loja",
         foto: usuarioDoc?.foto || metrica.foto || null,
         ultimaAuditoria: metrica.ultimaAtualizacao,
         conquistas: {
-          totalConquistas: metrica.achievements?.stats?.totalUnlockedAchievements || 0,
+          totalConquistas:
+            metrica.achievements?.stats?.totalUnlockedAchievements || 0,
           nivel: metrica.achievements?.level?.current || 1,
-          titulo: metrica.achievements?.level?.title || 'Novato',
-          xpTotal: metrica.achievements?.xp?.total || 0
+          titulo: metrica.achievements?.level?.title || "Novato",
+          xpTotal: metrica.achievements?.xp?.total || 0,
         },
         desempenho: {
-          posicaoLoja: metrica.ranking?.posicaoLoja || 0,
-          posicaoGeral: metrica.ranking?.posicaoGeral || 0,
-          pontuacaoTotal: metrica.totais?.pontuacaoTotal || 0
+          pontuacaoTotal: metrica.totais?.pontuacaoTotal || 0,
         },
         auditoriasPorTipo: {
           etiquetas: metrica.contadoresAuditorias?.totalEtiquetas || 0,
           rupturas: metrica.contadoresAuditorias?.totalRupturas || 0,
-          presencas: metrica.contadoresAuditorias?.totalPresencas || 0
+          presencas: metrica.contadoresAuditorias?.totalPresencas || 0,
         },
         metricas: {
           etiquetas: metrica.etiquetas,
           rupturas: metrica.rupturas,
-          presencas: metrica.presencas
-        }
+          presencas: metrica.presencas,
+        },
       };
     });
 
     const totalColaboradoresGeral = usuarios.length;
 
     // Obter estatísticas
-    const mediaItensPorUsuario = usuarios.length > 0
-      ? Math.round(usuarios.reduce((sum, u) => sum + u.contador, 0) / usuarios.length)
-      : 0;
+    const mediaItensPorUsuario =
+      usuarios.length > 0
+        ? Math.round(
+            usuarios.reduce((sum, u) => sum + u.contador, 0) / usuarios.length,
+          )
+        : 0;
 
     // Encontrar melhor colaborador
-    const melhorColaborador = usuarios.length > 0
-      ? usuarios.reduce((prev, current) =>
-          (prev.desempenho?.pontuacaoTotal || 0) > (current.desempenho?.pontuacaoTotal || 0) ? prev : current
-        )
-      : null;
+    const melhorColaborador =
+      usuarios.length > 0
+        ? usuarios.reduce((prev, current) =>
+            (prev.desempenho?.pontuacaoTotal || 0) >
+            (current.desempenho?.pontuacaoTotal || 0)
+              ? prev
+              : current,
+          )
+        : null;
 
     res.json({
       usuarios,
@@ -138,15 +155,17 @@ router.get('/metricas/usuarios', async (req, res) => {
       estatisticas: {
         totalUsuarios: usuarios.length,
         mediaItensPorUsuario,
-        melhorColaborador
-      }
+        melhorColaborador,
+      },
     });
-
   } catch (error) {
-    console.error("❌ [MetricasUsuarios] Erro ao buscar métricas de usuários:", error);
+    console.error(
+      "❌ [MetricasUsuarios] Erro ao buscar métricas de usuários:",
+      error,
+    );
     res.status(500).json({
       erro: "Erro interno do servidor",
-      detalhes: error.message
+      detalhes: error.message,
     });
   }
 });
@@ -157,9 +176,9 @@ router.get('/metricas/usuarios', async (req, res) => {
  * Headers:
  *   - x-loja: código da loja (obrigatório)
  */
-router.get('/metricas/usuarios/:usuarioId', async (req, res) => {
+router.get("/metricas/usuarios/:usuarioId", async (req, res) => {
   try {
-    const lojaCodigo = req.headers['x-loja'];
+    const lojaCodigo = req.headers["x-loja"];
     const { usuarioId } = req.params;
 
     if (!lojaCodigo) {
@@ -173,10 +192,15 @@ router.get('/metricas/usuarios/:usuarioId', async (req, res) => {
     }
 
     // Buscar métricas do usuário
-    const metricas = await metricasUsuariosService.obterMetricasUsuario(loja._id, usuarioId);
+    const metricas = await metricasUsuariosService.obterMetricasUsuario(
+      loja._id,
+      usuarioId,
+    );
 
     if (!metricas) {
-      return res.status(404).json({ erro: "Métricas não encontradas para este usuário" });
+      return res
+        .status(404)
+        .json({ erro: "Métricas não encontradas para este usuário" });
     }
 
     // Formatar resposta
@@ -187,36 +211,36 @@ router.get('/metricas/usuarios/:usuarioId', async (req, res) => {
         codigo: metricas.loja?.codigo,
         nome: metricas.loja?.nome || metricas.lojaNome,
         endereco: metricas.loja?.endereco,
-        imagem: metricas.loja?.imagem
+        imagem: metricas.loja?.imagem,
       },
       periodo: {
         dataInicio: metricas.dataInicio,
-        dataFim: metricas.dataFim
+        dataFim: metricas.dataFim,
       },
       metricas: {
         etiquetas: metricas.etiquetas,
         rupturas: metricas.rupturas,
-        presencas: metricas.presencas
+        presencas: metricas.presencas,
       },
       totais: metricas.totais,
       totaisAcumulados: metricas.totaisAcumulados,
       contadores: metricas.contadoresAuditorias,
-      ranking: metricas.ranking,
-      tendencias: metricas.tendencias,
       historicoRanking: metricas.historicoRanking,
       achievements: metricas.achievements,
       ContadorClassesProduto: metricas.ContadorClassesProduto,
       ContadorLocais: metricas.ContadorLocais,
-      ultimaAtualizacao: metricas.ultimaAtualizacao
+      ultimaAtualizacao: metricas.ultimaAtualizacao,
     };
 
     res.json(usuario);
-
   } catch (error) {
-    console.error("❌ [MetricasUsuarios] Erro ao buscar métricas do usuário:", error);
+    console.error(
+      "❌ [MetricasUsuarios] Erro ao buscar métricas do usuário:",
+      error,
+    );
     res.status(500).json({
       erro: "Erro interno do servidor",
-      detalhes: error.message
+      detalhes: error.message,
     });
   }
 });
@@ -226,23 +250,22 @@ router.get('/metricas/usuarios/:usuarioId', async (req, res) => {
  * Recalcula métricas de todos os usuários (período completo)
  * Endpoint administrativo para recalcular métricas
  */
-router.post('/metricas/usuarios/calcular', async (req, res) => {
+router.post("/metricas/usuarios/calcular", async (req, res) => {
   try {
-    console.log('🔄 [MetricasUsuarios] Iniciando recálculo de métricas...');
+    console.log("🔄 [MetricasUsuarios] Iniciando recálculo de métricas...");
 
     const resultado = await metricasUsuariosService.calcularMetricasUsuarios();
 
     res.json({
       sucesso: true,
       mensagem: "Métricas de usuários recalculadas com sucesso",
-      ...resultado
+      ...resultado,
     });
-
   } catch (error) {
     console.error("❌ [MetricasUsuarios] Erro ao recalcular métricas:", error);
     res.status(500).json({
       erro: "Erro ao recalcular métricas",
-      detalhes: error.message
+      detalhes: error.message,
     });
   }
 });
@@ -253,13 +276,13 @@ router.post('/metricas/usuarios/calcular', async (req, res) => {
  * Headers:
  *   - x-loja: código da loja (obrigatório)
  */
-router.get('/datas-auditoria', async (req, res) => {
+router.get("/datas-auditoria", async (req, res) => {
   try {
-    const lojaCodigo = req.headers['x-loja'];
+    const lojaCodigo = req.headers["x-loja"];
 
     if (!lojaCodigo) {
       return res.status(400).json({
-        erro: "Código da loja é obrigatório"
+        erro: "Código da loja é obrigatório",
       });
     }
 
@@ -273,26 +296,32 @@ router.get('/datas-auditoria', async (req, res) => {
     const metricas = await metricasUsuariosService.obterMetricasLoja(loja._id);
 
     // Extrair datas únicas
-    const datasUnicas = [...new Set(
-      metricas.map(m => new Date(m.dataInicio).toISOString().split('T')[0])
-    )];
+    const datasUnicas = [
+      ...new Set(
+        metricas.map((m) => new Date(m.dataInicio).toISOString().split("T")[0]),
+      ),
+    ];
 
-    const datasFormatadas = datasUnicas.map(data => {
-      const dataObj = new Date(data);
-      return {
-        data: data,
-        dataFormatada: dataObj.toLocaleDateString('pt-BR'),
-        timestamp: dataObj.getTime()
-      };
-    }).sort((a, b) => b.timestamp - a.timestamp); // Mais recentes primeiro
+    const datasFormatadas = datasUnicas
+      .map((data) => {
+        const dataObj = new Date(data);
+        return {
+          data: data,
+          dataFormatada: dataObj.toLocaleDateString("pt-BR"),
+          timestamp: dataObj.getTime(),
+        };
+      })
+      .sort((a, b) => b.timestamp - a.timestamp); // Mais recentes primeiro
 
     res.json(datasFormatadas);
-
   } catch (error) {
-    console.error("❌ [MetricasUsuarios] Erro ao buscar datas de auditoria:", error);
+    console.error(
+      "❌ [MetricasUsuarios] Erro ao buscar datas de auditoria:",
+      error,
+    );
     res.status(500).json({
       erro: "Erro interno do servidor",
-      detalhes: error.message
+      detalhes: error.message,
     });
   }
 });
@@ -303,9 +332,9 @@ router.get('/datas-auditoria', async (req, res) => {
  * Headers:
  *   - x-loja: código da loja (obrigatório)
  */
-router.get('/metricas/conquistas/:usuarioId', async (req, res) => {
+router.get("/metricas/conquistas/:usuarioId", async (req, res) => {
   try {
-    const lojaCodigo = req.headers['x-loja'];
+    const lojaCodigo = req.headers["x-loja"];
     const { usuarioId } = req.params;
 
     if (!lojaCodigo) {
@@ -321,11 +350,13 @@ router.get('/metricas/conquistas/:usuarioId', async (req, res) => {
     // Buscar métricas do usuário (que contém as conquistas)
     const metricasUsuario = await MetricasUsuario.findOne({
       usuarioId: usuarioId,
-      loja: loja._id
+      loja: loja._id,
     });
 
     if (!metricasUsuario) {
-      return res.status(404).json({ erro: "Métricas do usuário não encontradas" });
+      return res
+        .status(404)
+        .json({ erro: "Métricas do usuário não encontradas" });
     }
 
     // Retornar apenas as conquistas do usuário
@@ -334,14 +365,16 @@ router.get('/metricas/conquistas/:usuarioId', async (req, res) => {
       usuarioNome: metricasUsuario.usuarioNome,
       lojaNome: metricasUsuario.lojaNome,
       achievements: metricasUsuario.achievements,
-      ultimaAtualizacao: metricasUsuario.ultimaAtualizacao
+      ultimaAtualizacao: metricasUsuario.ultimaAtualizacao,
     });
-
   } catch (error) {
-    console.error("❌ [MetricasUsuarios] Erro ao buscar conquistas do usuário:", error);
+    console.error(
+      "❌ [MetricasUsuarios] Erro ao buscar conquistas do usuário:",
+      error,
+    );
     res.status(500).json({
       erro: "Erro interno do servidor",
-      detalhes: error.message
+      detalhes: error.message,
     });
   }
 });

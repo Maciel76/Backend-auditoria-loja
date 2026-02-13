@@ -484,11 +484,11 @@ class MetricsCalculationService {
         let totaisAcumulados = {
           itensLidosEtiquetas: dados.etiquetas.itensLidos,
           itensLidosRupturas: dados.rupturas.itensLidos,
-          itensLidosPresencas: dados.presencas.itensLidos,
+          itensLidosPresencas: dados.presencas.totalItens || 0,
           itensLidosTotal:
             dados.etiquetas.itensLidos +
             dados.rupturas.itensLidos +
-            dados.presencas.itensLidos,
+            (dados.presencas.totalItens || 0),
         };
 
         // Somar com histórico anterior

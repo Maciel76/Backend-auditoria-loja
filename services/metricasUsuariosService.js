@@ -380,14 +380,6 @@ class MetricasUsuariosService {
     const totaisAcumulados = this.calcularTotaisAcumulados(dados);
     metricasUsuario.totaisAcumulados = totaisAcumulados;
 
-    // Calcular tendências
-    const tendencias = await this.calcularTendencias(
-      dados.loja._id,
-      dados.usuarioId,
-      dados,
-    );
-    metricasUsuario.tendencias = tendencias;
-
     // Calcular totais e pontuação (também calcula achievements)
     metricasUsuario.atualizarTotais();
 
@@ -459,50 +451,11 @@ class MetricasUsuariosService {
     return {
       itensLidosEtiquetas: dados.etiquetas.itensLidos,
       itensLidosRupturas: dados.rupturas.itensLidos,
-      itensLidosPresencas: dados.presencas.itensLidos,
+      itensLidosPresencas: dados.presencas.totalItens || 0,
       itensLidosTotal:
         dados.etiquetas.itensLidos +
         dados.rupturas.itensLidos +
-        dados.presencas.itensLidos,
-    };
-  }
-
-  /**
-   * Calcula tendências e análise temporal
-   */
-  async calcularTendencias(lojaId, usuarioId, dados) {
-    // Calcular diasAtivos - dias únicos que o usuário fez auditoria
-    const diasUnicos = await Auditoria.aggregate([
-      {
-        $match: {
-          loja: lojaId,
-          usuarioId: usuarioId,
-        },
-      },
-      {
-        $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$data" } },
-        },
-      },
-    ]);
-
-    const diasAtivos = diasUnicos.length;
-    const totalItensLidos =
-      dados.etiquetas.itensLidos +
-      dados.rupturas.itensLidos +
-      dados.presencas.itensLidos;
-
-    const mediaItensPerDia =
-      diasAtivos > 0 ? Math.round(totalItensLidos / diasAtivos) : 0;
-
-    // Regularidade (0-100) baseada na frequência
-    const regularidade = Math.min(100, diasAtivos * 2);
-
-    return {
-      melhoriaPercentual: 0, // Será calculado comparando com período anterior
-      diasAtivos,
-      mediaItensPerDia,
-      regularidade,
+        (dados.presencas.totalItens || 0),
     };
   }
 
@@ -517,33 +470,33 @@ class MetricasUsuariosService {
       const lojas = await Loja.find({ ativa: true });
 
       for (const loja of lojas) {
-        // Ranking por loja
+        // Ranking por loja - ordenado por itens lidos total
         const metricasLoja = await MetricasUsuario.find({
           loja: loja._id,
           periodo: "periodo_completo",
-        }).sort({ "totais.pontuacaoTotal": -1 });
+        }).sort({ "totaisAcumulados.itensLidosTotal": -1 });
 
-        // Atualizar posição na loja
+        // Salvar apenas pontuação (ranking visual é por ordem)
         for (let i = 0; i < metricasLoja.length; i++) {
-          metricasLoja[i].ranking.posicaoLoja = i + 1;
           await metricasLoja[i].save();
         }
       }
 
-      // Ranking geral (todas as lojas)
+      // Ranking geral (todas as lojas) - por itens lidos total
       const todasMetricas = await MetricasUsuario.find({
         periodo: "periodo_completo",
-      }).sort({ "totais.pontuacaoTotal": -1 });
+      }).sort({ "totaisAcumulados.itensLidosTotal": -1 });
 
       for (let i = 0; i < todasMetricas.length; i++) {
-        todasMetricas[i].ranking.posicaoGeral = i + 1;
-
         // Atualizar histórico de ranking
         const posicao = i + 1;
         if (posicao <= 10) {
           const campo = `posicao${posicao}`;
           todasMetricas[i].historicoRanking[campo] =
             (todasMetricas[i].historicoRanking[campo] || 0) + 1;
+          // Incrementar totalTop10
+          todasMetricas[i].historicoRanking.totalTop10 =
+            (todasMetricas[i].historicoRanking.totalTop10 || 0) + 1;
         } else {
           todasMetricas[i].historicoRanking.ACIMA10 =
             (todasMetricas[i].historicoRanking.ACIMA10 || 0) + 1;
@@ -607,7 +560,6 @@ class MetricasUsuariosService {
         .populate("loja", "nome codigo endereco imagem")
         .sort({
           "totaisAcumulados.itensLidosTotal": -1,
-          "ranking.posicaoGeral": 1,
         });
 
       return metricas;
@@ -866,19 +818,7 @@ class MetricasUsuariosService {
         (metricasUsuario.presencas.totalItens || 0),
     };
 
-    // 6. Calcular tendências
-    const tendencias = await this.calcularTendencias(
-      lojaId,
-      dadosNovos.usuarioId,
-      {
-        etiquetas: metricasUsuario.etiquetas,
-        rupturas: metricasUsuario.rupturas,
-        presencas: metricasUsuario.presencas,
-      },
-    );
-    metricasUsuario.tendencias = tendencias;
-
-    // 7. Calcular totais e pontuação
+    // 6. Calcular totais e pontuação
     metricasUsuario.atualizarTotais();
 
     // 8. Salvar
@@ -946,26 +886,23 @@ class MetricasUsuariosService {
         `🏆 [MetricasUsuarios-Incremental] Atualizando rankings da loja...`,
       );
 
-      // Ranking da loja
+      // Ranking da loja - ordenado por itens lidos total
       const metricasLoja = await MetricasUsuario.find({
         loja: lojaId,
         periodo: "periodo_completo",
-      }).sort({ "totais.pontuacaoTotal": -1 });
+      }).sort({ "totaisAcumulados.itensLidosTotal": -1 });
 
-      // Atualizar posição na loja
+      // Salvar apenas pontuação (ranking visual é por ordem)
       for (let i = 0; i < metricasLoja.length; i++) {
-        metricasLoja[i].ranking.posicaoLoja = i + 1;
         await metricasLoja[i].save();
       }
 
-      // Ranking geral (todas as lojas) - necessário recalcular
+      // Ranking geral (todas as lojas) - por itens lidos total
       const todasMetricas = await MetricasUsuario.find({
         periodo: "periodo_completo",
-      }).sort({ "totais.pontuacaoTotal": -1 });
+      }).sort({ "totaisAcumulados.itensLidosTotal": -1 });
 
       for (let i = 0; i < todasMetricas.length; i++) {
-        todasMetricas[i].ranking.posicaoGeral = i + 1;
-
         // Atualizar histórico apenas se mudou
         const posicao = i + 1;
         if (posicao <= 10) {
@@ -974,6 +911,9 @@ class MetricasUsuariosService {
           if (todasMetricas[i].loja.toString() === lojaId.toString()) {
             todasMetricas[i].historicoRanking[campo] =
               (todasMetricas[i].historicoRanking[campo] || 0) + 1;
+            // Incrementar totalTop10
+            todasMetricas[i].historicoRanking.totalTop10 =
+              (todasMetricas[i].historicoRanking.totalTop10 || 0) + 1;
           }
         }
 
@@ -1119,14 +1059,6 @@ class MetricasUsuariosService {
       // Calcular totais acumulados
       const totaisAcumulados = this.calcularTotaisAcumulados(dadosUsuario);
       metricasUsuario.totaisAcumulados = totaisAcumulados;
-
-      // Calcular tendências
-      const tendencias = await this.calcularTendencias(
-        lojaId,
-        dadosUsuario.usuarioId,
-        dadosUsuario,
-      );
-      metricasUsuario.tendencias = tendencias;
 
       // Calcular totais e pontuação
       metricasUsuario.atualizarTotais();

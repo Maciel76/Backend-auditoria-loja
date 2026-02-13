@@ -94,17 +94,17 @@ router.get(
         historico.length >= 2
           ? {
               melhoriaTotal:
-                historico[0]?.totais.percentualConclusaoGeral -
-                historico[1]?.totais.percentualConclusaoGeral,
+                (historico[0]?.totais.percentualConclusaoGeral || 0) -
+                (historico[1]?.totais.percentualConclusaoGeral || 0),
               melhoriaEtiquetas:
-                historico[0]?.etiquetas.percentualConclusao -
-                historico[1]?.etiquetas.percentualConclusao,
+                (historico[0]?.etiquetas.itensAtualizados || 0) -
+                (historico[1]?.etiquetas.itensAtualizados || 0),
               melhoriaRupturas:
-                historico[0]?.rupturas.percentualConclusao -
-                historico[1]?.rupturas.percentualConclusao,
+                (historico[0]?.rupturas.itensAtualizados || 0) -
+                (historico[1]?.rupturas.itensAtualizados || 0),
               melhoriaPresencas:
-                historico[0]?.presencas.percentualConclusao -
-                historico[1]?.presencas.percentualConclusao,
+                (historico[0]?.presencas.itensAtualizados || 0) -
+                (historico[1]?.presencas.itensAtualizados || 0),
             }
           : null;
 
@@ -126,7 +126,7 @@ router.get(
         detalhes: error.message,
       });
     }
-  }
+  },
 );
 
 // Obter ranking de usuários da loja
@@ -303,7 +303,7 @@ router.get("/lojas/ranking", async (req, res) => {
       totalItens: loja.totais.totalItens,
       melhorUsuario: loja.usuariosEstatisticas.melhorUsuario,
       alertas: loja.alertas.filter(
-        (a) => a.severidade === "alta" || a.severidade === "critica"
+        (a) => a.severidade === "alta" || a.severidade === "critica",
       ).length,
       ultimaAtualizacao: loja.ultimaAtualizacao,
     }));
@@ -452,7 +452,7 @@ router.get(
         detalhes: error.message,
       });
     }
-  }
+  },
 );
 
 // Obter histórico de métricas diárias da loja
@@ -503,7 +503,7 @@ router.get(
         detalhes: error.message,
       });
     }
-  }
+  },
 );
 
 // Obter ranking diário de lojas (similar ao existente mas com mais detalhes)
@@ -559,7 +559,7 @@ router.get("/lojas-daily-ranking", async (req, res) => {
       locaisComProblemas:
         item.locaisEstatisticas?.filter(
           (l) =>
-            l.prioridadeAtencao === "alta" || l.prioridadeAtencao === "critica"
+            l.prioridadeAtencao === "alta" || l.prioridadeAtencao === "critica",
         ).length || 0,
       ultimaAtualizacao: item.ultimaAtualizacao,
     }));
@@ -575,7 +575,7 @@ router.get("/lojas-daily-ranking", async (req, res) => {
           rankingFormatado.length > 0
             ? Math.round(
                 rankingFormatado.reduce((acc, l) => acc + l.totalItens, 0) /
-                  rankingFormatado.length
+                  rankingFormatado.length,
               )
             : 0,
         mediaEficiencia:
@@ -583,13 +583,13 @@ router.get("/lojas-daily-ranking", async (req, res) => {
             ? Math.round(
                 rankingFormatado.reduce(
                   (acc, l) => acc + l.percentualConclusao,
-                  0
-                ) / rankingFormatado.length
+                  0,
+                ) / rankingFormatado.length,
               )
             : 0,
         totalUsuariosAtivos: rankingFormatado.reduce(
           (acc, l) => acc + l.usuariosAtivos,
-          0
+          0,
         ),
       },
     });
@@ -651,7 +651,7 @@ router.get("/lojas-daily-ranking-classes", async (req, res) => {
   } catch (error) {
     console.error(
       "Erro ao buscar ranking LojaDailyMetrics por classes:",
-      error
+      error,
     );
     res.status(500).json({
       erro: "Falha ao buscar ranking de lojas diárias por classes",
@@ -798,7 +798,7 @@ router.post("/lojas/comparar", async (req, res) => {
         erro: "Uma ou mais lojas não foram encontradas",
         lojasEncontradas: lojas.map((l) => l.codigo),
         lojasNaoEncontradas: lojasCodigos.filter(
-          (c) => !lojas.find((l) => l.codigo === c)
+          (c) => !lojas.find((l) => l.codigo === c),
         ),
       });
     }
@@ -822,7 +822,7 @@ router.post("/lojas/comparar", async (req, res) => {
     const comparacao = lojasCodigos.map((codigo) => {
       const loja = lojas.find((l) => l.codigo === codigo);
       const metrica = metricas.find(
-        (m) => m.loja._id.toString() === loja._id.toString()
+        (m) => m.loja._id.toString() === loja._id.toString(),
       );
 
       return {
@@ -1152,7 +1152,7 @@ router.post("/recalcular", async (req, res) => {
 
     const resultado = await metricsCalculationService.calcularTodasMetricas(
       periodo,
-      dataRef
+      dataRef,
     );
 
     res.json({
@@ -1242,12 +1242,14 @@ router.get(
 
       // Se não encontrar para a data específica, buscar a mais recente
       if (!metricas) {
-        console.log(`⚠️ Nenhuma métrica encontrada para ${data}, buscando mais recente...`);
+        console.log(
+          `⚠️ Nenhuma métrica encontrada para ${data}, buscando mais recente...`,
+        );
 
         metricas = await LojaDailyMetrics.findOne({
           loja: req.loja._id,
         })
-          .sort({ dataInicio: -1 })  // Ordena pela data mais recente
+          .sort({ dataInicio: -1 }) // Ordena pela data mais recente
           .populate("loja", "codigo nome regiao");
 
         if (!metricas) {
@@ -1263,7 +1265,9 @@ router.get(
           });
         }
 
-        console.log(`✅ Usando dados de ${metricas.dataInicio.toISOString().split('T')[0]}`);
+        console.log(
+          `✅ Usando dados de ${metricas.dataInicio.toISOString().split("T")[0]}`,
+        );
       }
 
       // Função para enriquecer dados dos locais com informações específicas
@@ -1295,7 +1299,7 @@ router.get(
         etiquetas: {
           locaisLeitura: enriquecerLocaisLeitura(
             metricas.etiquetas?.locaisLeitura,
-            "etiquetas"
+            "etiquetas",
           ),
           resumo: {
             totalItens: metricas.etiquetas?.totalItens || 0,
@@ -1309,7 +1313,7 @@ router.get(
         rupturas: {
           locaisLeitura: enriquecerLocaisLeitura(
             metricas.rupturas?.locaisLeitura,
-            "rupturas"
+            "rupturas",
           ),
           resumo: {
             totalItens: metricas.rupturas?.totalItens || 0,
@@ -1322,7 +1326,7 @@ router.get(
         presencas: {
           locaisLeitura: enriquecerLocaisLeitura(
             metricas.presencas?.locaisLeitura,
-            "presencas"
+            "presencas",
           ),
           resumo: {
             totalItens: metricas.presencas?.totalItens || 0,
@@ -1346,7 +1350,7 @@ router.get(
       console.log(
         `✅ Endpoint locais-completas: Retornando dados para ${
           Object.keys(resposta.etiquetas.locaisLeitura).length
-        } locais`
+        } locais`,
       );
 
       res.json(resposta);
@@ -1357,7 +1361,7 @@ router.get(
         detalhes: error.message,
       });
     }
-  }
+  },
 );
 
 // Endpoint alternativo que retorna dados de exemplo caso não haja dados reais
@@ -1529,7 +1533,7 @@ router.get(
         detalhes: error.message,
       });
     }
-  }
+  },
 );
 
 // Obter métricas completas por classe de produto (TODAS as auditorias)
@@ -1557,12 +1561,14 @@ router.get(
 
       // Se não encontrar para a data específica, buscar a mais recente
       if (!metricas) {
-        console.log(`⚠️ Nenhuma métrica encontrada para ${data}, buscando mais recente...`);
+        console.log(
+          `⚠️ Nenhuma métrica encontrada para ${data}, buscando mais recente...`,
+        );
 
         metricas = await LojaDailyMetrics.findOne({
           loja: req.loja._id,
         })
-          .sort({ dataInicio: -1 })  // Ordena pela data mais recente
+          .sort({ dataInicio: -1 }) // Ordena pela data mais recente
           .populate("loja", "codigo nome regiao");
 
         if (!metricas) {
@@ -1577,7 +1583,9 @@ router.get(
           });
         }
 
-        console.log(`✅ Usando dados de ${metricas.dataInicio.toISOString().split('T')[0]}`);
+        console.log(
+          `✅ Usando dados de ${metricas.dataInicio.toISOString().split("T")[0]}`,
+        );
       }
 
       // Preparar resposta com TODAS as auditorias e suas classesLeitura
@@ -1594,7 +1602,8 @@ router.get(
             itensAtualizados: metricas.etiquetas?.itensAtualizados || 0,
             itensDesatualizado: metricas.etiquetas?.itensDesatualizado || 0,
             percentualConclusao: metricas.etiquetas?.percentualConclusao || 0,
-            percentualDesatualizado: metricas.etiquetas?.percentualDesatualizado || 0,
+            percentualDesatualizado:
+              metricas.etiquetas?.percentualDesatualizado || 0,
           },
         },
 
@@ -1623,16 +1632,23 @@ router.get(
 
         totais: {
           totalItens: metricas.totais?.totalItens || 0,
-          percentualConclusaoGeral: metricas.totais?.percentualConclusaoGeral || 0,
+          percentualConclusaoGeral:
+            metricas.totais?.percentualConclusaoGeral || 0,
         },
       };
 
       console.log(
-        `✅ Endpoint classes-completas: Retornando dados para loja ${req.loja.nome}`
+        `✅ Endpoint classes-completas: Retornando dados para loja ${req.loja.nome}`,
       );
-      console.log(`   - Etiquetas: ${Object.keys(resposta.etiquetas.classesLeitura).length} classes, ${Object.keys(resposta.etiquetas.locaisLeitura).length} locais`);
-      console.log(`   - Rupturas: ${Object.keys(resposta.rupturas.classesLeitura).length} classes, ${Object.keys(resposta.rupturas.locaisLeitura).length} locais`);
-      console.log(`   - Presenças: ${Object.keys(resposta.presencas.classesLeitura).length} classes, ${Object.keys(resposta.presencas.locaisLeitura).length} locais`);
+      console.log(
+        `   - Etiquetas: ${Object.keys(resposta.etiquetas.classesLeitura).length} classes, ${Object.keys(resposta.etiquetas.locaisLeitura).length} locais`,
+      );
+      console.log(
+        `   - Rupturas: ${Object.keys(resposta.rupturas.classesLeitura).length} classes, ${Object.keys(resposta.rupturas.locaisLeitura).length} locais`,
+      );
+      console.log(
+        `   - Presenças: ${Object.keys(resposta.presencas.classesLeitura).length} classes, ${Object.keys(resposta.presencas.locaisLeitura).length} locais`,
+      );
 
       res.json(resposta);
     } catch (error) {
@@ -1642,7 +1658,7 @@ router.get(
         detalhes: error.message,
       });
     }
-  }
+  },
 );
 
 // ROTA DE DEBUG TEMPORÁRIA PARA FORÇAR RECÁLCULO
@@ -1651,10 +1667,11 @@ router.get("/force-recalc-today", async (req, res) => {
     const lojaCodigo = req.headers["x-loja"];
     if (!lojaCodigo) {
       return res.status(400).json({
-        message: "Header 'x-loja' não fornecido. Por favor, selecione uma loja no frontend.",
+        message:
+          "Header 'x-loja' não fornecido. Por favor, selecione uma loja no frontend.",
       });
     }
-    
+
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
     const amanha = new Date(hoje);
@@ -1663,19 +1680,26 @@ router.get("/force-recalc-today", async (req, res) => {
     const regexLojaNome = new RegExp(`^Loja ${lojaCodigo} -`, "i");
 
     // Passo 1: Buscar os valores distintos de 'local' para diagnóstico
-    console.log(`[DEBUG] Buscando valores distintos de 'local' para a loja ${lojaCodigo} em ${hoje.toISOString().split('T')[0]}`);
-    const distinctLocais = await Auditoria.distinct('local', {
+    console.log(
+      `[DEBUG] Buscando valores distintos de 'local' para a loja ${lojaCodigo} em ${hoje.toISOString().split("T")[0]}`,
+    );
+    const distinctLocais = await Auditoria.distinct("local", {
       lojaNome: regexLojaNome,
       tipo: "etiqueta", // Filtrar por um tipo para ser mais rápido
-      data: { $gte: hoje, $lt: amanha }
+      data: { $gte: hoje, $lt: amanha },
     });
-    console.log(`[DEBUG] Valores distintos de 'local' encontrados:`, distinctLocais);
+    console.log(
+      `[DEBUG] Valores distintos de 'local' encontrados:`,
+      distinctLocais,
+    );
 
     // Passo 2: Forçar o recálculo
-    console.log("🔄 [DEBUG] Forçando recálculo manual para o período 'diario'...");
+    console.log(
+      "🔄 [DEBUG] Forçando recálculo manual para o período 'diario'...",
+    );
     const resultado = await metricsCalculationService.calcularTodasMetricas(
       "diario",
-      new Date()
+      new Date(),
     );
     console.log("✅ [DEBUG] Recálculo concluído com sucesso.");
 
