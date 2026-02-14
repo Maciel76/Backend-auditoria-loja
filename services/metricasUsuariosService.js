@@ -17,14 +17,19 @@ class MetricasUsuariosService {
       console.log(`📊 [MetricasUsuarios] Calculando métricas de usuários...`);
 
       // Buscar TODAS as auditorias para cálculo de período completo
-      const auditorias = await Auditoria.find({}).populate('loja', 'codigo nome regiao');
+      const auditorias = await Auditoria.find({}).populate(
+        "loja",
+        "codigo nome regiao",
+      );
 
       if (auditorias.length === 0) {
         console.log(`⚠️ [MetricasUsuarios] Nenhuma auditoria encontrada`);
         return { success: true, totalUsuarios: 0 };
       }
 
-      console.log(`📦 [MetricasUsuarios] Processando ${auditorias.length} auditorias`);
+      console.log(
+        `📦 [MetricasUsuarios] Processando ${auditorias.length} auditorias`,
+      );
 
       // Calcular totais por loja para cada tipo de auditoria (para percentuais)
       const totaisPorLoja = this.calcularTotaisPorLoja(auditorias);
@@ -32,34 +37,46 @@ class MetricasUsuariosService {
       // Agrupar auditorias por usuário e loja
       const usuariosMap = this.agruparPorUsuarioELoja(auditorias);
 
-      console.log(`👥 [MetricasUsuarios] ${usuariosMap.size} usuários encontrados`);
+      console.log(
+        `👥 [MetricasUsuarios] ${usuariosMap.size} usuários encontrados`,
+      );
 
       // Determinar datas padrão se não fornecidas
-      const dataInicioFinal = dataInicio || new Date(Math.min(...auditorias.map(a => a.data)));
+      const dataInicioFinal =
+        dataInicio || new Date(Math.min(...auditorias.map((a) => a.data)));
       const dataFimFinal = dataFim || new Date();
 
       // Processar cada usuário
       let salvosComSucesso = 0;
       for (const [chave, dados] of usuariosMap) {
         try {
-          await this.salvarMetricasUsuario(dados, totaisPorLoja, dataInicioFinal, dataFimFinal);
+          await this.salvarMetricasUsuario(
+            dados,
+            totaisPorLoja,
+            dataInicioFinal,
+            dataFimFinal,
+          );
           salvosComSucesso++;
         } catch (error) {
-          console.error(`❌ [MetricasUsuarios] Erro ao salvar ${dados.usuarioNome}:`, error.message);
+          console.error(
+            `❌ [MetricasUsuarios] Erro ao salvar ${dados.usuarioNome}:`,
+            error.message,
+          );
         }
       }
 
       // Atualizar rankings após salvar todas as métricas
       await this.atualizarRankings();
 
-      console.log(`✅ [MetricasUsuarios] ${salvosComSucesso}/${usuariosMap.size} usuários processados`);
+      console.log(
+        `✅ [MetricasUsuarios] ${salvosComSucesso}/${usuariosMap.size} usuários processados`,
+      );
 
       return {
         success: true,
         totalUsuarios: salvosComSucesso,
-        totalAuditorias: auditorias.length
+        totalAuditorias: auditorias.length,
       };
-
     } catch (error) {
       console.error(`❌ [MetricasUsuarios] Erro ao calcular métricas:`, error);
       throw error;
@@ -79,7 +96,7 @@ class MetricasUsuariosService {
         totaisPorLoja[lojaId] = {
           etiquetas: { itensLidos: 0 },
           rupturas: { itensLidos: 0 },
-          presencas: { itensLidos: 0 }
+          presencas: { itensLidos: 0 },
         };
       }
 
@@ -113,8 +130,8 @@ class MetricasUsuariosService {
           usuarioNome: auditoria.usuarioNome,
           loja: auditoria.loja,
           etiquetas: this.criarMetricasVazias(),
-          rupturas: this.criarMetricasVazias('ruptura'),
-          presencas: this.criarMetricasVazias('presenca'),
+          rupturas: this.criarMetricasVazias("ruptura"),
+          presencas: this.criarMetricasVazias("presenca"),
           ContadorClassesProduto: new Map(),
           ContadorLocais: new Map(),
         });
@@ -146,14 +163,19 @@ class MetricasUsuariosService {
       itensDesatualizado: 0,
       itensSemEstoque: 0,
       itensNaopertence: 0,
-      percentualConclusao: 0
+      percentualConclusao: 0,
     };
 
-    if (tipo === 'ruptura') {
-      return { ...base, custoTotal: 0, custoTotalRuptura: 0, custoMedioRuptura: 0 };
+    if (tipo === "ruptura") {
+      return {
+        ...base,
+        custoTotal: 0,
+        custoTotalRuptura: 0,
+        custoMedioRuptura: 0,
+      };
     }
 
-    if (tipo === 'presenca') {
+    if (tipo === "presenca") {
       return { ...base, presencasConfirmadas: 0, percentualPresenca: 0 };
     }
 
@@ -221,7 +243,7 @@ class MetricasUsuariosService {
       const classeNormalizada = classe.toUpperCase().trim();
       dadosUsuario.ContadorClassesProduto.set(
         classeNormalizada,
-        (dadosUsuario.ContadorClassesProduto.get(classeNormalizada) || 0) + 1
+        (dadosUsuario.ContadorClassesProduto.get(classeNormalizada) || 0) + 1,
       );
     }
   }
@@ -234,7 +256,7 @@ class MetricasUsuariosService {
       const localNormalizado = auditoria.local.trim();
       dadosUsuario.ContadorLocais.set(
         localNormalizado,
-        (dadosUsuario.ContadorLocais.get(localNormalizado) || 0) + 1
+        (dadosUsuario.ContadorLocais.get(localNormalizado) || 0) + 1,
       );
     }
   }
@@ -247,36 +269,54 @@ class MetricasUsuariosService {
     const totaisDaLoja = totaisPorLoja[lojaId] || {
       etiquetas: { itensLidos: 1 },
       rupturas: { itensLidos: 1 },
-      presencas: { itensLidos: 1 }
+      presencas: { itensLidos: 1 },
     };
 
     // Calcular percentuais em relação ao total da loja
     const etiquetas = {
       ...dados.etiquetas,
-      percentualConclusao: totaisDaLoja.etiquetas.itensLidos > 0
-        ? Math.round((dados.etiquetas.itensLidos / totaisDaLoja.etiquetas.itensLidos) * 100)
-        : 0,
+      percentualConclusao:
+        totaisDaLoja.etiquetas.itensLidos > 0
+          ? Math.round(
+              (dados.etiquetas.itensLidos / totaisDaLoja.etiquetas.itensLidos) *
+                100,
+            )
+          : 0,
     };
 
     const rupturas = {
       ...dados.rupturas,
-      percentualConclusao: totaisDaLoja.rupturas.itensLidos > 0
-        ? Math.round((dados.rupturas.itensLidos / totaisDaLoja.rupturas.itensLidos) * 100)
-        : 0,
+      percentualConclusao:
+        totaisDaLoja.rupturas.itensLidos > 0
+          ? Math.round(
+              (dados.rupturas.itensLidos / totaisDaLoja.rupturas.itensLidos) *
+                100,
+            )
+          : 0,
       custoTotalRuptura: dados.rupturas.custoTotal,
-      custoMedioRuptura: dados.rupturas.totalItens > 0
-        ? dados.rupturas.custoTotal / dados.rupturas.totalItens
-        : 0,
+      custoMedioRuptura:
+        dados.rupturas.totalItens > 0
+          ? dados.rupturas.custoTotal / dados.rupturas.totalItens
+          : 0,
     };
 
     const presencas = {
       ...dados.presencas,
-      percentualConclusao: totaisDaLoja.presencas.itensLidos > 0
-        ? Math.round((dados.presencas.itensLidos / totaisDaLoja.presencas.itensLidos) * 100)
-        : 0,
-      percentualPresenca: dados.presencas.totalItens > 0
-        ? Math.round((dados.presencas.presencasConfirmadas / dados.presencas.totalItens) * 100)
-        : 0,
+      percentualConclusao:
+        totaisDaLoja.presencas.itensLidos > 0
+          ? Math.round(
+              (dados.presencas.itensLidos / totaisDaLoja.presencas.itensLidos) *
+                100,
+            )
+          : 0,
+      percentualPresenca:
+        dados.presencas.totalItens > 0
+          ? Math.round(
+              (dados.presencas.presencasConfirmadas /
+                dados.presencas.totalItens) *
+                100,
+            )
+          : 0,
     };
 
     // Buscar ou criar métricas do usuário - CORRIGIDO: busca única por loja e usuário
@@ -287,7 +327,9 @@ class MetricasUsuariosService {
     });
 
     if (!metricasUsuario) {
-      console.log(`📝 [MetricasUsuarios] Criando novo registro para ${dados.usuarioNome}`);
+      console.log(
+        `📝 [MetricasUsuarios] Criando novo registro para ${dados.usuarioNome}`,
+      );
       metricasUsuario = new MetricasUsuario({
         loja: dados.loja._id,
         usuarioId: dados.usuarioId,
@@ -306,7 +348,10 @@ class MetricasUsuariosService {
       metricasUsuario.dataFim = dataFim;
 
       // Atualizar dataInicio apenas se a nova for anterior
-      if (!metricasUsuario.dataInicio || dataInicio < metricasUsuario.dataInicio) {
+      if (
+        !metricasUsuario.dataInicio ||
+        dataInicio < metricasUsuario.dataInicio
+      ) {
         metricasUsuario.dataInicio = dataInicio;
       }
     }
@@ -317,11 +362,16 @@ class MetricasUsuariosService {
     metricasUsuario.presencas = presencas;
 
     // Atualizar contadores
-    metricasUsuario.ContadorClassesProduto = Object.fromEntries(dados.ContadorClassesProduto);
+    metricasUsuario.ContadorClassesProduto = Object.fromEntries(
+      dados.ContadorClassesProduto,
+    );
     metricasUsuario.ContadorLocais = Object.fromEntries(dados.ContadorLocais);
 
     // Calcular contadores de auditorias
-    const contadores = await this.calcularContadoresAuditorias(dados.loja._id, dados.usuarioId);
+    const contadores = await this.calcularContadoresAuditorias(
+      dados.loja._id,
+      dados.usuarioId,
+    );
     metricasUsuario.contadoresAuditorias = contadores;
 
     // Calcular totais acumulados
@@ -329,7 +379,11 @@ class MetricasUsuariosService {
     metricasUsuario.totaisAcumulados = totaisAcumulados;
 
     // Calcular tendências
-    const tendencias = await this.calcularTendencias(dados.loja._id, dados.usuarioId, dados);
+    const tendencias = await this.calcularTendencias(
+      dados.loja._id,
+      dados.usuarioId,
+      dados,
+    );
     metricasUsuario.tendencias = tendencias;
 
     // Calcular totais e pontuação (também calcula achievements)
@@ -338,7 +392,9 @@ class MetricasUsuariosService {
     // Salvar no banco
     await metricasUsuario.save();
 
-    console.log(`✅ [MetricasUsuarios] ${dados.usuarioNome}: ${totaisAcumulados.itensLidosTotal} itens lidos`);
+    console.log(
+      `✅ [MetricasUsuarios] ${dados.usuarioNome}: ${totaisAcumulados.itensLidosTotal} itens lidos`,
+    );
   }
 
   /**
@@ -377,15 +433,18 @@ class MetricasUsuariosService {
     };
 
     auditoriasPorTipo.forEach((item) => {
-      if (item._id === "etiqueta") contadores.totalEtiquetas = Number(item.auditorias) || 0;
-      if (item._id === "ruptura") contadores.totalRupturas = Number(item.auditorias) || 0;
-      if (item._id === "presenca") contadores.totalPresencas = Number(item.auditorias) || 0;
+      if (item._id === "etiqueta")
+        contadores.totalEtiquetas = Number(item.auditorias) || 0;
+      if (item._id === "ruptura")
+        contadores.totalRupturas = Number(item.auditorias) || 0;
+      if (item._id === "presenca")
+        contadores.totalPresencas = Number(item.auditorias) || 0;
     });
 
     contadores.totalGeral = Number(
       (contadores.totalEtiquetas || 0) +
-      (contadores.totalRupturas || 0) +
-      (contadores.totalPresencas || 0)
+        (contadores.totalRupturas || 0) +
+        (contadores.totalPresencas || 0),
     );
 
     return contadores;
@@ -431,9 +490,8 @@ class MetricasUsuariosService {
       dados.rupturas.itensLidos +
       dados.presencas.itensLidos;
 
-    const mediaItensPerDia = diasAtivos > 0
-      ? Math.round(totalItensLidos / diasAtivos)
-      : 0;
+    const mediaItensPerDia =
+      diasAtivos > 0 ? Math.round(totalItensLidos / diasAtivos) : 0;
 
     // Regularidade (0-100) baseada na frequência
     const regularidade = Math.min(100, diasAtivos * 2);
@@ -460,7 +518,7 @@ class MetricasUsuariosService {
         // Ranking por loja
         const metricasLoja = await MetricasUsuario.find({
           loja: loja._id,
-          periodo: "periodo_completo"
+          periodo: "periodo_completo",
         }).sort({ "totais.pontuacaoTotal": -1 });
 
         // Atualizar posição na loja
@@ -472,7 +530,7 @@ class MetricasUsuariosService {
 
       // Ranking geral (todas as lojas)
       const todasMetricas = await MetricasUsuario.find({
-        periodo: "periodo_completo"
+        periodo: "periodo_completo",
       }).sort({ "totais.pontuacaoTotal": -1 });
 
       for (let i = 0; i < todasMetricas.length; i++) {
@@ -490,8 +548,10 @@ class MetricasUsuariosService {
         }
 
         // Atualizar melhor posição
-        if (!todasMetricas[i].historicoRanking.melhorPosicao ||
-            posicao < todasMetricas[i].historicoRanking.melhorPosicao) {
+        if (
+          !todasMetricas[i].historicoRanking.melhorPosicao ||
+          posicao < todasMetricas[i].historicoRanking.melhorPosicao
+        ) {
           todasMetricas[i].historicoRanking.melhorPosicao = posicao;
         }
 
@@ -513,8 +573,8 @@ class MetricasUsuariosService {
       const metricas = await MetricasUsuario.findOne({
         loja: lojaId,
         usuarioId: usuarioId,
-        periodo: "periodo_completo"
-      }).populate('loja', 'nome codigo endereco imagem');
+        periodo: "periodo_completo",
+      }).populate("loja", "nome codigo endereco imagem");
 
       return metricas;
     } catch (error) {
@@ -530,7 +590,7 @@ class MetricasUsuariosService {
     try {
       const query = {
         loja: lojaId,
-        periodo: "periodo_completo"
+        periodo: "periodo_completo",
       };
 
       // Aplicar filtros adicionais se fornecidos
@@ -542,12 +602,18 @@ class MetricasUsuariosService {
       }
 
       const metricas = await MetricasUsuario.find(query)
-        .populate('loja', 'nome codigo endereco imagem')
-        .sort({ 'totaisAcumulados.itensLidosTotal': -1, 'ranking.posicaoGeral': 1 });
+        .populate("loja", "nome codigo endereco imagem")
+        .sort({
+          "totaisAcumulados.itensLidosTotal": -1,
+          "ranking.posicaoGeral": 1,
+        });
 
       return metricas;
     } catch (error) {
-      console.error(`❌ [MetricasUsuarios] Erro ao obter métricas da loja:`, error);
+      console.error(
+        `❌ [MetricasUsuarios] Erro ao obter métricas da loja:`,
+        error,
+      );
       throw error;
     }
   }
@@ -568,12 +634,15 @@ class MetricasUsuariosService {
       }
 
       const metricas = await MetricasUsuario.find(query)
-        .populate('loja', 'nome codigo endereco imagem')
-        .sort({ 'totaisAcumulados.itensLidosTotal': -1 });
+        .populate("loja", "nome codigo endereco imagem")
+        .sort({ "totaisAcumulados.itensLidosTotal": -1 });
 
       return metricas;
     } catch (error) {
-      console.error(`❌ [MetricasUsuarios] Erro ao obter todas as métricas:`, error);
+      console.error(
+        `❌ [MetricasUsuarios] Erro ao obter todas as métricas:`,
+        error,
+      );
       throw error;
     }
   }
@@ -586,24 +655,32 @@ class MetricasUsuariosService {
    */
   async atualizarMetricasIncrementalmente(novasAuditorias, loja) {
     try {
-      console.log(`⚡ [MetricasUsuarios-Incremental] Atualizando métricas para ${novasAuditorias.length} novas auditorias`);
+      console.log(
+        `⚡ [MetricasUsuarios-Incremental] Atualizando métricas para ${novasAuditorias.length} novas auditorias`,
+      );
 
       if (!novasAuditorias || novasAuditorias.length === 0) {
-        console.log(`⚠️ [MetricasUsuarios-Incremental] Nenhuma auditoria para processar`);
+        console.log(
+          `⚠️ [MetricasUsuarios-Incremental] Nenhuma auditoria para processar`,
+        );
         return { success: true, totalUsuarios: 0 };
       }
 
       // 1. Buscar apenas as novas auditorias
       const auditorias = await Auditoria.find({
-        _id: { $in: novasAuditorias }
-      }).populate('loja', 'codigo nome regiao');
+        _id: { $in: novasAuditorias },
+      }).populate("loja", "codigo nome regiao");
 
-      console.log(`📦 [MetricasUsuarios-Incremental] Processando ${auditorias.length} auditorias novas`);
+      console.log(
+        `📦 [MetricasUsuarios-Incremental] Processando ${auditorias.length} auditorias novas`,
+      );
 
       // 2. Agrupar as novas auditorias por usuário
       const usuariosAfetados = this.agruparPorUsuarioELoja(auditorias);
 
-      console.log(`👥 [MetricasUsuarios-Incremental] ${usuariosAfetados.size} usuários afetados`);
+      console.log(
+        `👥 [MetricasUsuarios-Incremental] ${usuariosAfetados.size} usuários afetados`,
+      );
 
       // 3. Para cada usuário afetado, atualizar métricas incrementalmente
       let salvosComSucesso = 0;
@@ -612,23 +689,30 @@ class MetricasUsuariosService {
           await this.atualizarMetricasUsuarioIncremental(dadosNovos, loja);
           salvosComSucesso++;
         } catch (error) {
-          console.error(`❌ [MetricasUsuarios-Incremental] Erro ao atualizar ${dadosNovos.usuarioNome}:`, error.message);
+          console.error(
+            `❌ [MetricasUsuarios-Incremental] Erro ao atualizar ${dadosNovos.usuarioNome}:`,
+            error.message,
+          );
         }
       }
 
       // 4. Atualizar rankings apenas da loja afetada
       await this.atualizarRankingsLoja(loja._id);
 
-      console.log(`✅ [MetricasUsuarios-Incremental] ${salvosComSucesso}/${usuariosAfetados.size} usuários atualizados`);
+      console.log(
+        `✅ [MetricasUsuarios-Incremental] ${salvosComSucesso}/${usuariosAfetados.size} usuários atualizados`,
+      );
 
       return {
         success: true,
         totalUsuarios: salvosComSucesso,
-        totalAuditorias: auditorias.length
+        totalAuditorias: auditorias.length,
       };
-
     } catch (error) {
-      console.error(`❌ [MetricasUsuarios-Incremental] Erro ao atualizar métricas:`, error);
+      console.error(
+        `❌ [MetricasUsuarios-Incremental] Erro ao atualizar métricas:`,
+        error,
+      );
       throw error;
     }
   }
@@ -651,7 +735,9 @@ class MetricasUsuariosService {
 
     // 2. Se não existe, criar novo registro
     if (!metricasUsuario) {
-      console.log(`📝 [Incremental] Criando novo registro para ${dadosNovos.usuarioNome}`);
+      console.log(
+        `📝 [Incremental] Criando novo registro para ${dadosNovos.usuarioNome}`,
+      );
 
       // Buscar totais da loja para calcular percentuais
       const totaisDaLoja = await this.calcularTotaisPorLojaRapido(lojaId);
@@ -665,51 +751,92 @@ class MetricasUsuariosService {
         dataInicio: agora,
         dataFim: agora,
         versaoCalculo: this.versaoCalculo,
-        etiquetas: this.calcularMetricasComPercentual(dadosNovos.etiquetas, totaisDaLoja.etiquetas, 'etiqueta'),
-        rupturas: this.calcularMetricasComPercentual(dadosNovos.rupturas, totaisDaLoja.rupturas, 'ruptura'),
-        presencas: this.calcularMetricasComPercentual(dadosNovos.presencas, totaisDaLoja.presencas, 'presenca'),
-        ContadorClassesProduto: Object.fromEntries(dadosNovos.ContadorClassesProduto),
+        etiquetas: this.calcularMetricasComPercentual(
+          dadosNovos.etiquetas,
+          totaisDaLoja.etiquetas,
+          "etiqueta",
+        ),
+        rupturas: this.calcularMetricasComPercentual(
+          dadosNovos.rupturas,
+          totaisDaLoja.rupturas,
+          "ruptura",
+        ),
+        presencas: this.calcularMetricasComPercentual(
+          dadosNovos.presencas,
+          totaisDaLoja.presencas,
+          "presenca",
+        ),
+        ContadorClassesProduto: Object.fromEntries(
+          dadosNovos.ContadorClassesProduto,
+        ),
         ContadorLocais: Object.fromEntries(dadosNovos.ContadorLocais),
       });
     } else {
       // 3. INCREMENTAL: SOMAR novos valores nos existentes
-      console.log(`➕ [Incremental] Somando novos dados para ${dadosNovos.usuarioNome}`);
+      console.log(
+        `➕ [Incremental] Somando novos dados para ${dadosNovos.usuarioNome}`,
+      );
 
       // Somar métricas de etiquetas
       metricasUsuario.etiquetas.totalItens += dadosNovos.etiquetas.totalItens;
       metricasUsuario.etiquetas.itensLidos += dadosNovos.etiquetas.itensLidos;
-      metricasUsuario.etiquetas.itensAtualizados += dadosNovos.etiquetas.itensAtualizados;
-      metricasUsuario.etiquetas.itensDesatualizado += dadosNovos.etiquetas.itensDesatualizado;
-      metricasUsuario.etiquetas.itensSemEstoque += dadosNovos.etiquetas.itensSemEstoque;
-      metricasUsuario.etiquetas.itensNaopertence += dadosNovos.etiquetas.itensNaopertence;
+      metricasUsuario.etiquetas.itensAtualizados +=
+        dadosNovos.etiquetas.itensAtualizados;
+      metricasUsuario.etiquetas.itensDesatualizado +=
+        dadosNovos.etiquetas.itensDesatualizado;
+      metricasUsuario.etiquetas.itensSemEstoque +=
+        dadosNovos.etiquetas.itensSemEstoque;
+      metricasUsuario.etiquetas.itensNaopertence +=
+        dadosNovos.etiquetas.itensNaopertence;
 
       // Somar métricas de rupturas
       metricasUsuario.rupturas.totalItens += dadosNovos.rupturas.totalItens;
       metricasUsuario.rupturas.itensLidos += dadosNovos.rupturas.itensLidos;
-      metricasUsuario.rupturas.itensAtualizados += dadosNovos.rupturas.itensAtualizados;
-      metricasUsuario.rupturas.itensDesatualizado += dadosNovos.rupturas.itensDesatualizado;
-      metricasUsuario.rupturas.itensSemEstoque += dadosNovos.rupturas.itensSemEstoque;
-      metricasUsuario.rupturas.itensNaopertence += dadosNovos.rupturas.itensNaopertence;
-      metricasUsuario.rupturas.custoTotalRuptura = (metricasUsuario.rupturas.custoTotalRuptura || 0) + (dadosNovos.rupturas.custoTotal || 0);
+      metricasUsuario.rupturas.itensAtualizados +=
+        dadosNovos.rupturas.itensAtualizados;
+      metricasUsuario.rupturas.itensDesatualizado +=
+        dadosNovos.rupturas.itensDesatualizado;
+      metricasUsuario.rupturas.itensSemEstoque +=
+        dadosNovos.rupturas.itensSemEstoque;
+      metricasUsuario.rupturas.itensNaopertence +=
+        dadosNovos.rupturas.itensNaopertence;
+      metricasUsuario.rupturas.custoTotalRuptura =
+        (metricasUsuario.rupturas.custoTotalRuptura || 0) +
+        (dadosNovos.rupturas.custoTotal || 0);
 
       // Somar métricas de presenças
       metricasUsuario.presencas.totalItens += dadosNovos.presencas.totalItens;
       metricasUsuario.presencas.itensLidos += dadosNovos.presencas.itensLidos;
-      metricasUsuario.presencas.itensAtualizados += dadosNovos.presencas.itensAtualizados;
-      metricasUsuario.presencas.itensDesatualizado += dadosNovos.presencas.itensDesatualizado;
-      metricasUsuario.presencas.itensSemEstoque += dadosNovos.presencas.itensSemEstoque;
-      metricasUsuario.presencas.itensNaopertence += dadosNovos.presencas.itensNaopertence;
-      metricasUsuario.presencas.presencasConfirmadas = (metricasUsuario.presencas.presencasConfirmadas || 0) + (dadosNovos.presencas.presencasConfirmadas || 0);
+      metricasUsuario.presencas.itensAtualizados +=
+        dadosNovos.presencas.itensAtualizados;
+      metricasUsuario.presencas.itensDesatualizado +=
+        dadosNovos.presencas.itensDesatualizado;
+      metricasUsuario.presencas.itensSemEstoque +=
+        dadosNovos.presencas.itensSemEstoque;
+      metricasUsuario.presencas.itensNaopertence +=
+        dadosNovos.presencas.itensNaopertence;
+      metricasUsuario.presencas.presencasConfirmadas =
+        (metricasUsuario.presencas.presencasConfirmadas || 0) +
+        (dadosNovos.presencas.presencasConfirmadas || 0);
 
       // Somar contadores de classes de produto
-      const classesProdutoExistentes = new Map(Object.entries(metricasUsuario.ContadorClassesProduto || {}));
+      const classesProdutoExistentes = new Map(
+        Object.entries(metricasUsuario.ContadorClassesProduto || {}),
+      );
       for (const [classe, count] of dadosNovos.ContadorClassesProduto) {
-        classesProdutoExistentes.set(classe, (classesProdutoExistentes.get(classe) || 0) + count);
+        classesProdutoExistentes.set(
+          classe,
+          (classesProdutoExistentes.get(classe) || 0) + count,
+        );
       }
-      metricasUsuario.ContadorClassesProduto = Object.fromEntries(classesProdutoExistentes);
+      metricasUsuario.ContadorClassesProduto = Object.fromEntries(
+        classesProdutoExistentes,
+      );
 
       // Somar contadores de locais
-      const locaisExistentes = new Map(Object.entries(metricasUsuario.ContadorLocais || {}));
+      const locaisExistentes = new Map(
+        Object.entries(metricasUsuario.ContadorLocais || {}),
+      );
       for (const [local, count] of dadosNovos.ContadorLocais) {
         locaisExistentes.set(local, (locaisExistentes.get(local) || 0) + count);
       }
@@ -723,27 +850,52 @@ class MetricasUsuariosService {
       // Recalcular percentuais com os novos totais
       const totaisDaLoja = await this.calcularTotaisPorLojaRapido(lojaId);
 
-      metricasUsuario.etiquetas.percentualConclusao = totaisDaLoja.etiquetas.itensLidos > 0
-        ? Math.round((metricasUsuario.etiquetas.itensLidos / totaisDaLoja.etiquetas.itensLidos) * 100)
-        : 0;
+      metricasUsuario.etiquetas.percentualConclusao =
+        totaisDaLoja.etiquetas.itensLidos > 0
+          ? Math.round(
+              (metricasUsuario.etiquetas.itensLidos /
+                totaisDaLoja.etiquetas.itensLidos) *
+                100,
+            )
+          : 0;
 
-      metricasUsuario.rupturas.percentualConclusao = totaisDaLoja.rupturas.itensLidos > 0
-        ? Math.round((metricasUsuario.rupturas.itensLidos / totaisDaLoja.rupturas.itensLidos) * 100)
-        : 0;
-      metricasUsuario.rupturas.custoMedioRuptura = metricasUsuario.rupturas.totalItens > 0
-        ? metricasUsuario.rupturas.custoTotalRuptura / metricasUsuario.rupturas.totalItens
-        : 0;
+      metricasUsuario.rupturas.percentualConclusao =
+        totaisDaLoja.rupturas.itensLidos > 0
+          ? Math.round(
+              (metricasUsuario.rupturas.itensLidos /
+                totaisDaLoja.rupturas.itensLidos) *
+                100,
+            )
+          : 0;
+      metricasUsuario.rupturas.custoMedioRuptura =
+        metricasUsuario.rupturas.totalItens > 0
+          ? metricasUsuario.rupturas.custoTotalRuptura /
+            metricasUsuario.rupturas.totalItens
+          : 0;
 
-      metricasUsuario.presencas.percentualConclusao = totaisDaLoja.presencas.itensLidos > 0
-        ? Math.round((metricasUsuario.presencas.itensLidos / totaisDaLoja.presencas.itensLidos) * 100)
-        : 0;
-      metricasUsuario.presencas.percentualPresenca = metricasUsuario.presencas.totalItens > 0
-        ? Math.round((metricasUsuario.presencas.presencasConfirmadas / metricasUsuario.presencas.totalItens) * 100)
-        : 0;
+      metricasUsuario.presencas.percentualConclusao =
+        totaisDaLoja.presencas.itensLidos > 0
+          ? Math.round(
+              (metricasUsuario.presencas.itensLidos /
+                totaisDaLoja.presencas.itensLidos) *
+                100,
+            )
+          : 0;
+      metricasUsuario.presencas.percentualPresenca =
+        metricasUsuario.presencas.totalItens > 0
+          ? Math.round(
+              (metricasUsuario.presencas.presencasConfirmadas /
+                metricasUsuario.presencas.totalItens) *
+                100,
+            )
+          : 0;
     }
 
     // 4. Recalcular contadores de auditorias (usa aggregate, então precisa buscar tudo do usuário)
-    const contadores = await this.calcularContadoresAuditorias(lojaId, dadosNovos.usuarioId);
+    const contadores = await this.calcularContadoresAuditorias(
+      lojaId,
+      dadosNovos.usuarioId,
+    );
     metricasUsuario.contadoresAuditorias = contadores;
 
     // 5. Calcular totais acumulados a partir das métricas atualizadas
@@ -758,11 +910,15 @@ class MetricasUsuariosService {
     };
 
     // 6. Calcular tendências
-    const tendencias = await this.calcularTendencias(lojaId, dadosNovos.usuarioId, {
-      etiquetas: metricasUsuario.etiquetas,
-      rupturas: metricasUsuario.rupturas,
-      presencas: metricasUsuario.presencas,
-    });
+    const tendencias = await this.calcularTendencias(
+      lojaId,
+      dadosNovos.usuarioId,
+      {
+        etiquetas: metricasUsuario.etiquetas,
+        rupturas: metricasUsuario.rupturas,
+        presencas: metricasUsuario.presencas,
+      },
+    );
     metricasUsuario.tendencias = tendencias;
 
     // 7. Calcular totais e pontuação
@@ -771,7 +927,9 @@ class MetricasUsuariosService {
     // 8. Salvar
     await metricasUsuario.save();
 
-    console.log(`✅ [Incremental] ${dadosNovos.usuarioNome}: ${metricasUsuario.totaisAcumulados.itensLidosTotal} itens lidos (total)`);
+    console.log(
+      `✅ [Incremental] ${dadosNovos.usuarioNome}: ${metricasUsuario.totaisAcumulados.itensLidosTotal} itens lidos (total)`,
+    );
   }
 
   /**
@@ -783,21 +941,23 @@ class MetricasUsuariosService {
       {
         $group: {
           _id: "$tipo",
-          itensLidos: { $sum: 1 }
-        }
-      }
+          itensLidos: { $sum: 1 },
+        },
+      },
     ]);
 
     const totais = {
       etiquetas: { itensLidos: 1 },
       rupturas: { itensLidos: 1 },
-      presencas: { itensLidos: 1 }
+      presencas: { itensLidos: 1 },
     };
 
-    resultado.forEach(item => {
-      if (item._id === "etiqueta") totais.etiquetas.itensLidos = item.itensLidos;
+    resultado.forEach((item) => {
+      if (item._id === "etiqueta")
+        totais.etiquetas.itensLidos = item.itensLidos;
       if (item._id === "ruptura") totais.rupturas.itensLidos = item.itensLidos;
-      if (item._id === "presenca") totais.presencas.itensLidos = item.itensLidos;
+      if (item._id === "presenca")
+        totais.presencas.itensLidos = item.itensLidos;
     });
 
     return totais;
@@ -809,21 +969,27 @@ class MetricasUsuariosService {
   calcularMetricasComPercentual(metricas, totaisDaLoja, tipo) {
     const resultado = { ...metricas };
 
-    resultado.percentualConclusao = totaisDaLoja.itensLidos > 0
-      ? Math.round((metricas.itensLidos / totaisDaLoja.itensLidos) * 100)
-      : 0;
-
-    if (tipo === 'ruptura') {
-      resultado.custoTotalRuptura = metricas.custoTotal || 0;
-      resultado.custoMedioRuptura = metricas.totalItens > 0
-        ? (metricas.custoTotal || 0) / metricas.totalItens
+    resultado.percentualConclusao =
+      totaisDaLoja.itensLidos > 0
+        ? Math.round((metricas.itensLidos / totaisDaLoja.itensLidos) * 100)
         : 0;
+
+    if (tipo === "ruptura") {
+      resultado.custoTotalRuptura = metricas.custoTotal || 0;
+      resultado.custoMedioRuptura =
+        metricas.totalItens > 0
+          ? (metricas.custoTotal || 0) / metricas.totalItens
+          : 0;
     }
 
-    if (tipo === 'presenca') {
-      resultado.percentualPresenca = metricas.totalItens > 0
-        ? Math.round(((metricas.presencasConfirmadas || 0) / metricas.totalItens) * 100)
-        : 0;
+    if (tipo === "presenca") {
+      resultado.percentualPresenca =
+        metricas.totalItens > 0
+          ? Math.round(
+              ((metricas.presencasConfirmadas || 0) / metricas.totalItens) *
+                100,
+            )
+          : 0;
     }
 
     return resultado;
@@ -834,12 +1000,14 @@ class MetricasUsuariosService {
    */
   async atualizarRankingsLoja(lojaId) {
     try {
-      console.log(`🏆 [MetricasUsuarios-Incremental] Atualizando rankings da loja...`);
+      console.log(
+        `🏆 [MetricasUsuarios-Incremental] Atualizando rankings da loja...`,
+      );
 
       // Ranking da loja
       const metricasLoja = await MetricasUsuario.find({
         loja: lojaId,
-        periodo: "periodo_completo"
+        periodo: "periodo_completo",
       }).sort({ "totais.pontuacaoTotal": -1 });
 
       // Atualizar posição na loja
@@ -850,7 +1018,7 @@ class MetricasUsuariosService {
 
       // Ranking geral (todas as lojas) - necessário recalcular
       const todasMetricas = await MetricasUsuario.find({
-        periodo: "periodo_completo"
+        periodo: "periodo_completo",
       }).sort({ "totais.pontuacaoTotal": -1 });
 
       for (let i = 0; i < todasMetricas.length; i++) {
@@ -868,8 +1036,10 @@ class MetricasUsuariosService {
         }
 
         // Atualizar melhor posição
-        if (!todasMetricas[i].historicoRanking.melhorPosicao ||
-            posicao < todasMetricas[i].historicoRanking.melhorPosicao) {
+        if (
+          !todasMetricas[i].historicoRanking.melhorPosicao ||
+          posicao < todasMetricas[i].historicoRanking.melhorPosicao
+        ) {
           todasMetricas[i].historicoRanking.melhorPosicao = posicao;
         }
 
@@ -878,33 +1048,36 @@ class MetricasUsuariosService {
 
       console.log(`✅ [MetricasUsuarios-Incremental] Rankings atualizados`);
     } catch (error) {
-      console.error(`❌ [MetricasUsuarios-Incremental] Erro ao atualizar rankings:`, error);
+      console.error(
+        `❌ [MetricasUsuarios-Incremental] Erro ao atualizar rankings:`,
+        error,
+      );
       throw error;
     }
   }
 
   /**
-   * Recalcula as métricas de um usuário específico para um determinado dia
-   * Isso garante que não haja acumulação indevida quando os dados são substituídos
+   * Recalcula as métricas CUMULATIVAS de um usuário específico
+   * Busca TODAS as auditorias do usuário na loja e recalcula o acumulado total
+   * Isso garante que MetricasUsuario sempre tenha os valores corretos
    */
   async recalcularMetricasUsuario(lojaId, usuarioId, dataReferencia) {
     try {
-      console.log(`🔄 [MetricasUsuarios] Recalculando métricas para usuário ${usuarioId} na loja ${lojaId} para a data ${dataReferencia}`);
+      console.log(
+        `🔄 [MetricasUsuarios] Recalculando métricas CUMULATIVAS para usuário ${usuarioId} na loja ${lojaId}`,
+      );
 
-      // Buscar todas as auditorias do usuário na loja para o período
-      const inicioDia = new Date(dataReferencia);
-      inicioDia.setHours(0, 0, 0, 0);
-      const fimDia = new Date(dataReferencia);
-      fimDia.setHours(23, 59, 59, 999);
-
+      // CORREÇÃO: Buscar TODAS as auditorias do usuário na loja (cumulativo)
+      // Não filtrar por data, pois MetricasUsuario deve ter o acumulado total
       const auditorias = await Auditoria.find({
         loja: lojaId,
         usuarioId: usuarioId,
-        data: { $gte: inicioDia, $lte: fimDia }
-      }).populate('loja', 'codigo nome regiao');
+      }).populate("loja", "codigo nome regiao");
 
       if (auditorias.length === 0) {
-        console.log(`⚠️ [MetricasUsuarios] Nenhuma auditoria encontrada para recalculo do usuário ${usuarioId}`);
+        console.log(
+          `⚠️ [MetricasUsuarios] Nenhuma auditoria encontrada para recalculo do usuário ${usuarioId}`,
+        );
         return { success: true, recalculated: false };
       }
 
@@ -914,8 +1087,8 @@ class MetricasUsuariosService {
         usuarioNome: auditorias[0].usuarioNome || usuarioId,
         loja: auditorias[0].loja,
         etiquetas: this.criarMetricasVazias(),
-        rupturas: this.criarMetricasVazias('ruptura'),
-        presencas: this.criarMetricasVazias('presenca'),
+        rupturas: this.criarMetricasVazias("ruptura"),
+        presencas: this.criarMetricasVazias("presenca"),
         ContadorClassesProduto: new Map(),
         ContadorLocais: new Map(),
       };
@@ -938,7 +1111,9 @@ class MetricasUsuariosService {
       });
 
       if (!metricasUsuario) {
-        console.log(`📝 [MetricasUsuarios] Criando novo registro para ${dadosUsuario.usuarioNome}`);
+        console.log(
+          `📝 [MetricasUsuarios] Criando novo registro para ${dadosUsuario.usuarioNome}`,
+        );
         metricasUsuario = new MetricasUsuario({
           loja: lojaId,
           usuarioId: dadosUsuario.usuarioId,
@@ -950,29 +1125,53 @@ class MetricasUsuariosService {
           versaoCalculo: this.versaoCalculo,
         });
       } else {
-        console.log(`🔄 [MetricasUsuarios] Atualizando ${dadosUsuario.usuarioNome}`);
+        console.log(
+          `🔄 [MetricasUsuarios] Atualizando ${dadosUsuario.usuarioNome}`,
+        );
         // Atualizar campos básicos
         metricasUsuario.usuarioNome = dadosUsuario.usuarioNome;
         metricasUsuario.lojaNome = dadosUsuario.loja.nome;
         metricasUsuario.dataFim = dataReferencia;
 
         // Atualizar dataInicio apenas se a nova for anterior
-        if (!metricasUsuario.dataInicio || dataReferencia < metricasUsuario.dataInicio) {
+        if (
+          !metricasUsuario.dataInicio ||
+          dataReferencia < metricasUsuario.dataInicio
+        ) {
           metricasUsuario.dataInicio = dataReferencia;
         }
       }
 
       // Atualizar métricas principais com os valores recalculados
-      metricasUsuario.etiquetas = this.calcularMetricasComPercentual(dadosUsuario.etiquetas, totaisDaLoja.etiquetas, 'etiqueta');
-      metricasUsuario.rupturas = this.calcularMetricasComPercentual(dadosUsuario.rupturas, totaisDaLoja.rupturas, 'ruptura');
-      metricasUsuario.presencas = this.calcularMetricasComPercentual(dadosUsuario.presencas, totaisDaLoja.presencas, 'presenca');
+      metricasUsuario.etiquetas = this.calcularMetricasComPercentual(
+        dadosUsuario.etiquetas,
+        totaisDaLoja.etiquetas,
+        "etiqueta",
+      );
+      metricasUsuario.rupturas = this.calcularMetricasComPercentual(
+        dadosUsuario.rupturas,
+        totaisDaLoja.rupturas,
+        "ruptura",
+      );
+      metricasUsuario.presencas = this.calcularMetricasComPercentual(
+        dadosUsuario.presencas,
+        totaisDaLoja.presencas,
+        "presenca",
+      );
 
       // Atualizar contadores
-      metricasUsuario.ContadorClassesProduto = Object.fromEntries(dadosUsuario.ContadorClassesProduto);
-      metricasUsuario.ContadorLocais = Object.fromEntries(dadosUsuario.ContadorLocais);
+      metricasUsuario.ContadorClassesProduto = Object.fromEntries(
+        dadosUsuario.ContadorClassesProduto,
+      );
+      metricasUsuario.ContadorLocais = Object.fromEntries(
+        dadosUsuario.ContadorLocais,
+      );
 
       // Recalcular contadores de auditorias
-      const contadores = await this.calcularContadoresAuditorias(lojaId, dadosUsuario.usuarioId);
+      const contadores = await this.calcularContadoresAuditorias(
+        lojaId,
+        dadosUsuario.usuarioId,
+      );
       metricasUsuario.contadoresAuditorias = contadores;
 
       // Calcular totais acumulados
@@ -980,7 +1179,11 @@ class MetricasUsuariosService {
       metricasUsuario.totaisAcumulados = totaisAcumulados;
 
       // Calcular tendências
-      const tendencias = await this.calcularTendencias(lojaId, dadosUsuario.usuarioId, dadosUsuario);
+      const tendencias = await this.calcularTendencias(
+        lojaId,
+        dadosUsuario.usuarioId,
+        dadosUsuario,
+      );
       metricasUsuario.tendencias = tendencias;
 
       // Calcular totais e pontuação
@@ -989,16 +1192,20 @@ class MetricasUsuariosService {
       // Salvar no banco
       await metricasUsuario.save();
 
-      console.log(`✅ [MetricasUsuarios] Métricas recalculadas para ${dadosUsuario.usuarioNome}: ${totaisAcumulados.itensLidosTotal} itens lidos`);
+      console.log(
+        `✅ [MetricasUsuarios] Métricas recalculadas para ${dadosUsuario.usuarioNome}: ${totaisAcumulados.itensLidosTotal} itens lidos`,
+      );
 
       return {
         success: true,
         recalculated: true,
-        totalItens: totaisAcumulados.itensLidosTotal
+        totalItens: totaisAcumulados.itensLidosTotal,
       };
-
     } catch (error) {
-      console.error(`❌ [MetricasUsuarios] Erro ao recalcular métricas do usuário:`, error);
+      console.error(
+        `❌ [MetricasUsuarios] Erro ao recalcular métricas do usuário:`,
+        error,
+      );
       throw error;
     }
   }

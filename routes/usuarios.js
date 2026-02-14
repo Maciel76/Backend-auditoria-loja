@@ -127,6 +127,9 @@ router.patch("/:id/cover", async (req, res) => {
     const userId = req.params.id;
     const { coverId, selectedBadges, selectedAvatar } = req.body;
 
+    console.log('Recebendo requisição para atualizar avatar do usuário:', userId);
+    console.log('Body da requisição:', { coverId, selectedBadges, selectedAvatar });
+
     // At least one field must be provided
     if (!coverId && !selectedBadges && !selectedAvatar) {
       return res.status(400).json({ erro: "Pelo menos um campo deve ser fornecido: coverId, selectedBadges ou selectedAvatar" });
@@ -150,11 +153,16 @@ router.patch("/:id/cover", async (req, res) => {
       updateObj.foto = selectedAvatar;
     }
 
+    console.log('Tentando atualizar usuário com ID:', userId);
+    console.log('Objeto de atualização:', updateObj);
+
     const usuario = await User.findOneAndUpdate(
       { id: userId },
       updateObj,
       { new: true, runValidators: true },
     );
+
+    console.log('Resultado da atualização:', usuario ? 'SUCESSO' : 'FALHA - Usuário não encontrado');
 
     if (!usuario) {
       return res.status(404).json({ erro: "Usuário não encontrado" });

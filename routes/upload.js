@@ -79,7 +79,7 @@ function limparArquivoTemporario(filePath) {
 async function processarEtiqueta(file, dataAuditoria, loja) {
   try {
     console.log(
-      `🏷️ Processando etiquetas para loja: ${loja.codigo} - ${loja.nome}`
+      `🏷️ Processando etiquetas para loja: ${loja.codigo} - ${loja.nome}`,
     );
 
     // Lendo planilha
@@ -100,34 +100,34 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
     const usuarioKey = todasChaves.find(
       (key) =>
         key.toLowerCase().includes("usuário") ||
-        key.toLowerCase().includes("usuario")
+        key.toLowerCase().includes("usuario"),
     );
     const situacaoKey = todasChaves.find(
       (key) =>
         key.toLowerCase().includes("situação") ||
-        key.toLowerCase().includes("situacao")
+        key.toLowerCase().includes("situacao"),
     );
     const localKey = todasChaves.find((key) =>
-      key.toLowerCase().includes("local")
+      key.toLowerCase().includes("local"),
     );
     const produtoKey = todasChaves.find((key) =>
-      key.toLowerCase().includes("produto")
+      key.toLowerCase().includes("produto"),
     );
     const codigoKey = todasChaves.find(
       (key) =>
         key.toLowerCase().includes("código") ||
-        key.toLowerCase().includes("codigo")
+        key.toLowerCase().includes("codigo"),
     );
     const estoqueKey = todasChaves.find((key) =>
-      key.toLowerCase().includes("estoque")
+      key.toLowerCase().includes("estoque"),
     );
     const compraKey = todasChaves.find((key) =>
-      key.toLowerCase().includes("compra")
+      key.toLowerCase().includes("compra"),
     );
     const classeProdutoKey = todasChaves.find(
       (key) =>
         key.toLowerCase().includes("classe") &&
-        key.toLowerCase().includes("produto")
+        key.toLowerCase().includes("produto"),
     );
     // Buscar colunas "Auditado em" - Excel/XLSX cria "_1", "_2" etc para colunas duplicadas
     const auditadoEmDataKey = todasChaves.find((key) => {
@@ -177,7 +177,7 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
         if (index === 0) {
           console.log(
             `📅 Data encontrada (${auditadoEmDataKey}):`,
-            auditadoDia
+            auditadoDia,
           );
         }
       }
@@ -197,14 +197,14 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
             `⏰ Hora encontrada (${auditadoEmHoraKey}):`,
             horaCompleta,
             "→",
-            auditadoHora
+            auditadoHora,
           );
         }
       }
 
       if (index === 0) {
         console.log(
-          `✅ Resultado final - Dia: "${auditadoDia}", Hora: "${auditadoHora}"`
+          `✅ Resultado final - Dia: "${auditadoDia}", Hora: "${auditadoHora}"`,
         );
       }
 
@@ -264,13 +264,13 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
     // Limpar produtos de auditoria para este tipo e loja
     await AuditProductsService.limparProdutosPorLojaELojaTipo(
       loja._id,
-      "etiqueta"
+      "etiqueta",
     );
 
     console.log(
       `🗑️ Dados antigos removidos para loja ${
         loja.codigo
-      } na data ${dataAuditoria.toLocaleDateString()}`
+      } na data ${dataAuditoria.toLocaleDateString()}`,
     );
 
     // Salvar auditorias e capturar IDs
@@ -278,7 +278,7 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
     if (setoresBatch.length > 0) {
       auditoriasInseridas = await Auditoria.insertMany(setoresBatch);
       console.log(
-        `💾 ${setoresBatch.length} auditorias salvos para loja ${loja.codigo}`
+        `💾 ${setoresBatch.length} auditorias salvos para loja ${loja.codigo}`,
       );
     }
 
@@ -310,7 +310,7 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
             upsert: true,
             new: true,
             setDefaultsOnInsert: true,
-          }
+          },
         );
 
         console.log(`👤 Usuário processado: ${usuario.nome} (${usuario.id})`);
@@ -331,7 +331,7 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
 
         await usuario.save();
         console.log(
-          `👤 Usuário processado: ${nome} (${itensAtualizados} itens)`
+          `👤 Usuário processado: ${nome} (${itensAtualizados} itens)`,
         );
       } catch (error) {
         console.error(`❌ Erro ao processar usuário ${usuarioStr}:`, error);
@@ -340,7 +340,7 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
 
     // Calcular total de itens lidos
     const totalItensLidos = jsonData.filter(
-      (item) => situacaoKey && item[situacaoKey] === "Atualizado"
+      (item) => situacaoKey && item[situacaoKey] === "Atualizado",
     ).length;
 
     // Salvar informações da planilha - COM LOJA
@@ -366,7 +366,7 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
           processamentoCompleto: true,
         },
       },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
 
     console.log(`✅ Planilha processada com sucesso para loja ${loja.codigo}`);
@@ -377,12 +377,12 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
         loja._id,
         loja.nome,
         "etiqueta",
-        setoresBatch
+        setoresBatch,
       );
     } catch (error) {
       console.error(
         `❌ Erro ao processar produtos de auditoria para etiqueta:`,
-        error
+        error,
       );
     }
 
@@ -409,7 +409,7 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
 async function processarRuptura(file, dataAuditoria, loja) {
   try {
     console.log(
-      `💔 Processando rupturas para loja: ${loja.codigo} - ${loja.nome}`
+      `💔 Processando rupturas para loja: ${loja.codigo} - ${loja.nome}`,
     );
 
     const workbook = xlsx.readFile(file.path, { cellDates: true });
@@ -430,7 +430,7 @@ async function processarRuptura(file, dataAuditoria, loja) {
 
       const codigo = String(item["Código"] || "").trim();
       const produto = String(
-        item["Produto"] || "Produto não especificado"
+        item["Produto"] || "Produto não especificado",
       ).trim();
 
       if (!codigo && !produto) {
@@ -439,7 +439,7 @@ async function processarRuptura(file, dataAuditoria, loja) {
 
       const local = String(item["Local"] || "Não especificado").trim();
       const usuario = String(
-        item["Usuário"] || "Usuário não identificado"
+        item["Usuário"] || "Usuário não identificado",
       ).trim();
       const situacao = String(item["Situação"] || "Não lido").trim();
 
@@ -453,17 +453,17 @@ async function processarRuptura(file, dataAuditoria, loja) {
         classeProduto: String(item["Classe de Produto"] || "").trim(),
         setor: String(item["Setor"] || "").trim(),
         situacaoAuditoria: String(
-          item["Situação atual da auditoria"] || ""
+          item["Situação atual da auditoria"] || "",
         ).trim(),
         auditadoEm: combinarDataHoraBrasileira(
           item["Auditado em"],
-          item["Auditado em_1"]
+          item["Auditado em_1"],
         ),
         estoqueAtual: processarValorEstoque(item["Estoque atual"] || "0"),
         presencaConfirmada: String(item["Presença confirmada"] || "").trim(),
         presencaConfirmadaEm: combinarDataHoraBrasileira(
           item["Presença confirmada"],
-          item["Presença confirmada_1"]
+          item["Presença confirmada_1"],
         ),
         estoqueLeitura: processarValorEstoque(item["Estoque Leitura"] || "0"),
         residuo: String(item["Resíduo"] || "").trim(),
@@ -471,13 +471,13 @@ async function processarRuptura(file, dataAuditoria, loja) {
         ultimaCompra: String(item["Última compra"] || "").trim(),
         ultimaCompraEm: combinarDataHoraBrasileira(
           item["Última compra"],
-          item["Última compra_1"]
+          item["Última compra_1"],
         ),
         diasSemVenda: parseInt(item["Dias sem venda"] || 0),
         custoRuptura: parseFloat(
           String(item["Custo Ruptura"] || "0")
             .replace(".", "")
-            .replace(",", ".")
+            .replace(",", "."),
         ),
         dataAuditoria: dataAuditoriaFinal,
         tipo: "ruptura",
@@ -502,7 +502,7 @@ async function processarRuptura(file, dataAuditoria, loja) {
             classeProduto: dadosItem.classeProduto,
             local: dadosItem.local,
             setor: dadosItem.setor,
-          }
+          },
         );
       }
 
@@ -530,7 +530,7 @@ async function processarRuptura(file, dataAuditoria, loja) {
     // Limpar produtos de auditoria para este tipo e loja
     await AuditProductsService.limparProdutosPorLojaELojaTipo(
       loja._id,
-      "ruptura"
+      "ruptura",
     );
 
     console.log(`🗑️ Rupturas antigas removidas para loja ${loja.codigo}`);
@@ -579,7 +579,7 @@ async function processarRuptura(file, dataAuditoria, loja) {
 
       const auditoriasInseridas = await Auditoria.insertMany(auditoriasBatch);
       console.log(
-        `💾 ${dadosProcessados.length} rupturas salvas para loja ${loja.codigo}`
+        `💾 ${dadosProcessados.length} rupturas salvas para loja ${loja.codigo}`,
       );
 
       // Verificar se as classes foram salvas corretamente
@@ -591,13 +591,13 @@ async function processarRuptura(file, dataAuditoria, loja) {
       });
       console.log(
         `📊 [RUPTURA] Classes encontradas: ${Array.from(
-          classesEncontradas
-        ).join(", ")}`
+          classesEncontradas,
+        ).join(", ")}`,
       );
       console.log(
         `📍 [RUPTURA] Locais encontrados: ${Array.from(locaisEncontrados).join(
-          ", "
-        )}`
+          ", ",
+        )}`,
       );
 
       // Salvar IDs para retorno
@@ -634,7 +634,7 @@ async function processarRuptura(file, dataAuditoria, loja) {
             upsert: true,
             new: true,
             setDefaultsOnInsert: true,
-          }
+          },
         );
 
         console.log(`👤 Usuário processado: ${usuario.nome} (${usuario.id})`);
@@ -671,7 +671,7 @@ async function processarRuptura(file, dataAuditoria, loja) {
         loja: loja._id,
         totalItens: jsonData.length,
         totalItensLidos: dadosProcessados.filter(
-          (item) => item.situacao === "Atualizado"
+          (item) => item.situacao === "Atualizado",
         ).length,
         usuariosEnvolvidos: Array.from(usuariosMap.keys()),
         dataUpload: new Date(),
@@ -682,7 +682,7 @@ async function processarRuptura(file, dataAuditoria, loja) {
           processamentoCompleto: true,
         },
       },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
 
     console.log(`✅ Ruptura processada com sucesso para loja ${loja.codigo}`);
@@ -693,12 +693,12 @@ async function processarRuptura(file, dataAuditoria, loja) {
         loja._id,
         loja.nome,
         "ruptura",
-        dadosProcessados
+        dadosProcessados,
       );
     } catch (error) {
       console.error(
         `❌ Erro ao processar produtos de auditoria para ruptura:`,
-        error
+        error,
       );
     }
 
@@ -726,7 +726,7 @@ async function processarRuptura(file, dataAuditoria, loja) {
 async function processarPresenca(file, dataAuditoria, loja) {
   try {
     console.log(
-      `👥 Processando presenças para loja: ${loja.codigo} - ${loja.nome}`
+      `👥 Processando presenças para loja: ${loja.codigo} - ${loja.nome}`,
     );
 
     const workbook = xlsx.readFile(file.path, { cellDates: true });
@@ -747,7 +747,7 @@ async function processarPresenca(file, dataAuditoria, loja) {
 
       const codigo = String(item["Código"] || "").trim();
       const produto = String(
-        item["Produto"] || "Produto não especificado"
+        item["Produto"] || "Produto não especificado",
       ).trim();
 
       if (!codigo && !produto) {
@@ -756,7 +756,7 @@ async function processarPresenca(file, dataAuditoria, loja) {
 
       const local = String(item["Local"] || "Não especificado").trim();
       const usuario = String(
-        item["Usuário"] || "Usuário não identificado"
+        item["Usuário"] || "Usuário não identificado",
       ).trim();
       const situacao = String(item["Situação"] || "Não lido").trim();
 
@@ -777,17 +777,17 @@ async function processarPresenca(file, dataAuditoria, loja) {
         presencaConfirmada: String(item["Presença confirmada"] || "").trim(),
         auditadoEm: combinarDataHoraBrasileira(
           item["Auditado em"],
-          item["Auditado em_1"]
+          item["Auditado em_1"],
         ),
         presencaConfirmadaEm: combinarDataHoraBrasileira(
           item["Presença confirmada"],
-          item["Presença confirmada_1"]
+          item["Presença confirmada_1"],
         ),
         classeProdutoRaiz: String(item["Classe de Produto Raiz"] || "").trim(),
         classeProduto: String(item["Classe de Produto"] || "").trim(),
         setor: String(item["Setor"] || "").trim(),
         situacaoAuditoria: String(
-          item["Situação atual da auditoria"] || ""
+          item["Situação atual da auditoria"] || "",
         ).trim(),
         estoqueLeitura: processarValorEstoque(item["Estoque Leitura"] || "0"),
         residuo: String(item["Resíduo"] || "").trim(),
@@ -797,7 +797,7 @@ async function processarPresenca(file, dataAuditoria, loja) {
         custoRuptura: parseFloat(
           String(item["Custo Ruptura"] || "0")
             .replace(".", "")
-            .replace(",", ".")
+            .replace(",", "."),
         ),
         dataAuditoria: dataAuditoriaFinal,
         tipo: "presenca",
@@ -835,7 +835,7 @@ async function processarPresenca(file, dataAuditoria, loja) {
     // Limpar produtos de auditoria para este tipo e loja
     await AuditProductsService.limparProdutosPorLojaELojaTipo(
       loja._id,
-      "presenca"
+      "presenca",
     );
 
     console.log(`🗑️ Presenças antigas removidas para loja ${loja.codigo}`);
@@ -887,7 +887,7 @@ async function processarPresenca(file, dataAuditoria, loja) {
 
       const auditoriasInseridas = await Auditoria.insertMany(auditoriasBatch);
       console.log(
-        `💾 ${dadosProcessados.length} presenças salvas para loja ${loja.codigo}`
+        `💾 ${dadosProcessados.length} presenças salvas para loja ${loja.codigo}`,
       );
 
       // Salvar IDs para retorno
@@ -924,11 +924,11 @@ async function processarPresenca(file, dataAuditoria, loja) {
             upsert: true,
             new: true,
             setDefaultsOnInsert: true,
-          }
+          },
         );
 
         console.log(
-          `👤 Usuário processado para presença: ${usuario.nome} (${usuario.id})`
+          `👤 Usuário processado para presença: ${usuario.nome} (${usuario.id})`,
         );
 
         // Calcular contador total baseado nos itens processados
@@ -963,7 +963,7 @@ async function processarPresenca(file, dataAuditoria, loja) {
         loja: loja._id,
         totalItens: jsonData.length,
         totalItensLidos: dadosProcessados.filter(
-          (item) => item.situacao === "Atualizado"
+          (item) => item.situacao === "Atualizado",
         ).length,
         usuariosEnvolvidos: Array.from(usuariosMap.keys()),
         dataUpload: new Date(),
@@ -974,7 +974,7 @@ async function processarPresenca(file, dataAuditoria, loja) {
           processamentoCompleto: true,
         },
       },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
 
     console.log(`✅ Presença processada com sucesso para loja ${loja.codigo}`);
@@ -985,12 +985,12 @@ async function processarPresenca(file, dataAuditoria, loja) {
         loja._id,
         loja.nome,
         "presenca",
-        dadosProcessados
+        dadosProcessados,
       );
     } catch (error) {
       console.error(
         `❌ Erro ao processar produtos de auditoria para presenca:`,
-        error
+        error,
       );
     }
 
@@ -1030,7 +1030,7 @@ router.post(
       const loja = req.loja;
 
       console.log(
-        `📤 Iniciando upload de ${tipoAuditoria} para loja ${loja.codigo}`
+        `📤 Iniciando upload de ${tipoAuditoria} para loja ${loja.codigo}`,
       );
 
       // Iniciando upload
@@ -1100,11 +1100,11 @@ router.post(
 
       try {
         console.log(
-          `📊 Iniciando cálculo automático de métricas para loja ${loja.codigo}...`
+          `📊 Iniciando cálculo automático de métricas para loja ${loja.codigo}...`,
         );
         console.log(
           `📊 Service disponível:`,
-          typeof metricsCalculationService.calcularTodasMetricas
+          typeof metricsCalculationService.calcularTodasMetricas,
         );
 
         // Verificar se o serviço está disponível
@@ -1113,7 +1113,7 @@ router.post(
           typeof metricsCalculationService.calcularTodasMetricas !== "function"
         ) {
           throw new Error(
-            "MetricsCalculationService não está disponível ou não possui o método calcularTodasMetricas"
+            "MetricsCalculationService não está disponível ou não possui o método calcularTodasMetricas",
           );
         }
 
@@ -1122,7 +1122,7 @@ router.post(
         metricsStatus.initiated = true;
 
         console.log(
-          `📊 Calculando métricas para data: ${dataMetricas.toISOString()}`
+          `📊 Calculando métricas para data: ${dataMetricas.toISOString()}`,
         );
 
         // Calcular métricas diárias
@@ -1131,26 +1131,26 @@ router.post(
           await metricsCalculationService.calcularTodasMetricas(
             "diario",
             dataMetricas,
-            tipoAuditoria
+            tipoAuditoria,
           );
         metricsStatus.diario.success = resultadoDiario.success;
         console.log(
           `📅 Métricas diárias calculadas:`,
-          resultadoDiario.success ? "✅ Sucesso" : "❌ Falha"
+          resultadoDiario.success ? "✅ Sucesso" : "❌ Falha",
         );
 
         // Atualizar UserDailyMetrics se métricas diárias foram calculadas com sucesso
         if (resultadoDiario.success) {
           try {
             console.log(
-              `📊 Atualizando UserDailyMetrics para loja ${loja.codigo}...`
+              `📊 Atualizando UserDailyMetrics para loja ${loja.codigo}...`,
             );
             await atualizarUserDailyMetrics(loja, dataMetricas, tipoAuditoria);
             console.log(`✅ UserDailyMetrics atualizado com sucesso`);
           } catch (errorDailyMetrics) {
             console.error(
               `❌ Erro ao atualizar UserDailyMetrics:`,
-              errorDailyMetrics.message
+              errorDailyMetrics.message,
             );
           }
         }
@@ -1160,49 +1160,51 @@ router.post(
         try {
           // Para evitar acumulação indevida quando os dados são substituídos (mesmo dia),
           // recalculamos as métricas dos usuários afetados para o dia específico
-          console.log(`🔄 Recalculando métricas para o dia ${resultado.dataAuditoria || dataAuditoria} para evitar acumulação...`);
+          console.log(
+            `🔄 Recalculando métricas CUMULATIVAS para os usuários afetados...`,
+          );
 
-          // Recalcula as métricas para os usuários afetados no dia específico
-          const usuariosAfetados = [...new Set(resultado.usuariosEnvolvidos.map(usuarioStr => {
-            const match = usuarioStr.match(/^(\d+)\s*\((.*)\)$/);
-            return match ? match[1].trim() : usuarioStr;
-          }))];
+          // Recalcula as métricas CUMULATIVAS para os usuários afetados
+          const usuariosAfetados = [
+            ...new Set(
+              resultado.usuariosEnvolvidos.map((usuarioStr) => {
+                const match = usuarioStr.match(/^(\d+)\s*\((.*)\)$/);
+                return match ? match[1].trim() : usuarioStr;
+              }),
+            ),
+          ];
 
           for (const userId of usuariosAfetados) {
-            if (userId && userId !== 'Produto não auditado' && userId !== 'Usuário não identificado') {
+            if (
+              userId &&
+              userId !== "Produto não auditado" &&
+              userId !== "Usuário não identificado"
+            ) {
               try {
-                // Recalcula as métricas do usuário para o dia específico para garantir consistência
+                // Recalcula as métricas CUMULATIVAS do usuário (busca TODAS as auditorias)
                 await metricasUsuariosService.recalcularMetricasUsuario(
                   loja._id,
                   userId,
-                  resultado.dataAuditoria || dataAuditoria
+                  resultado.dataAuditoria || dataAuditoria,
                 );
-                console.log(`✅ Métricas recalculadas para usuário ${userId}`);
+                console.log(
+                  `✅ Métricas cumulativas recalculadas para usuário ${userId}`,
+                );
               } catch (errorRecalc) {
-                console.error(`❌ Erro ao recalcular métricas para usuário ${userId}:`, errorRecalc.message);
+                console.error(
+                  `❌ Erro ao recalcular métricas para usuário ${userId}:`,
+                  errorRecalc.message,
+                );
               }
             }
           }
 
-          if (resultado.auditoriasIds && resultado.auditoriasIds.length > 0) {
-            console.log(
-              `⚡ Usando cálculo INCREMENTAL para ${resultado.auditoriasIds.length} auditorias`
-            );
-            const resultadoIncremental =
-              await metricasUsuariosService.atualizarMetricasIncrementalmente(
-                resultado.auditoriasIds,
-                loja
-              );
-            metricsStatus.mensal.success = resultadoIncremental.success;
-            console.log(
-              `📊 Métricas atualizadas incrementalmente:`,
-              resultadoIncremental.success ? "✅ Sucesso" : "❌ Falha"
-            );
-          } else {
-            console.log(`⚠️ Nenhuma auditoria nova para calcular métricas`);
-            metricsStatus.mensal.success = true;
-          }
-
+          // CORREÇÃO: Removido atualizarMetricasIncrementalmente pois recalcularMetricasUsuario
+          // agora faz recalculo completo cumulativo, evitando contagem dupla
+          metricsStatus.mensal.success = true;
+          console.log(
+            `✅ MetricasUsuario recalculado com sucesso para ${usuariosAfetados.length} usuários`,
+          );
 
           // 🏪 ATUALIZAR MÉTRICAS DE LOJA (Período Completo)
           console.log(`🏪 ============================================`);
@@ -1214,31 +1216,31 @@ router.post(
               await metricsCalculationService.calcularMetricasLojas(
                 "periodo_completo",
                 new Date("2020-01-01"),
-                new Date()
+                new Date(),
               );
             console.log(`✅ MetricasLoja atualizado com sucesso`);
             console.log(`📊 Resultado:`, resultadoMetricasLoja);
           } catch (errorMetricasLoja) {
             console.error(
               `❌ Erro ao atualizar MetricasLoja:`,
-              errorMetricasLoja.message
+              errorMetricasLoja.message,
             );
             console.error(`📋 Stack:`, errorMetricasLoja.stack);
           }
         } catch (errorIncremental) {
           console.error(
             `❌ Erro no cálculo incremental:`,
-            errorIncremental.message
+            errorIncremental.message,
           );
           metricsStatus.mensal.error = errorIncremental.message;
           metricsStatus.mensal.success = false;
         }
 
         console.log(
-          `✅ Processamento de métricas concluído para loja ${loja.codigo}`
+          `✅ Processamento de métricas concluído para loja ${loja.codigo}`,
         );
         console.log(
-          `🔍 Verificar resultados: GET /api/debug/verificar-metricas com header x-loja: ${loja.codigo}`
+          `🔍 Verificar resultados: GET /api/debug/verificar-metricas com header x-loja: ${loja.codigo}`,
         );
       } catch (errorMetricas) {
         console.error(`❌ ERRO DETALHADO ao calcular métricas:`, {
@@ -1254,10 +1256,10 @@ router.post(
         metricsStatus.mensal.error = errorMetricas.message;
 
         console.log(
-          `🔍 Para debug detalhado: GET /api/debug/verificar-metricas com header x-loja: ${loja.codigo}`
+          `🔍 Para debug detalhado: GET /api/debug/verificar-metricas com header x-loja: ${loja.codigo}`,
         );
         console.log(
-          `🔄 Para tentar novamente: POST /api/debug/calcular-agora com header x-loja: ${loja.codigo}`
+          `🔄 Para tentar novamente: POST /api/debug/calcular-agora com header x-loja: ${loja.codigo}`,
         );
       }
 
@@ -1286,7 +1288,7 @@ router.post(
       // Atualizar conquistas para os usuários envolvidos na planilha
       try {
         console.log(
-          `🏆 Atualizando conquistas para ${resultado.totalUsuarios} usuários após upload da loja ${loja.codigo}`
+          `🏆 Atualizando conquistas para ${resultado.totalUsuarios} usuários após upload da loja ${loja.codigo}`,
         );
 
         // Obter os IDs dos usuários envolvidos na planilha processada
@@ -1298,17 +1300,16 @@ router.post(
               await achievementRulesService.evaluateUserAchievements(
                 usuarioId,
                 loja.codigo,
-                resultado.dataAuditoria || dataAuditoria
+                resultado.dataAuditoria || dataAuditoria,
               );
             console.log(
-              `✅ Conquistas atualizadas para usuário ${usuarioId} na loja ${loja.codigo}`
+              `✅ Conquistas atualizadas para usuário ${usuarioId} na loja ${loja.codigo}`,
             );
 
             // Atualizar também o modelo MetricasUsuario com os dados de conquistas
             try {
-              const { UserAchievement } = await import(
-                "../models/UserAchievement.js"
-              );
+              const { UserAchievement } =
+                await import("../models/UserAchievement.js");
               const userAchievementDoc = await UserAchievement.findOne({
                 userId: usuarioId,
                 loja: loja.codigo,
@@ -1325,31 +1326,31 @@ router.post(
                   metricaUsuario.atualizarAchievements(userAchievementDoc);
                   await metricaUsuario.save();
                   console.log(
-                    `✅ Métricas de usuário ${usuarioId} atualizadas com conquistas`
+                    `✅ Métricas de usuário ${usuarioId} atualizadas com conquistas`,
                   );
                 }
               }
             } catch (errorMetricas) {
               console.error(
                 `❌ Erro ao atualizar MetricasUsuario com conquistas para usuário ${usuarioId}:`,
-                errorMetricas.message
+                errorMetricas.message,
               );
             }
           } catch (error) {
             console.error(
               `❌ Erro ao atualizar conquistas para usuário ${usuarioId}:`,
-              error.message
+              error.message,
             );
           }
         }
 
         console.log(
-          `🏆 Conquistas atualizadas para ${usuariosIds.length} usuários após upload da loja ${loja.codigo}`
+          `🏆 Conquistas atualizadas para ${usuariosIds.length} usuários após upload da loja ${loja.codigo}`,
         );
       } catch (errorAchievements) {
         console.error(
           `❌ Erro no processamento de conquistas após upload:`,
-          errorAchievements.message
+          errorAchievements.message,
         );
       }
 
@@ -1362,7 +1363,7 @@ router.post(
         detalhes: error.message,
       });
     }
-  }
+  },
 );
 
 // Rotas para frontend - TODAS COM FILTRO DE LOJA
@@ -1393,7 +1394,7 @@ router.get("/usuarios", verificarLojaObrigatoria, async (req, res) => {
         lojaCompleta: u.loja?.nome || req.loja.nome,
         totalAuditorias: 0, // Não mais rastreado no modelo
         ultimaAuditoria: null, // Não mais rastreado no modelo
-      }))
+      })),
     );
   } catch (error) {
     console.error("Erro ao buscar usuários:", error);
@@ -1417,7 +1418,7 @@ router.get("/datas-auditoria", verificarLojaObrigatoria, async (req, res) => {
     }));
 
     res.json(
-      datasFormatadas.sort((a, b) => new Date(b.data) - new Date(a.data))
+      datasFormatadas.sort((a, b) => new Date(b.data) - new Date(a.data)),
     );
   } catch (error) {
     console.error("Erro ao buscar datas:", error);
@@ -1460,7 +1461,7 @@ router.get("/dados-planilha", verificarLojaObrigatoria, async (req, res) => {
               23,
               59,
               59,
-              999
+              999,
             ),
           },
           loja: req.loja._id,
@@ -1495,7 +1496,7 @@ router.get("/dados-planilha", verificarLojaObrigatoria, async (req, res) => {
               23,
               59,
               59,
-              999
+              999,
             ),
           },
           loja: req.loja._id,
@@ -1895,7 +1896,7 @@ router.get(
         .status(500)
         .json({ erro: "Falha ao buscar auditorias", detalhes: error.message });
     }
-  }
+  },
 );
 // upload.js - NOVA ROTA PARA DEBUG
 router.get(
@@ -1950,7 +1951,7 @@ router.get(
         .status(500)
         .json({ erro: "Falha ao buscar métricas", detalhes: error.message });
     }
-  }
+  },
 );
 
 // Endpoint para RankingColaboradores - UserDailyMetrics
@@ -1964,16 +1965,16 @@ router.get(
       const { tipo } = req.query;
 
       console.log(
-        `🏆 Buscando ranking para loja ${loja.codigo}, tipo: ${tipo || "todos"}`
+        `🏆 Buscando ranking para loja ${loja.codigo}, tipo: ${tipo || "todos"}`,
       );
 
       // Buscar todos os UserDailyMetrics da loja
       const usuarios = await UserDailyMetrics.find({ loja: loja._id });
 
       // Buscar os dados de foto para todos os usuários de uma vez para melhorar performance
-      const idsUsuarios = [...new Set(usuarios.map(u => u.usuarioId))];
+      const idsUsuarios = [...new Set(usuarios.map((u) => u.usuarioId))];
       const usuariosDocs = await User.find({ id: { $in: idsUsuarios } });
-      const usuariosMap = new Map(usuariosDocs.map(u => [u.id, u]));
+      const usuariosMap = new Map(usuariosDocs.map((u) => [u.id, u]));
 
       const ranking = [];
 
@@ -2035,7 +2036,7 @@ router.get(
       console.log(
         `✅ Ranking gerado: ${ranking.length} colaboradores - Tipo: ${
           tipo || "todos"
-        }`
+        }`,
       );
 
       res.json(ranking);
@@ -2046,7 +2047,7 @@ router.get(
         detalhes: error.message,
       });
     }
-  }
+  },
 );
 
 // Endpoint para RankingColaboradores - MetricasUsuario (período completo)
@@ -2061,7 +2062,7 @@ router.get(
       console.log(
         `🏆 Buscando ranking completo para loja ${loja.codigo}, tipo: ${
           tipo || "todos"
-        }`
+        }`,
       );
 
       // Buscar todos os MetricasUsuario da loja (período completo)
@@ -2071,9 +2072,9 @@ router.get(
       });
 
       // Buscar os dados de foto para todos os usuários de uma vez para melhorar performance
-      const idsUsuarios = [...new Set(usuarios.map(u => u.usuarioId))];
+      const idsUsuarios = [...new Set(usuarios.map((u) => u.usuarioId))];
       const usuariosDocs = await User.find({ id: { $in: idsUsuarios } });
-      const usuariosMap = new Map(usuariosDocs.map(u => [u.id, u]));
+      const usuariosMap = new Map(usuariosDocs.map((u) => [u.id, u]));
 
       const ranking = [];
 
@@ -2138,7 +2139,7 @@ router.get(
       console.log(
         `✅ Ranking completo gerado: ${ranking.length} colaboradores - Tipo: ${
           tipo || "todos"
-        }`
+        }`,
       );
 
       res.json(ranking);
@@ -2149,7 +2150,7 @@ router.get(
         detalhes: error.message,
       });
     }
-  }
+  },
 );
 
 // Endpoint para obter datas de auditoria disponíveis - UserDailyMetrics
@@ -2188,7 +2189,7 @@ router.get(
         }));
 
       console.log(
-        `📅 Encontradas ${datas.length} datas de auditoria disponíveis`
+        `📅 Encontradas ${datas.length} datas de auditoria disponíveis`,
       );
 
       res.json(datas);
@@ -2199,7 +2200,7 @@ router.get(
         detalhes: error.message,
       });
     }
-  }
+  },
 );
 
 // Endpoint para testar UserDailyMetrics - DEBUG
@@ -2260,7 +2261,7 @@ router.get(
         detalhes: error.message,
       });
     }
-  }
+  },
 );
 
 // Função auxiliar para calcular métricas por classe de produto
@@ -2328,18 +2329,22 @@ function calcularMetricasPorClasse(auditorias) {
 async function atualizarUserDailyMetrics(loja, dataMetricas, tipoAuditoria) {
   try {
     console.log(
-      `📊 Atualizando UserDailyMetrics para loja ${loja.codigo}, tipo: ${tipoAuditoria}`
+      `📊 Atualizando UserDailyMetrics para loja ${loja.codigo}, tipo: ${tipoAuditoria}`,
     );
 
-    // CORREÇÃO: Buscar TODAS as auditorias da loja (não só de hoje)
-    // Para calcular métricas completas do usuário
+    // CORREÇÃO: Buscar apenas auditorias DO DIA para métricas diárias
+    const inicioDia = new Date(dataMetricas);
+    inicioDia.setHours(0, 0, 0, 0);
+    const fimDia = new Date(dataMetricas);
+    fimDia.setHours(23, 59, 59, 999);
+
     const auditorias = await Auditoria.find({
       loja: loja._id,
-      // REMOVIDO: filtro de data para buscar TODAS as auditorias
+      data: { $gte: inicioDia, $lte: fimDia },
     });
 
     console.log(
-      `📊 Encontradas ${auditorias.length} auditorias para processar`
+      `📊 Encontradas ${auditorias.length} auditorias para processar`,
     );
 
     // Agrupar por usuário
@@ -2468,7 +2473,7 @@ async function atualizarUserDailyMetrics(loja, dataMetricas, tipoAuditoria) {
             upsert: true,
             new: true,
             runValidators: true,
-          }
+          },
         );
 
         // Calcular percentuais (SEM ARREDONDAMENTO)
@@ -2572,9 +2577,9 @@ async function atualizarUserDailyMetrics(loja, dataMetricas, tipoAuditoria) {
               100
             : 0;
 
-        // CORREÇÃO: Buscar TODAS as auditorias do usuário nesta data para calcular contadores completos
+        // Buscar auditorias DO DIA do usuário para calcular contadores (já filtrado por data)
         const todasAuditorias = auditorias.filter(
-          (aud) => aud.usuarioId === dados.usuarioId
+          (aud) => aud.usuarioId === dados.usuarioId,
         );
 
         // Garantir que as métricas existam
@@ -2776,13 +2781,13 @@ async function atualizarUserDailyMetrics(loja, dataMetricas, tipoAuditoria) {
 
         // Calcular métricas por classe para cada tipo de auditoria
         const etiquetasAuditorias = todasAuditorias.filter(
-          (a) => a.tipo === "etiqueta"
+          (a) => a.tipo === "etiqueta",
         );
         const rupturasAuditorias = todasAuditorias.filter(
-          (a) => a.tipo === "ruptura"
+          (a) => a.tipo === "ruptura",
         );
         const presencasAuditorias = todasAuditorias.filter(
-          (a) => a.tipo === "presenca"
+          (a) => a.tipo === "presenca",
         );
 
         const classesLeituraEtiquetas =
@@ -2839,23 +2844,23 @@ async function atualizarUserDailyMetrics(loja, dataMetricas, tipoAuditoria) {
         console.log(
           `✅ UserDailyMetrics atualizado para ${dados.usuarioNome} - Tipo: ${
             tipoAuditoria || "todos"
-          }`
+          }`,
         );
       } catch (error) {
         console.error(
           `❌ Erro ao atualizar usuário ${dados.usuarioNome}:`,
-          error.message
+          error.message,
         );
       }
     }
 
     console.log(
-      `✅ UserDailyMetrics atualizado para ${usuariosMap.size} usuários`
+      `✅ UserDailyMetrics atualizado para ${usuariosMap.size} usuários`,
     );
   } catch (error) {
     console.error(
       `❌ Erro geral ao atualizar UserDailyMetrics:`,
-      error.message
+      error.message,
     );
   }
 }
@@ -2917,7 +2922,7 @@ router.get("/metricas-usuarios", verificarLojaObrigatoria, async (req, res) => {
     });
 
     console.log(
-      `📊 MetricasUsuario - Loja: ${loja.codigo}, Total: ${metricas.length}, Válidos: ${usuariosValidos.length}`
+      `📊 MetricasUsuario - Loja: ${loja.codigo}, Total: ${metricas.length}, Válidos: ${usuariosValidos.length}`,
     );
 
     const usuarios = usuariosValidos.map((metrica) => {
@@ -2988,7 +2993,7 @@ router.post(
     try {
       const metricas = await MetricasUsuario.find({}).populate(
         "loja",
-        "nome codigo"
+        "nome codigo",
       );
 
       let atualizados = 0;
@@ -3010,7 +3015,7 @@ router.post(
     } catch (error) {
       res.status(500).json({ erro: error.message });
     }
-  }
+  },
 );
 
 // Rota para atualizar o cover da loja
