@@ -359,6 +359,10 @@ router.get("/metricas/conquistas/:usuarioId", async (req, res) => {
         .json({ erro: "Métricas do usuário não encontradas" });
     }
 
+    // Recalcular conquistas (injeta novas conquistas estáticas/dinâmicas e atualiza progresso)
+    metricasUsuario.calcularAchievements();
+    await metricasUsuario.save();
+
     // Retornar apenas as conquistas do usuário
     res.json({
       usuarioId: metricasUsuario.usuarioId,

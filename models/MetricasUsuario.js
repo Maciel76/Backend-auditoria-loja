@@ -51,6 +51,704 @@ const CLASS_ICONS = {
 const LOCAL_ICON = "📍";
 
 /**
+ * Retorna todas as regras de conquistas estáticas (não dinâmicas).
+ * Usado tanto na inicialização de documentos novos quanto na injeção
+ * de conquistas novas em documentos existentes.
+ */
+function getStaticAchievementRules() {
+  const achievementRules = {
+    "first-audit": {
+      title: "Primeiro Passo",
+      description: "Você completou sua primeira auditoria! Toda grande jornada começa com um único passo.",
+      icon: "🔍",
+      category: "audits",
+      difficulty: "easy",
+      rarity: "Basica",
+      points: 10,
+      criteria: { type: "count", target: 1, description: "Realizar 1 auditoria atualizada" },
+    },
+    "audit-enthusiast": {
+      title: "Olho de Águia",
+      description: "Completou 5 auditorias com sucesso! Seus olhos já estão afiados para encontrar qualquer detalhe.",
+      icon: "📊",
+      category: "audits",
+      difficulty: "medium",
+      rarity: "Raro",
+      points: 150,
+      criteria: { type: "count", target: 5, description: "Realizar 5 auditorias atualizadas" },
+    },
+    "audit-master": {
+      title: "Guardião da Qualidade",
+      description: "10 auditorias completas! Você é referência em qualidade e precisão no controle de estoque.",
+      icon: "🏆",
+      category: "audits",
+      difficulty: "hard",
+      rarity: "Epico",
+      points: 1500,
+      criteria: { type: "count", target: 10, description: "Realizar 10 auditorias atualizadas" },
+    },
+    "consistent-auditor": {
+      title: "Máquina de Precisão",
+      description: "20 auditorias realizadas! Sua consistência é admirável. Nada escapa do seu radar.",
+      icon: "📅",
+      category: "consistency",
+      difficulty: "hard",
+      rarity: "Lendario",
+      points: 5000,
+      criteria: { type: "count", target: 20, description: "Realizar 20 auditorias atualizadas" },
+    },
+    "weekly-warrior": {
+      title: "Imperador das Auditorias",
+      description: "50 auditorias! Você domina completamente a arte de auditar. Uma lenda viva do estoque!",
+      icon: "👑",
+      category: "performance",
+      difficulty: "very-hard",
+      rarity: "Diamante",
+      points: 25000,
+      criteria: { type: "count", target: 50, description: "Realizar 50 auditorias atualizadas" },
+    },
+    "item-collector-100": {
+      title: "Primeiras Moedas",
+      description: "Acumulou 100 pontos totais! Você está construindo sua reputação como auditor.",
+      icon: "💯",
+      category: "performance",
+      difficulty: "easy",
+      rarity: "Basica",
+      points: 50,
+      criteria: { type: "count", target: 100, description: "Alcançar 100 pontos totais" },
+    },
+    "item-collector-500": {
+      title: "Cofre em Crescimento",
+      description: "2.000 pontos! Sua coleção de conquistas cresce a cada dia. Continue acumulando!",
+      icon: "🎯",
+      category: "performance",
+      difficulty: "medium",
+      rarity: "Comum",
+      points: 100,
+      criteria: { type: "count", target: 2000, description: "Alcançar 2.000 pontos totais" },
+    },
+    "item-collector-1000": {
+      title: "Tesouro Valioso",
+      description: "5.000 pontos acumulados! Você é um verdadeiro caçador de tesouros do estoque.",
+      icon: "🏅",
+      category: "performance",
+      difficulty: "hard",
+      rarity: "Raro",
+      points: 250,
+      criteria: { type: "count", target: 5000, description: "Alcançar 5.000 pontos totais" },
+    },
+    "item-collector-2000": {
+      title: "Fortuna do Auditor",
+      description: "15.000 pontos! Seu desempenho é extraordinário. Poucos chegam tão longe.",
+      icon: "🏆",
+      category: "performance",
+      difficulty: "hard",
+      rarity: "Epico",
+      points: 500,
+      criteria: { type: "count", target: 15000, description: "Alcançar 15.000 pontos totais" },
+    },
+    "item-collector-5000": {
+      title: "Barão do Estoque",
+      description: "30.000 pontos! Você é uma força imparável. O estoque treme quando você chega!",
+      icon: "👑",
+      category: "performance",
+      difficulty: "very-hard",
+      rarity: "Lendario",
+      points: 1000,
+      criteria: { type: "count", target: 30000, description: "Alcançar 30.000 pontos totais" },
+    },
+    "item-collector-10000": {
+      title: "Magnata Supremo",
+      description: "50.000 pontos! Você alcançou o topo do topo. Lendas são escritas sobre você.",
+      icon: "💎",
+      category: "performance",
+      difficulty: "extreme",
+      rarity: "Diamante",
+      points: 2000,
+      criteria: { type: "count", target: 50000, description: "Alcançar 50.000 pontos totais" },
+    },
+    "detetive-1": {
+      title: "Investigador Novato",
+      description: "Verificou 100 itens de ruptura. Você começou a desvendar os mistérios das prateleiras vazias!",
+      icon: "🕵️",
+      category: "performance",
+      difficulty: "easy",
+      rarity: "Basica",
+      points: 50,
+      criteria: { type: "count", target: 100, description: "Verificar 100 itens de ruptura" },
+    },
+    "detetive-2": {
+      title: "Detetive de Rupturas",
+      description: "1.000 rupturas investigadas! Nenhuma prateleira vazia escapa da sua investigação.",
+      icon: "🔎",
+      category: "performance",
+      difficulty: "medium",
+      rarity: "Comum",
+      points: 500,
+      criteria: { type: "count", target: 1000, description: "Verificar 1.000 itens de ruptura" },
+    },
+    "detetive-3": {
+      title: "Caçador de Rupturas",
+      description: "5.000 rupturas! Seu faro para encontrar falhas no estoque é incomparável.",
+      icon: "🕵️‍♂️",
+      category: "performance",
+      difficulty: "hard",
+      rarity: "Raro",
+      points: 1000,
+      criteria: { type: "count", target: 5000, description: "Verificar 5.000 itens de ruptura" },
+    },
+    "detetive-4": {
+      title: "Xerife do Estoque",
+      description: "10.000 rupturas investigadas! A lei do estoque é mantida por suas mãos.",
+      icon: "🔦",
+      category: "performance",
+      difficulty: "hard",
+      rarity: "Epico",
+      points: 2000,
+      criteria: { type: "count", target: 10000, description: "Verificar 10.000 itens de ruptura" },
+    },
+    "detetive-5": {
+      title: "Sentinela das Prateleiras",
+      description: "15.000 rupturas! Você vigia cada centímetro da loja. Nada passa despercebido!",
+      icon: "🕵️‍♀️",
+      category: "performance",
+      difficulty: "very-hard",
+      rarity: "Lendario",
+      points: 3000,
+      criteria: { type: "count", target: 15000, description: "Verificar 15.000 itens de ruptura" },
+    },
+    "detetive-6": {
+      title: "Oráculo das Rupturas",
+      description: "30.000 rupturas! Você prevê rupturas antes mesmo delas acontecerem. Lendário!",
+      icon: "👑",
+      category: "performance",
+      difficulty: "extreme",
+      rarity: "Diamante",
+      points: 6000,
+      criteria: { type: "count", target: 30000, description: "Verificar 30.000 itens de ruptura" },
+    },
+    "auditor-etiqueta-1": {
+      title: "Leitor de Etiquetas",
+      description: "Leu 500 etiquetas! Você está aprendendo a linguagem secreta dos preços.",
+      icon: "🏷️",
+      category: "performance",
+      difficulty: "easy",
+      rarity: "Basica",
+      points: 75,
+      criteria: { type: "count", target: 500, description: "Ler 500 etiquetas" },
+    },
+    "auditor-etiqueta-2": {
+      title: "Mestre dos Preços",
+      description: "2.000 etiquetas lidas! Os números não têm segredos para você.",
+      icon: "🔖",
+      category: "performance",
+      difficulty: "medium",
+      rarity: "Comum",
+      points: 250,
+      criteria: { type: "count", target: 2000, description: "Ler 2.000 etiquetas" },
+    },
+    "auditor-etiqueta-3": {
+      title: "Scanner Humano",
+      description: "5.000 etiquetas! Você lê preços mais rápido que um leitor de código de barras.",
+      icon: "📋",
+      category: "performance",
+      difficulty: "hard",
+      rarity: "Raro",
+      points: 750,
+      criteria: { type: "count", target: 5000, description: "Ler 5.000 etiquetas" },
+    },
+    "auditor-etiqueta-4": {
+      title: "Arquiteto dos Preços",
+      description: "10.000 etiquetas verificadas! Cada preço é uma obra de arte sob sua supervisão.",
+      icon: "🎯",
+      category: "performance",
+      difficulty: "hard",
+      rarity: "Epico",
+      points: 1500,
+      criteria: { type: "count", target: 10000, description: "Ler 10.000 etiquetas" },
+    },
+    "auditor-etiqueta-5": {
+      title: "Titã das Etiquetas",
+      description: "20.000 etiquetas! As prateleiras se curvam diante da sua dedicação. Impressionante!",
+      icon: "🏆",
+      category: "performance",
+      difficulty: "very-hard",
+      rarity: "Lendario",
+      points: 3000,
+      criteria: { type: "count", target: 20000, description: "Ler 20.000 etiquetas" },
+    },
+    "auditor-etiqueta-6": {
+      title: "Divindade das Etiquetas",
+      description: "40.000 etiquetas! Você transcendeu os limites humanos. Uma força da natureza!",
+      icon: "👑",
+      category: "performance",
+      difficulty: "extreme",
+      rarity: "Diamante",
+      points: 6000,
+      criteria: { type: "count", target: 40000, description: "Ler 40.000 etiquetas" },
+    },
+    "auditor-presenca-1": {
+      title: "Vigia Atento",
+      description: "Verificou 300 presenças! Seus olhos capturam cada detalhe nas prateleiras.",
+      icon: "👁️",
+      category: "performance",
+      difficulty: "easy",
+      rarity: "Basica",
+      points: 75,
+      criteria: { type: "count", target: 300, description: "Verificar 300 presenças" },
+    },
+    "auditor-presenca-2": {
+      title: "Fiscal de Gôndolas",
+      description: "1.500 presenças conferidas! As gôndolas estão sempre perfeitas sob sua gestão.",
+      icon: "👀",
+      category: "performance",
+      difficulty: "medium",
+      rarity: "Comum",
+      points: 250,
+      criteria: { type: "count", target: 1500, description: "Verificar 1.500 presenças" },
+    },
+    "auditor-presenca-3": {
+      title: "Guardião da Exposição",
+      description: "4.000 presenças! Cada produto está no lugar certo graças a você.",
+      icon: "🔍",
+      category: "performance",
+      difficulty: "hard",
+      rarity: "Raro",
+      points: 750,
+      criteria: { type: "count", target: 4000, description: "Verificar 4.000 presenças" },
+    },
+    "auditor-presenca-4": {
+      title: "Senhor das Prateleiras",
+      description: "8.000 presenças verificadas! As prateleiras são seu reino e você as governa com maestria.",
+      icon: "✅",
+      category: "performance",
+      difficulty: "hard",
+      rarity: "Epico",
+      points: 1500,
+      criteria: { type: "count", target: 8000, description: "Verificar 8.000 presenças" },
+    },
+    "auditor-presenca-5": {
+      title: "Olho que Tudo Vê",
+      description: "16.000 presenças! Nenhum produto fora do lugar escapa da sua visão absoluta.",
+      icon: "🌟",
+      category: "performance",
+      difficulty: "very-hard",
+      rarity: "Lendario",
+      points: 3000,
+      criteria: { type: "count", target: 16000, description: "Verificar 16.000 presenças" },
+    },
+    "auditor-presenca-6": {
+      title: "Entidade Onipresente",
+      description: "32.000 presenças! Você está em todos os lugares ao mesmo tempo. Sobrenatural!",
+      icon: "👑",
+      category: "performance",
+      difficulty: "extreme",
+      rarity: "Diamante",
+      points: 6000,
+      criteria: { type: "count", target: 32000, description: "Verificar 32.000 presenças" },
+    },
+    // ===== CONQUISTAS DE RANKING =====
+    "ranking-first-1": {
+      title: "Primeira Coroa",
+      description: "Você conquistou o 1º lugar no ranking! O topo da montanha é seu, mesmo que por um instante glorioso.",
+      icon: "🏅",
+      category: "ranking",
+      difficulty: "hard",
+      rarity: "Raro",
+      points: 500,
+      criteria: { type: "count", target: 1, description: "Ficar em 1º lugar no ranking 1 vez" },
+    },
+    "ranking-first-5": {
+      title: "Rei do Ranking",
+      description: "5 vezes no topo! Você não visita o 1º lugar, você mora lá. Uma verdadeira dinastia!",
+      icon: "👑",
+      category: "ranking",
+      difficulty: "very-hard",
+      rarity: "Epico",
+      points: 1000,
+      criteria: { type: "count", target: 5, description: "Ficar em 1º lugar no ranking 5 vezes" },
+    },
+    "ranking-top3-5": {
+      title: "Pódio Frequente",
+      description: "5 vezes no Top 3! Seu lugar no pódio já tem placa com seu nome.",
+      icon: "🥇",
+      category: "ranking",
+      difficulty: "medium",
+      rarity: "Comum",
+      points: 250,
+      criteria: { type: "count", target: 5, description: "Ficar no Top 3 do ranking 5 vezes" },
+    },
+    "ranking-top3-20": {
+      title: "Medalhista Nato",
+      description: "20 vezes no Top 3! Você coleciona medalhas como se fossem figurinhas. Impressionante!",
+      icon: "🏆",
+      category: "ranking",
+      difficulty: "hard",
+      rarity: "Raro",
+      points: 500,
+      criteria: { type: "count", target: 20, description: "Ficar no Top 3 do ranking 20 vezes" },
+    },
+    "ranking-top10-10": {
+      title: "Elite Constante",
+      description: "10 vezes no Top 10! Consistência é sua marca registrada. Sempre entre os melhores!",
+      icon: "⭐",
+      category: "ranking",
+      difficulty: "medium",
+      rarity: "Comum",
+      points: 250,
+      criteria: { type: "count", target: 10, description: "Ficar no Top 10 do ranking 10 vezes" },
+    },
+    "ranking-top10-50": {
+      title: "Inabalável",
+      description: "50 vezes no Top 10! Você é uma fortaleza inabalável. Ninguém te derruba da elite!",
+      icon: "💫",
+      category: "ranking",
+      difficulty: "very-hard",
+      rarity: "Epico",
+      points: 1000,
+      criteria: { type: "count", target: 50, description: "Ficar no Top 10 do ranking 50 vezes" },
+    },
+    // ===== CONQUISTAS DE CUSTO RUPTURA =====
+    "custo-ruptura-1k": {
+      title: "Caçador de Prejuízos",
+      description: "Identificou R$1.000 em custos de ruptura! Cada real conta e você está de olho.",
+      icon: "💰",
+      category: "financial",
+      difficulty: "easy",
+      rarity: "Basica",
+      points: 100,
+      criteria: { type: "count", target: 1000, description: "Identificar R$1.000 em custos de ruptura" },
+    },
+    "custo-ruptura-10k": {
+      title: "Protetor do Lucro",
+      description: "R$10.000 em rupturas mapeadas! Você protege o lucro da empresa como um guardião.",
+      icon: "💵",
+      category: "financial",
+      difficulty: "medium",
+      rarity: "Comum",
+      points: 250,
+      criteria: { type: "count", target: 10000, description: "Identificar R$10.000 em custos de ruptura" },
+    },
+    "custo-ruptura-50k": {
+      title: "Salvador Financeiro",
+      description: "R$50.000 identificados! Suas auditorias salvam fortunas. O financeiro te agradece!",
+      icon: "🏦",
+      category: "financial",
+      difficulty: "hard",
+      rarity: "Raro",
+      points: 500,
+      criteria: { type: "count", target: 50000, description: "Identificar R$50.000 em custos de ruptura" },
+    },
+    "custo-ruptura-200k": {
+      title: "Guardião do Caixa",
+      description: "R$200.000 em rupturas rastreadas! Você é o anjo guardião das finanças da loja.",
+      icon: "💎",
+      category: "financial",
+      difficulty: "very-hard",
+      rarity: "Epico",
+      points: 1000,
+      criteria: { type: "count", target: 200000, description: "Identificar R$200.000 em custos de ruptura" },
+    },
+    // ===== CONQUISTAS DE PRESENÇA CONFIRMADA =====
+    "confirmador-1": {
+      title: "Confirmador Atento",
+      description: "100 presenças confirmadas! Você garante que os produtos estão onde deveriam estar.",
+      icon: "✅",
+      category: "performance",
+      difficulty: "easy",
+      rarity: "Basica",
+      points: 100,
+      criteria: { type: "count", target: 100, description: "Confirmar 100 presenças de produtos" },
+    },
+    "confirmador-2": {
+      title: "Validador Experiente",
+      description: "500 confirmações! Sua validação é sinônimo de confiança. Nada escapa!",
+      icon: "🔍",
+      category: "performance",
+      difficulty: "medium",
+      rarity: "Comum",
+      points: 250,
+      criteria: { type: "count", target: 500, description: "Confirmar 500 presenças de produtos" },
+    },
+    "confirmador-3": {
+      title: "Selo de Aprovação",
+      description: "2.000 presenças confirmadas! Seu selo de aprovação é o mais respeitado da loja.",
+      icon: "🏅",
+      category: "performance",
+      difficulty: "hard",
+      rarity: "Raro",
+      points: 500,
+      criteria: { type: "count", target: 2000, description: "Confirmar 2.000 presenças de produtos" },
+    },
+    // ===== CONQUISTAS DE ITENS DESATUALIZADOS =====
+    "desatualizado-1": {
+      title: "Caçador de Defasagem",
+      description: "Encontrou 100 itens desatualizados! Você é essencial para manter os preços corretos.",
+      icon: "📉",
+      category: "quality",
+      difficulty: "easy",
+      rarity: "Basica",
+      points: 100,
+      criteria: { type: "count", target: 100, description: "Encontrar 100 itens desatualizados" },
+    },
+    "desatualizado-2": {
+      title: "Detetive dos Preços",
+      description: "500 preços defasados encontrados! Nenhum erro escapa do seu faro investigativo.",
+      icon: "🔎",
+      category: "quality",
+      difficulty: "medium",
+      rarity: "Comum",
+      points: 250,
+      criteria: { type: "count", target: 500, description: "Encontrar 500 itens desatualizados" },
+    },
+    "desatualizado-3": {
+      title: "Fiscal Implacável",
+      description: "2.000 desatualizações! Você é o pesadelo dos preços errados. Implacável!",
+      icon: "🎯",
+      category: "quality",
+      difficulty: "hard",
+      rarity: "Raro",
+      points: 500,
+      criteria: { type: "count", target: 2000, description: "Encontrar 2.000 itens desatualizados" },
+    },
+    // ===== CONQUISTAS DE ITENS SEM ESTOQUE =====
+    "sem-estoque-1": {
+      title: "Alerta de Estoque",
+      description: "50 itens sem estoque identificados! Você é o primeiro alarme contra a falta de produtos.",
+      icon: "⚠️",
+      category: "quality",
+      difficulty: "easy",
+      rarity: "Basica",
+      points: 100,
+      criteria: { type: "count", target: 50, description: "Identificar 50 itens sem estoque" },
+    },
+    "sem-estoque-2": {
+      title: "Radar de Escassez",
+      description: "200 faltas detectadas! Seu radar de escassez funciona 24 horas por dia.",
+      icon: "📡",
+      category: "quality",
+      difficulty: "medium",
+      rarity: "Comum",
+      points: 250,
+      criteria: { type: "count", target: 200, description: "Identificar 200 itens sem estoque" },
+    },
+    "sem-estoque-3": {
+      title: "Previsor de Faltas",
+      description: "1.000 itens sem estoque encontrados! Você prevê faltas antes que o cliente perceba.",
+      icon: "🔮",
+      category: "quality",
+      difficulty: "hard",
+      rarity: "Raro",
+      points: 500,
+      criteria: { type: "count", target: 1000, description: "Identificar 1.000 itens sem estoque" },
+    },
+    // ===== CONQUISTAS DE ESPECIALIZAÇÃO POR TIPO =====
+    "especialista-etiqueta": {
+      title: "Etiquetador Focado",
+      description: "5 auditorias de etiqueta concluídas! Você está se especializando na arte das etiquetas.",
+      icon: "🏷️",
+      category: "specialization",
+      difficulty: "easy",
+      rarity: "Basica",
+      points: 100,
+      criteria: { type: "count", target: 5, description: "Realizar 5 auditorias de etiqueta" },
+    },
+    "guru-etiqueta": {
+      title: "Guru das Etiquetas",
+      description: "20 auditorias de etiqueta! Você é o guru absoluto quando o assunto é precificação.",
+      icon: "📋",
+      category: "specialization",
+      difficulty: "medium",
+      rarity: "Comum",
+      points: 250,
+      criteria: { type: "count", target: 20, description: "Realizar 20 auditorias de etiqueta" },
+    },
+    "especialista-ruptura": {
+      title: "Investigador Focado",
+      description: "5 auditorias de ruptura! Você está se tornando especialista em caçar rupturas.",
+      icon: "🕵️",
+      category: "specialization",
+      difficulty: "easy",
+      rarity: "Basica",
+      points: 100,
+      criteria: { type: "count", target: 5, description: "Realizar 5 auditorias de ruptura" },
+    },
+    "guru-ruptura": {
+      title: "Mestre da Ruptura",
+      description: "20 auditorias de ruptura! As prateleiras vazias tremem quando ouvem seu nome.",
+      icon: "🔦",
+      category: "specialization",
+      difficulty: "medium",
+      rarity: "Comum",
+      points: 250,
+      criteria: { type: "count", target: 20, description: "Realizar 20 auditorias de ruptura" },
+    },
+    "especialista-presenca": {
+      title: "Fiscal Dedicado",
+      description: "5 auditorias de presença! Seu olhar atento garante que nada está fora do lugar.",
+      icon: "👁️",
+      category: "specialization",
+      difficulty: "easy",
+      rarity: "Basica",
+      points: 100,
+      criteria: { type: "count", target: 5, description: "Realizar 5 auditorias de presença" },
+    },
+    "guru-presenca": {
+      title: "Guru da Presença",
+      description: "20 auditorias de presença! Você enxerga cada produto como um maestro enxerga as notas.",
+      icon: "🌟",
+      category: "specialization",
+      difficulty: "medium",
+      rarity: "Comum",
+      points: 250,
+      criteria: { type: "count", target: 20, description: "Realizar 20 auditorias de presença" },
+    },
+    // ===== CONQUISTAS DE VERSATILIDADE =====
+    "versatil-1": {
+      title: "Auditor Polivalente",
+      description: "Realizou ao menos 1 auditoria de cada tipo! Etiqueta, ruptura e presença - você faz tudo!",
+      icon: "🎭",
+      category: "versatility",
+      difficulty: "medium",
+      rarity: "Raro",
+      points: 500,
+      criteria: { type: "custom", target: 1, description: "Realizar ao menos 1 auditoria de cada tipo (etiqueta, ruptura, presença)" },
+    },
+    "versatil-2": {
+      title: "Mestre de Todas as Artes",
+      description: "10 auditorias de cada tipo! Você domina todas as vertentes da auditoria. Um verdadeiro polímata!",
+      icon: "🌈",
+      category: "versatility",
+      difficulty: "hard",
+      rarity: "Epico",
+      points: 1000,
+      criteria: { type: "custom", target: 10, description: "Realizar ao menos 10 auditorias de cada tipo" },
+    },
+    // ===== CONQUISTAS DE LEITURA TOTAL =====
+    "leitor-total-1k": {
+      title: "Devorador de Dados",
+      description: "1.000 itens lidos no total! Você está devorando dados como um verdadeiro analista.",
+      icon: "📖",
+      category: "performance",
+      difficulty: "easy",
+      rarity: "Basica",
+      points: 100,
+      criteria: { type: "count", target: 1000, description: "Ler 1.000 itens no total" },
+    },
+    "leitor-total-10k": {
+      title: "Máquina de Leitura",
+      description: "10.000 itens lidos! Seus olhos processam informação mais rápido que um computador.",
+      icon: "📚",
+      category: "performance",
+      difficulty: "medium",
+      rarity: "Comum",
+      points: 250,
+      criteria: { type: "count", target: 10000, description: "Ler 10.000 itens no total" },
+    },
+    "leitor-total-50k": {
+      title: "Biblioteca Viva",
+      description: "50.000 itens lidos! Você é uma enciclopédia ambulante do estoque. Incrível!",
+      icon: "🏛️",
+      category: "performance",
+      difficulty: "hard",
+      rarity: "Raro",
+      points: 500,
+      criteria: { type: "count", target: 50000, description: "Ler 50.000 itens no total" },
+    },
+    // ===== CONQUISTAS DE PARTICIPAÇÃO COMUNITÁRIA (cross-model) =====
+    "sugestao-1": {
+      title: "Voz Ativa",
+      description: "Enviou sua primeira sugestão! Sua opinião importa e ajuda a melhorar o sistema.",
+      icon: "💡",
+      category: "community",
+      difficulty: "easy",
+      rarity: "Basica",
+      points: 100,
+      criteria: { type: "count", target: 1, description: "Enviar 1 sugestão" },
+    },
+    "sugestao-5": {
+      title: "Fonte de Ideias",
+      description: "5 sugestões enviadas! Você é uma máquina de ideias. Continue inovando!",
+      icon: "🧠",
+      category: "community",
+      difficulty: "medium",
+      rarity: "Comum",
+      points: 250,
+      criteria: { type: "count", target: 5, description: "Enviar 5 sugestões" },
+    },
+    "sugestao-15": {
+      title: "Visionário",
+      description: "15 sugestões! Você enxerga além do óbvio. O futuro do sistema tem sua digital.",
+      icon: "🔭",
+      category: "community",
+      difficulty: "hard",
+      rarity: "Raro",
+      points: 500,
+      criteria: { type: "count", target: 15, description: "Enviar 15 sugestões" },
+    },
+    "artigo-1": {
+      title: "Primeiro Artigo",
+      description: "Publicou seu primeiro artigo! Compartilhar conhecimento é a maior riqueza.",
+      icon: "✍️",
+      category: "community",
+      difficulty: "medium",
+      rarity: "Comum",
+      points: 250,
+      criteria: { type: "count", target: 1, description: "Publicar 1 artigo" },
+    },
+    "artigo-5": {
+      title: "Blogueiro Nato",
+      description: "5 artigos publicados! Você é um comunicador excepcional. A comunidade aprende com você!",
+      icon: "📰",
+      category: "community",
+      difficulty: "hard",
+      rarity: "Raro",
+      points: 500,
+      criteria: { type: "count", target: 5, description: "Publicar 5 artigos" },
+    },
+    "comentarista-1": {
+      title: "Opinião que Conta",
+      description: "5 comentários feitos! Você participa ativamente das discussões. Continue engajado!",
+      icon: "💬",
+      category: "community",
+      difficulty: "easy",
+      rarity: "Basica",
+      points: 100,
+      criteria: { type: "count", target: 5, description: "Fazer 5 comentários" },
+    },
+    "comentarista-2": {
+      title: "Debatedor Ativo",
+      description: "20 comentários! Suas opiniões enriquecem as discussões. Um verdadeiro influenciador!",
+      icon: "🗣️",
+      category: "community",
+      difficulty: "medium",
+      rarity: "Comum",
+      points: 250,
+      criteria: { type: "count", target: 20, description: "Fazer 20 comentários" },
+    },
+    "votante-1": {
+      title: "Cidadão Participativo",
+      description: "5 votos dados! Sua participação nas votações ajuda a definir o futuro da plataforma.",
+      icon: "🗳️",
+      category: "community",
+      difficulty: "easy",
+      rarity: "Basica",
+      points: 100,
+      criteria: { type: "count", target: 5, description: "Dar 5 votos em votações" },
+    },
+  };
+
+  // Padronizar pontuação por raridade
+  Object.values(achievementRules).forEach((rule) => {
+    if (RARITY_POINTS[rule.rarity]) {
+      rule.points = RARITY_POINTS[rule.rarity];
+    }
+  });
+
+  return achievementRules;
+}
+
+/**
  * Gera conquistas dinâmicas para uma classe de produto ou local.
  * Retorna um array com 6 conquistas (uma por nível).
  * @param {string} type - "classe" ou "local"
@@ -483,6 +1181,42 @@ const metricasUsuarioSchema = new mongoose.Schema(
       },
     },
 
+    // Dados de participação comunitária (cross-model)
+    participacao: {
+      sugestoesEnviadas: {
+        type: Number,
+        default: 0,
+        set: function (value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        },
+      },
+      artigosPublicados: {
+        type: Number,
+        default: 0,
+        set: function (value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        },
+      },
+      comentariosFeitos: {
+        type: Number,
+        default: 0,
+        set: function (value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        },
+      },
+      votosRealizados: {
+        type: Number,
+        default: 0,
+        set: function (value) {
+          const numValue = Number(value);
+          return value == null || isNaN(numValue) ? 0 : numValue;
+        },
+      },
+    },
+
     // Histórico de posições no ranking
     historicoRanking: {
       posicao1: {
@@ -729,450 +1463,22 @@ const metricasUsuarioSchema = new mongoose.Schema(
           },
         ],
         default: function () {
-          // Retornar array inicializado com todas as conquistas
-          // Usaremos os valores padrão definidos, mas o sistema irá atualizar os documentos existentes
-          // quando as configurações forem modificadas via endpoint
-          const achievementRules = {
-            "first-audit": {
-              title: "Primeiro Passo",
-              description: "Você completou sua primeira auditoria! Toda grande jornada começa com um único passo.",
-              icon: "🔍",
-              category: "audits",
-              difficulty: "easy",
-              rarity: "Basica",
-              points: 10,
-              criteria: {
-                type: "count",
-                target: 1,
-                description: "Realizar 1 auditoria atualizada",
-              },
-            },
-            "audit-enthusiast": {
-              title: "Olho de Águia",
-              description: "Completou 5 auditorias com sucesso! Seus olhos já estão afiados para encontrar qualquer detalhe.",
-              icon: "📊",
-              category: "audits",
-              difficulty: "medium",
-              rarity: "Raro",
-              points: 150,
-              criteria: {
-                type: "count",
-                target: 5,
-                description: "Realizar 5 auditorias atualizadas",
-              },
-            },
-            "audit-master": {
-              title: "Guardião da Qualidade",
-              description: "10 auditorias completas! Você é referência em qualidade e precisão no controle de estoque.",
-              icon: "🏆",
-              category: "audits",
-              difficulty: "hard",
-              rarity: "Epico",
-              points: 1500,
-              criteria: {
-                type: "count",
-                target: 10,
-                description: "Realizar 10 auditorias atualizadas",
-              },
-            },
-            "consistent-auditor": {
-              title: "Máquina de Precisão",
-              description: "20 auditorias realizadas! Sua consistência é admirável. Nada escapa do seu radar.",
-              icon: "📅",
-              category: "consistency",
-              difficulty: "hard",
-              rarity: "Lendario",
-              points: 5000,
-              criteria: {
-                type: "count",
-                target: 20,
-                description: "Realizar 20 auditorias atualizadas",
-              },
-            },
-            "weekly-warrior": {
-              title: "Imperador das Auditorias",
-              description: "50 auditorias! Você domina completamente a arte de auditar. Uma lenda viva do estoque!",
-              icon: "👑",
-              category: "performance",
-              difficulty: "very-hard",
-              rarity: "Diamante",
-              points: 25000,
-              criteria: {
-                type: "count",
-                target: 50,
-                description: "Realizar 50 auditorias atualizadas",
-              },
-            },
-            "item-collector-100": {
-              title: "Primeiras Moedas",
-              description: "Acumulou 100 pontos totais! Você está construindo sua reputação como auditor.",
-              icon: "💯",
-              category: "performance",
-              difficulty: "easy",
-              rarity: "Basica",
-              points: 50,
-              criteria: {
-                type: "count",
-                target: 100,
-                description: "Alcançar 100 pontos totais",
-              },
-            },
-            "item-collector-500": {
-              title: "Cofre em Crescimento",
-              description: "2.000 pontos! Sua coleção de conquistas cresce a cada dia. Continue acumulando!",
-              icon: "🎯",
-              category: "performance",
-              difficulty: "medium",
-              rarity: "Comum",
-              points: 100,
-              criteria: {
-                type: "count",
-                target: 2000,
-                description: "Alcançar 2.000 pontos totais",
-              },
-            },
-            "item-collector-1000": {
-              title: "Tesouro Valioso",
-              description: "5.000 pontos acumulados! Você é um verdadeiro caçador de tesouros do estoque.",
-              icon: "🏅",
-              category: "performance",
-              difficulty: "hard",
-              rarity: "Raro",
-              points: 250,
-              criteria: {
-                type: "count",
-                target: 5000,
-                description: "Alcançar 5.000 pontos totais",
-              },
-            },
-            "item-collector-2000": {
-              title: "Fortuna do Auditor",
-              description: "15.000 pontos! Seu desempenho é extraordinário. Poucos chegam tão longe.",
-              icon: "🏆",
-              category: "performance",
-              difficulty: "hard",
-              rarity: "Epico",
-              points: 500,
-              criteria: {
-                type: "count",
-                target: 15000,
-                description: "Alcançar 15.000 pontos totais",
-              },
-            },
-            "item-collector-5000": {
-              title: "Barão do Estoque",
-              description: "30.000 pontos! Você é uma força imparável. O estoque treme quando você chega!",
-              icon: "👑",
-              category: "performance",
-              difficulty: "very-hard",
-              rarity: "Lendario",
-              points: 1000,
-              criteria: {
-                type: "count",
-                target: 30000,
-                description: "Alcançar 30.000 pontos totais",
-              },
-            },
-            "item-collector-10000": {
-              title: "Magnata Supremo",
-              description: "50.000 pontos! Você alcançou o topo do topo. Lendas são escritas sobre você.",
-              icon: "💎",
-              category: "performance",
-              difficulty: "extreme",
-              rarity: "Diamante",
-              points: 2000,
-              criteria: {
-                type: "count",
-                target: 50000,
-                description: "Alcançar 50.000 pontos totais",
-              },
-            },
-            "detetive-1": {
-              title: "Investigador Novato",
-              description: "Verificou 100 itens de ruptura. Você começou a desvendar os mistérios das prateleiras vazias!",
-              icon: "🕵️",
-              category: "performance",
-              difficulty: "easy",
-              rarity: "Basica",
-              points: 50,
-              criteria: {
-                type: "count",
-                target: 100,
-                description: "Verificar 100 itens de ruptura",
-              },
-            },
-            "detetive-2": {
-              title: "Detetive de Rupturas",
-              description: "1.000 rupturas investigadas! Nenhuma prateleira vazia escapa da sua investigação.",
-              icon: "🔎",
-              category: "performance",
-              difficulty: "medium",
-              rarity: "Comum",
-              points: 500,
-              criteria: {
-                type: "count",
-                target: 1000,
-                description: "Verificar 1.000 itens de ruptura",
-              },
-            },
-            "detetive-3": {
-              title: "Caçador de Rupturas",
-              description: "5.000 rupturas! Seu faro para encontrar falhas no estoque é incomparável.",
-              icon: "🕵️‍♂️",
-              category: "performance",
-              difficulty: "hard",
-              rarity: "Raro",
-              points: 1000,
-              criteria: {
-                type: "count",
-                target: 5000,
-                description: "Verificar 5.000 itens de ruptura",
-              },
-            },
-            "detetive-4": {
-              title: "Xerife do Estoque",
-              description: "10.000 rupturas investigadas! A lei do estoque é mantida por suas mãos.",
-              icon: "🔦",
-              category: "performance",
-              difficulty: "hard",
-              rarity: "Epico",
-              points: 2000,
-              criteria: {
-                type: "count",
-                target: 10000,
-                description: "Verificar 10.000 itens de ruptura",
-              },
-            },
-            "detetive-5": {
-              title: "Sentinela das Prateleiras",
-              description: "15.000 rupturas! Você vigia cada centímetro da loja. Nada passa despercebido!",
-              icon: "🕵️‍♀️",
-              category: "performance",
-              difficulty: "very-hard",
-              rarity: "Lendario",
-              points: 3000,
-              criteria: {
-                type: "count",
-                target: 15000,
-                description: "Verificar 15.000 itens de ruptura",
-              },
-            },
-            "detetive-6": {
-              title: "Oráculo das Rupturas",
-              description: "30.000 rupturas! Você prevê rupturas antes mesmo delas acontecerem. Lendário!",
-              icon: "👑",
-              category: "performance",
-              difficulty: "extreme",
-              rarity: "Diamante",
-              points: 6000,
-              criteria: {
-                type: "count",
-                target: 30000,
-                description: "Verificar 30.000 itens de ruptura",
-              },
-            },
-            "auditor-etiqueta-1": {
-              title: "Leitor de Etiquetas",
-              description: "Leu 500 etiquetas! Você está aprendendo a linguagem secreta dos preços.",
-              icon: "🏷️",
-              category: "performance",
-              difficulty: "easy",
-              rarity: "Basica",
-              points: 75,
-              criteria: {
-                type: "count",
-                target: 500,
-                description: "Ler 500 etiquetas",
-              },
-            },
-            "auditor-etiqueta-2": {
-              title: "Mestre dos Preços",
-              description: "2.000 etiquetas lidas! Os números não têm segredos para você.",
-              icon: "🔖",
-              category: "performance",
-              difficulty: "medium",
-              rarity: "Comum",
-              points: 250,
-              criteria: {
-                type: "count",
-                target: 2000,
-                description: "Ler 2.000 etiquetas",
-              },
-            },
-            "auditor-etiqueta-3": {
-              title: "Scanner Humano",
-              description: "5.000 etiquetas! Você lê preços mais rápido que um leitor de código de barras.",
-              icon: "📋",
-              category: "performance",
-              difficulty: "hard",
-              rarity: "Raro",
-              points: 750,
-              criteria: {
-                type: "count",
-                target: 5000,
-                description: "Ler 5.000 etiquetas",
-              },
-            },
-            "auditor-etiqueta-4": {
-              title: "Arquiteto dos Preços",
-              description: "10.000 etiquetas verificadas! Cada preço é uma obra de arte sob sua supervisão.",
-              icon: "🎯",
-              category: "performance",
-              difficulty: "hard",
-              rarity: "Epico",
-              points: 1500,
-              criteria: {
-                type: "count",
-                target: 10000,
-                description: "Ler 10.000 etiquetas",
-              },
-            },
-            "auditor-etiqueta-5": {
-              title: "Titã das Etiquetas",
-              description: "20.000 etiquetas! As prateleiras se curvam diante da sua dedicação. Impressionante!",
-              icon: "🏆",
-              category: "performance",
-              difficulty: "very-hard",
-              rarity: "Lendario",
-              points: 3000,
-              criteria: {
-                type: "count",
-                target: 20000,
-                description: "Ler 20.000 etiquetas",
-              },
-            },
-            "auditor-etiqueta-6": {
-              title: "Divindade das Etiquetas",
-              description: "40.000 etiquetas! Você transcendeu os limites humanos. Uma força da natureza!",
-              icon: "👑",
-              category: "performance",
-              difficulty: "extreme",
-              rarity: "Diamante",
-              points: 6000,
-              criteria: {
-                type: "count",
-                target: 40000,
-                description: "Ler 40.000 etiquetas",
-              },
-            },
-            "auditor-presenca-1": {
-              title: "Vigia Atento",
-              description: "Verificou 300 presenças! Seus olhos capturam cada detalhe nas prateleiras.",
-              icon: "👁️",
-              category: "performance",
-              difficulty: "easy",
-              rarity: "Basica",
-              points: 75,
-              criteria: {
-                type: "count",
-                target: 300,
-                description: "Verificar 300 presenças",
-              },
-            },
-            "auditor-presenca-2": {
-              title: "Fiscal de Gôndolas",
-              description: "1.500 presenças conferidas! As gôndolas estão sempre perfeitas sob sua gestão.",
-              icon: "👀",
-              category: "performance",
-              difficulty: "medium",
-              rarity: "Comum",
-              points: 250,
-              criteria: {
-                type: "count",
-                target: 1500,
-                description: "Verificar 1.500 presenças",
-              },
-            },
-            "auditor-presenca-3": {
-              title: "Guardião da Exposição",
-              description: "4.000 presenças! Cada produto está no lugar certo graças a você.",
-              icon: "🔍",
-              category: "performance",
-              difficulty: "hard",
-              rarity: "Raro",
-              points: 750,
-              criteria: {
-                type: "count",
-                target: 4000,
-                description: "Verificar 4.000 presenças",
-              },
-            },
-            "auditor-presenca-4": {
-              title: "Senhor das Prateleiras",
-              description: "8.000 presenças verificadas! As prateleiras são seu reino e você as governa com maestria.",
-              icon: "✅",
-              category: "performance",
-              difficulty: "hard",
-              rarity: "Epico",
-              points: 1500,
-              criteria: {
-                type: "count",
-                target: 8000,
-                description: "Verificar 8.000 presenças",
-              },
-            },
-            "auditor-presenca-5": {
-              title: "Olho que Tudo Vê",
-              description: "16.000 presenças! Nenhum produto fora do lugar escapa da sua visão absoluta.",
-              icon: "🌟",
-              category: "performance",
-              difficulty: "very-hard",
-              rarity: "Lendario",
-              points: 3000,
-              criteria: {
-                type: "count",
-                target: 16000,
-                description: "Verificar 16.000 presenças",
-              },
-            },
-            "auditor-presenca-6": {
-              title: "Entidade Onipresente",
-              description: "32.000 presenças! Você está em todos os lugares ao mesmo tempo. Sobrenatural!",
-              icon: "👑",
-              category: "performance",
-              difficulty: "extreme",
-              rarity: "Diamante",
-              points: 6000,
-              criteria: {
-                type: "count",
-                target: 32000,
-                description: "Verificar 32.000 presenças",
-              },
-            },
-          };
+          // Usa a função centralizada para obter todas as regras de conquistas
+          const achievementRules = getStaticAchievementRules();
 
-          // Padronizar pontuação por raridade
-          Object.values(achievementRules).forEach((rule) => {
-            if (RARITY_POINTS[rule.rarity]) {
-              rule.points = RARITY_POINTS[rule.rarity];
-            }
-          });
-
-          // Removendo as conquistas "perfect-accuracy", "team-player" e versões antigas "mestre-etiqueta" do array
-          const filteredAchievementRules = {};
-          for (const [key, value] of Object.entries(achievementRules)) {
-            if (
-              key !== "perfect-accuracy" &&
-              key !== "team-player" &&
-              !key.startsWith("mestre-etiqueta")
-            ) {
-              filteredAchievementRules[key] = value;
-            }
-          }
-
-          return Object.keys(filteredAchievementRules).map((achievementId) => ({
+          return Object.keys(achievementRules).map((achievementId) => ({
             achievementId: achievementId,
             unlocked: false,
             progress: {
               current: 0,
-              target: filteredAchievementRules[achievementId].criteria.target,
+              target: achievementRules[achievementId].criteria.target,
               percentage: 0,
             },
             unlockedAt: null,
             unlockedBy: null,
-            achievementData: filteredAchievementRules[achievementId],
-            rarity: filteredAchievementRules[achievementId].rarity || "Comum",
-            fixedXpValue: RARITY_POINTS[filteredAchievementRules[achievementId].rarity] || filteredAchievementRules[achievementId].points || 0,
+            achievementData: achievementRules[achievementId],
+            rarity: achievementRules[achievementId].rarity || "Comum",
+            fixedXpValue: RARITY_POINTS[achievementRules[achievementId].rarity] || achievementRules[achievementId].points || 0,
           }));
         },
       },
@@ -1228,310 +1534,8 @@ metricasUsuarioSchema.statics.obterRankingLoja = function (
 
 // Método estático para obter as configurações padrão das conquistas
 metricasUsuarioSchema.statics.getConfiguracoesPadrao = function () {
-  // Retorna as configurações padrão das conquistas
-  // Este método é usado principalmente para inicializar novos documentos
-  // As atualizações reais são feitas via AchievementUpdateService
-  const configs = {
-    "first-audit": {
-      title: "Primeiro Passo",
-      description: "Você completou sua primeira auditoria! Toda grande jornada começa com um único passo.",
-      icon: "🔍",
-      category: "audits",
-      difficulty: "easy",
-      rarity: "Basica",
-      points: 10,
-      criteria: { type: "count", target: 1, description: "Realizar 1 auditoria atualizada" },
-    },
-    "audit-enthusiast": {
-      title: "Olho de Águia",
-      description: "Completou 5 auditorias com sucesso! Seus olhos já estão afiados para encontrar qualquer detalhe.",
-      icon: "📊",
-      category: "audits",
-      difficulty: "medium",
-      rarity: "Raro",
-      points: 150,
-      criteria: { type: "count", target: 5, description: "Realizar 5 auditorias atualizadas" },
-    },
-    "audit-master": {
-      title: "Guardião da Qualidade",
-      description: "10 auditorias completas! Você é referência em qualidade e precisão no controle de estoque.",
-      icon: "🏆",
-      category: "audits",
-      difficulty: "hard",
-      rarity: "Epico",
-      points: 1500,
-      criteria: { type: "count", target: 10, description: "Realizar 10 auditorias atualizadas" },
-    },
-    "consistent-auditor": {
-      title: "Máquina de Precisão",
-      description: "20 auditorias realizadas! Sua consistência é admirável. Nada escapa do seu radar.",
-      icon: "📅",
-      category: "consistency",
-      difficulty: "hard",
-      rarity: "Lendario",
-      points: 5000,
-      criteria: { type: "count", target: 20, description: "Realizar 20 auditorias atualizadas" },
-    },
-    "weekly-warrior": {
-      title: "Imperador das Auditorias",
-      description: "50 auditorias! Você domina completamente a arte de auditar. Uma lenda viva do estoque!",
-      icon: "👑",
-      category: "performance",
-      difficulty: "very-hard",
-      rarity: "Diamante",
-      points: 25000,
-      criteria: { type: "count", target: 50, description: "Realizar 50 auditorias atualizadas" },
-    },
-    "item-collector-100": {
-      title: "Primeiras Moedas",
-      description: "Acumulou 100 pontos totais! Você está construindo sua reputação como auditor.",
-      icon: "💯",
-      category: "performance",
-      difficulty: "easy",
-      rarity: "Basica",
-      points: 50,
-      criteria: { type: "count", target: 100, description: "Alcançar 100 pontos totais" },
-    },
-    "item-collector-500": {
-      title: "Cofre em Crescimento",
-      description: "2.000 pontos! Sua coleção de conquistas cresce a cada dia. Continue acumulando!",
-      icon: "🎯",
-      category: "performance",
-      difficulty: "medium",
-      rarity: "Comum",
-      points: 100,
-      criteria: { type: "count", target: 2000, description: "Alcançar 2.000 pontos totais" },
-    },
-    "item-collector-1000": {
-      title: "Tesouro Valioso",
-      description: "5.000 pontos acumulados! Você é um verdadeiro caçador de tesouros do estoque.",
-      icon: "🏅",
-      category: "performance",
-      difficulty: "hard",
-      rarity: "Raro",
-      points: 250,
-      criteria: { type: "count", target: 5000, description: "Alcançar 5.000 pontos totais" },
-    },
-    "item-collector-2000": {
-      title: "Fortuna do Auditor",
-      description: "15.000 pontos! Seu desempenho é extraordinário. Poucos chegam tão longe.",
-      icon: "🏆",
-      category: "performance",
-      difficulty: "hard",
-      rarity: "Epico",
-      points: 500,
-      criteria: { type: "count", target: 15000, description: "Alcançar 15.000 pontos totais" },
-    },
-    "item-collector-5000": {
-      title: "Barão do Estoque",
-      description: "30.000 pontos! Você é uma força imparável. O estoque treme quando você chega!",
-      icon: "👑",
-      category: "performance",
-      difficulty: "very-hard",
-      rarity: "Lendario",
-      points: 1000,
-      criteria: { type: "count", target: 30000, description: "Alcançar 30.000 pontos totais" },
-    },
-    "item-collector-10000": {
-      title: "Magnata Supremo",
-      description: "50.000 pontos! Você alcançou o topo do topo. Lendas são escritas sobre você.",
-      icon: "💎",
-      category: "performance",
-      difficulty: "extreme",
-      rarity: "Diamante",
-      points: 2000,
-      criteria: { type: "count", target: 50000, description: "Alcançar 50.000 pontos totais" },
-    },
-    "detetive-1": {
-      title: "Investigador Novato",
-      description: "Verificou 100 itens de ruptura. Você começou a desvendar os mistérios das prateleiras vazias!",
-      icon: "🕵️",
-      category: "performance",
-      difficulty: "easy",
-      rarity: "Basica",
-      points: 50,
-      criteria: { type: "count", target: 100, description: "Verificar 100 itens de ruptura" },
-    },
-    "detetive-2": {
-      title: "Detetive de Rupturas",
-      description: "1.000 rupturas investigadas! Nenhuma prateleira vazia escapa da sua investigação.",
-      icon: "🔎",
-      category: "performance",
-      difficulty: "medium",
-      rarity: "Comum",
-      points: 500,
-      criteria: { type: "count", target: 1000, description: "Verificar 1.000 itens de ruptura" },
-    },
-    "detetive-3": {
-      title: "Caçador de Rupturas",
-      description: "5.000 rupturas! Seu faro para encontrar falhas no estoque é incomparável.",
-      icon: "🕵️‍♂️",
-      category: "performance",
-      difficulty: "hard",
-      rarity: "Raro",
-      points: 1000,
-      criteria: { type: "count", target: 5000, description: "Verificar 5.000 itens de ruptura" },
-    },
-    "detetive-4": {
-      title: "Xerife do Estoque",
-      description: "10.000 rupturas investigadas! A lei do estoque é mantida por suas mãos.",
-      icon: "🔦",
-      category: "performance",
-      difficulty: "hard",
-      rarity: "Epico",
-      points: 2000,
-      criteria: { type: "count", target: 10000, description: "Verificar 10.000 itens de ruptura" },
-    },
-    "detetive-5": {
-      title: "Sentinela das Prateleiras",
-      description: "15.000 rupturas! Você vigia cada centímetro da loja. Nada passa despercebido!",
-      icon: "🕵️‍♀️",
-      category: "performance",
-      difficulty: "very-hard",
-      rarity: "Lendario",
-      points: 3000,
-      criteria: { type: "count", target: 15000, description: "Verificar 15.000 itens de ruptura" },
-    },
-    "detetive-6": {
-      title: "Oráculo das Rupturas",
-      description: "30.000 rupturas! Você prevê rupturas antes mesmo delas acontecerem. Lendário!",
-      icon: "👑",
-      category: "performance",
-      difficulty: "extreme",
-      rarity: "Diamante",
-      points: 6000,
-      criteria: { type: "count", target: 30000, description: "Verificar 30.000 itens de ruptura" },
-    },
-    "auditor-etiqueta-1": {
-      title: "Leitor de Etiquetas",
-      description: "Leu 500 etiquetas! Você está aprendendo a linguagem secreta dos preços.",
-      icon: "🏷️",
-      category: "performance",
-      difficulty: "easy",
-      rarity: "Basica",
-      points: 75,
-      criteria: { type: "count", target: 500, description: "Ler 500 etiquetas" },
-    },
-    "auditor-etiqueta-2": {
-      title: "Mestre dos Preços",
-      description: "2.000 etiquetas lidas! Os números não têm segredos para você.",
-      icon: "🔖",
-      category: "performance",
-      difficulty: "medium",
-      rarity: "Comum",
-      points: 250,
-      criteria: { type: "count", target: 2000, description: "Ler 2.000 etiquetas" },
-    },
-    "auditor-etiqueta-3": {
-      title: "Scanner Humano",
-      description: "5.000 etiquetas! Você lê preços mais rápido que um leitor de código de barras.",
-      icon: "📋",
-      category: "performance",
-      difficulty: "hard",
-      rarity: "Raro",
-      points: 750,
-      criteria: { type: "count", target: 5000, description: "Ler 5.000 etiquetas" },
-    },
-    "auditor-etiqueta-4": {
-      title: "Arquiteto dos Preços",
-      description: "10.000 etiquetas verificadas! Cada preço é uma obra de arte sob sua supervisão.",
-      icon: "🎯",
-      category: "performance",
-      difficulty: "hard",
-      rarity: "Epico",
-      points: 1500,
-      criteria: { type: "count", target: 10000, description: "Ler 10.000 etiquetas" },
-    },
-    "auditor-etiqueta-5": {
-      title: "Titã das Etiquetas",
-      description: "20.000 etiquetas! As prateleiras se curvam diante da sua dedicação. Impressionante!",
-      icon: "🏆",
-      category: "performance",
-      difficulty: "very-hard",
-      rarity: "Lendario",
-      points: 3000,
-      criteria: { type: "count", target: 20000, description: "Ler 20.000 etiquetas" },
-    },
-    "auditor-etiqueta-6": {
-      title: "Divindade das Etiquetas",
-      description: "40.000 etiquetas! Você transcendeu os limites humanos. Uma força da natureza!",
-      icon: "👑",
-      category: "performance",
-      difficulty: "extreme",
-      rarity: "Diamante",
-      points: 6000,
-      criteria: { type: "count", target: 40000, description: "Ler 40.000 etiquetas" },
-    },
-    "auditor-presenca-1": {
-      title: "Vigia Atento",
-      description: "Verificou 300 presenças! Seus olhos capturam cada detalhe nas prateleiras.",
-      icon: "👁️",
-      category: "performance",
-      difficulty: "easy",
-      rarity: "Basica",
-      points: 75,
-      criteria: { type: "count", target: 300, description: "Verificar 300 presenças" },
-    },
-    "auditor-presenca-2": {
-      title: "Fiscal de Gôndolas",
-      description: "1.500 presenças conferidas! As gôndolas estão sempre perfeitas sob sua gestão.",
-      icon: "👀",
-      category: "performance",
-      difficulty: "medium",
-      rarity: "Comum",
-      points: 250,
-      criteria: { type: "count", target: 1500, description: "Verificar 1.500 presenças" },
-    },
-    "auditor-presenca-3": {
-      title: "Guardião da Exposição",
-      description: "4.000 presenças! Cada produto está no lugar certo graças a você.",
-      icon: "🔍",
-      category: "performance",
-      difficulty: "hard",
-      rarity: "Raro",
-      points: 750,
-      criteria: { type: "count", target: 4000, description: "Verificar 4.000 presenças" },
-    },
-    "auditor-presenca-4": {
-      title: "Senhor das Prateleiras",
-      description: "8.000 presenças verificadas! As prateleiras são seu reino e você as governa com maestria.",
-      icon: "✅",
-      category: "performance",
-      difficulty: "hard",
-      rarity: "Epico",
-      points: 1500,
-      criteria: { type: "count", target: 8000, description: "Verificar 8.000 presenças" },
-    },
-    "auditor-presenca-5": {
-      title: "Olho que Tudo Vê",
-      description: "16.000 presenças! Nenhum produto fora do lugar escapa da sua visão absoluta.",
-      icon: "🌟",
-      category: "performance",
-      difficulty: "very-hard",
-      rarity: "Lendario",
-      points: 3000,
-      criteria: { type: "count", target: 16000, description: "Verificar 16.000 presenças" },
-    },
-    "auditor-presenca-6": {
-      title: "Entidade Onipresente",
-      description: "32.000 presenças! Você está em todos os lugares ao mesmo tempo. Sobrenatural!",
-      icon: "👑",
-      category: "performance",
-      difficulty: "extreme",
-      rarity: "Diamante",
-      points: 6000,
-      criteria: { type: "count", target: 32000, description: "Verificar 32.000 presenças" },
-    },
-  };
-
-  // Padronizar pontuação por raridade
-  Object.values(configs).forEach((rule) => {
-    if (RARITY_POINTS[rule.rarity]) {
-      rule.points = RARITY_POINTS[rule.rarity];
-    }
-  });
-
-  return configs;
+  // Retorna as configurações padrão usando a função centralizada
+  return getStaticAchievementRules();
 };
 
 metricasUsuarioSchema.statics.obterMetricasUsuario = function (
@@ -1676,6 +1680,32 @@ metricasUsuarioSchema.methods.calcularAchievements = function () {
   // Atualizar estrutura de achievements com base nas métricas atuais
   const currentItensLidos = this.totais.itensAtualizados;
 
+  // ===== INJETAR CONQUISTAS ESTÁTICAS FALTANTES EM DOCUMENTOS EXISTENTES =====
+  const staticRules = getStaticAchievementRules();
+  const existingIds = new Set(
+    this.achievements.achievements.map((a) => a.achievementId)
+  );
+
+  for (const [achievementId, rule] of Object.entries(staticRules)) {
+    if (!existingIds.has(achievementId)) {
+      this.achievements.achievements.push({
+        achievementId,
+        unlocked: false,
+        progress: {
+          current: 0,
+          target: rule.criteria.target,
+          percentage: 0,
+        },
+        unlockedAt: null,
+        unlockedBy: null,
+        achievementData: rule,
+        rarity: rule.rarity || "Comum",
+        fixedXpValue: RARITY_POINTS[rule.rarity] || rule.points || 0,
+      });
+      existingIds.add(achievementId);
+    }
+  }
+
   // ===== GERAR CONQUISTAS DINÂMICAS DE CLASSE E LOCAL =====
   // Verificar se já existem conquistas dinâmicas, se não, gerar baseado nos Maps
   const existingDynamicIds = new Set(
@@ -1771,6 +1801,103 @@ metricasUsuarioSchema.methods.calcularAchievements = function () {
         case "auditor-presenca-6":
           currentProgress = this.totaisAcumulados.itensLidosPresencas;
           break;
+
+        // === RANKING ===
+        case "ranking-first-1":
+        case "ranking-first-5":
+          currentProgress = this.historicoRanking.posicao1 || 0;
+          break;
+        case "ranking-top3-5":
+        case "ranking-top3-20":
+          currentProgress = (this.historicoRanking.posicao1 || 0) +
+            (this.historicoRanking.posicao2 || 0) +
+            (this.historicoRanking.posicao3 || 0);
+          break;
+        case "ranking-top10-10":
+        case "ranking-top10-50":
+          currentProgress = this.historicoRanking.totalTop10 || 0;
+          break;
+
+        // === CUSTO RUPTURA ===
+        case "custo-ruptura-1k":
+        case "custo-ruptura-10k":
+        case "custo-ruptura-50k":
+        case "custo-ruptura-200k":
+          currentProgress = this.rupturas.custoTotalRuptura || 0;
+          break;
+
+        // === PRESENÇA CONFIRMADA ===
+        case "confirmador-1":
+        case "confirmador-2":
+        case "confirmador-3":
+          currentProgress = this.presencas.presencasConfirmadas || 0;
+          break;
+
+        // === ITENS DESATUALIZADOS ===
+        case "desatualizado-1":
+        case "desatualizado-2":
+        case "desatualizado-3":
+          currentProgress = this.etiquetas.itensDesatualizado || 0;
+          break;
+
+        // === ITENS SEM ESTOQUE ===
+        case "sem-estoque-1":
+        case "sem-estoque-2":
+        case "sem-estoque-3":
+          currentProgress = (this.etiquetas.itensSemEstoque || 0) +
+            (this.presencas.itensSemEstoque || 0);
+          break;
+
+        // === ESPECIALIZAÇÃO POR TIPO ===
+        case "especialista-etiqueta":
+        case "guru-etiqueta":
+          currentProgress = this.contadoresAuditorias.totalEtiquetas || 0;
+          break;
+        case "especialista-ruptura":
+        case "guru-ruptura":
+          currentProgress = this.contadoresAuditorias.totalRupturas || 0;
+          break;
+        case "especialista-presenca":
+        case "guru-presenca":
+          currentProgress = this.contadoresAuditorias.totalPresencas || 0;
+          break;
+
+        // === VERSATILIDADE ===
+        case "versatil-1":
+        case "versatil-2":
+          // Progresso = menor valor entre os 3 tipos (precisa todos >= target)
+          currentProgress = Math.min(
+            this.contadoresAuditorias.totalEtiquetas || 0,
+            this.contadoresAuditorias.totalRupturas || 0,
+            this.contadoresAuditorias.totalPresencas || 0
+          );
+          break;
+
+        // === LEITURA TOTAL ===
+        case "leitor-total-1k":
+        case "leitor-total-10k":
+        case "leitor-total-50k":
+          currentProgress = this.totaisAcumulados.itensLidosTotal || 0;
+          break;
+
+        // === PARTICIPAÇÃO COMUNITÁRIA (cross-model) ===
+        case "sugestao-1":
+        case "sugestao-5":
+        case "sugestao-15":
+          currentProgress = this.participacao?.sugestoesEnviadas || 0;
+          break;
+        case "artigo-1":
+        case "artigo-5":
+          currentProgress = this.participacao?.artigosPublicados || 0;
+          break;
+        case "comentarista-1":
+        case "comentarista-2":
+          currentProgress = this.participacao?.comentariosFeitos || 0;
+          break;
+        case "votante-1":
+          currentProgress = this.participacao?.votosRealizados || 0;
+          break;
+
         default:
           currentProgress = 0;
       }
@@ -2033,6 +2160,18 @@ metricasUsuarioSchema.pre("save", function (next) {
       Number(this.presencas.itensNaopertence) || 0;
     this.presencas.presencasConfirmadas =
       Number(this.presencas.presencasConfirmadas) || 0;
+  }
+
+  // Ensure participacao fields are numbers
+  if (this.participacao) {
+    this.participacao.sugestoesEnviadas =
+      Number(this.participacao.sugestoesEnviadas) || 0;
+    this.participacao.artigosPublicados =
+      Number(this.participacao.artigosPublicados) || 0;
+    this.participacao.comentariosFeitos =
+      Number(this.participacao.comentariosFeitos) || 0;
+    this.participacao.votosRealizados =
+      Number(this.participacao.votosRealizados) || 0;
   }
 
   next();

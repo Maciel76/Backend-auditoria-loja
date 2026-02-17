@@ -2,6 +2,7 @@
 import MetricasUsuario from "../models/MetricasUsuario.js";
 import Auditoria from "../models/Auditoria.js";
 import Loja from "../models/Loja.js";
+import mongoose from "mongoose";
 
 class MetricasUsuariosService {
   constructor() {
@@ -383,6 +384,17 @@ class MetricasUsuariosService {
     // Calcular totais e pontuação (também calcula achievements)
     metricasUsuario.atualizarTotais();
 
+    // Calcular dados de participação comunitária (cross-model)
+    try {
+      const participacao = await this.calcularParticipacao(dados.usuarioId, dados.loja._id);
+      metricasUsuario.participacao = participacao;
+    } catch (err) {
+      console.warn(`⚠️ [MetricasUsuarios] Erro ao calcular participação de ${dados.usuarioNome}:`, err.message);
+    }
+
+    // Recalcular achievements após participação ser populada
+    metricasUsuario.calcularAchievements();
+
     // Salvar no banco
     await metricasUsuario.save();
 
@@ -457,6 +469,120 @@ class MetricasUsuariosService {
         dados.rupturas.itensLidos +
         (dados.presencas.totalItens || 0),
     };
+  }
+
+  /**
+   * Calcula dados de participação comunitária (cross-model)
+   * Busca sugestões, artigos, comentários e votos do usuário em outros modelos
+   */
+  async calcularParticipacao(usuarioId, lojaId) {
+    const participacao = {
+      sugestoesEnviadas: 0,
+      artigosPublicados: 0,
+      comentariosFeitos: 0,
+      votosRealizados: 0,
+    };
+
+    try {
+      const db = mongoose.connection.db;
+      if (!db) return participacao;
+
+      // Contar sugestões enviadas pelo usuário
+      try {
+        const sugestoesCol = db.collection("sugestaos");
+        participacao.sugestoesEnviadas = await sugestoesCol.countDocuments({
+          $or: [
+            { usuario: lojaId ? new mongoose.Types.ObjectId(usuarioId) : usuarioId },
+            { "nome": { $exists: true }, "email": { $exists: true } }
+          ].filter(Boolean)
+        });
+        // Fallback: buscar por nome de usuário se o ID não funcionar como ObjectId
+        if (participacao.sugestoesEnviadas === 0) {
+          // Buscar User para pegar o ObjectId real
+          const usersCol = db.collection("users");
+          const userDoc = await usersCol.findOne({ id: usuarioId });
+          if (userDoc) {
+            participacao.sugestoesEnviadas = await sugestoesCol.countDocuments({
+              usuario: userDoc._id
+            });
+          }
+        }
+      } catch (e) { /* collection may not exist */ }
+
+      // Contar artigos publicados
+      try {
+        const articlesCol = db.collection("articles");
+        const usersCol = db.collection("users");
+        const userDoc = await usersCol.findOne({ id: usuarioId });
+        if (userDoc) {
+          participacao.artigosPublicados = await articlesCol.countDocuments({
+            usuario: userDoc._id,
+            status: "published"
+          });
+        }
+      } catch (e) { /* collection may not exist */ }
+
+      // Contar comentários feitos (em artigos + sugestões + votações)
+      try {
+        const usersCol = db.collection("users");
+        const userDoc = await usersCol.findOne({ id: usuarioId });
+
+        if (userDoc) {
+          const userId = userDoc._id;
+
+          // Comentários em artigos
+          try {
+            const articlesCol = db.collection("articles");
+            const articleComments = await articlesCol.aggregate([
+              { $unwind: "$comentarios" },
+              { $match: { "comentarios.usuario": userId } },
+              { $count: "total" }
+            ]).toArray();
+            participacao.comentariosFeitos += articleComments[0]?.total || 0;
+          } catch (e) { /* ignore */ }
+
+          // Comentários em sugestões
+          try {
+            const sugestoesCol = db.collection("sugestaos");
+            const sugComments = await sugestoesCol.aggregate([
+              { $unwind: "$comentarios" },
+              { $match: { "comentarios.userId": userId } },
+              { $count: "total" }
+            ]).toArray();
+            participacao.comentariosFeitos += sugComments[0]?.total || 0;
+          } catch (e) { /* ignore */ }
+
+          // Comentários em votações
+          try {
+            const votacoesCol = db.collection("votacaos");
+            const votComments = await votacoesCol.aggregate([
+              { $unwind: "$comentarios" },
+              { $match: { "comentarios.usuario": userId } },
+              { $count: "total" }
+            ]).toArray();
+            participacao.comentariosFeitos += votComments[0]?.total || 0;
+          } catch (e) { /* ignore */ }
+        }
+      } catch (e) { /* ignore */ }
+
+      // Contar votos realizados (em voting items)
+      try {
+        const votingItemsCol = db.collection("votingitems");
+        const usersCol = db.collection("users");
+        const userDoc = await usersCol.findOne({ id: usuarioId });
+        if (userDoc) {
+          const votedItems = await votingItemsCol.countDocuments({
+            "votedUsers.userId": userDoc._id.toString()
+          });
+          participacao.votosRealizados = votedItems;
+        }
+      } catch (e) { /* ignore */ }
+
+    } catch (error) {
+      console.warn(`⚠️ [MetricasUsuarios] Erro geral ao calcular participação:`, error.message);
+    }
+
+    return participacao;
   }
 
   /**
