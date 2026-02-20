@@ -1225,9 +1225,10 @@ class MetricsCalculationService {
 
     for (const loja of lojas) {
       try {
-        // Se tipoAuditoria específico foi fornecido, processar apenas esse tipo
-        // Senão, buscar TODAS as auditorias da loja
-        let filtroAuditoria = { loja: loja._id };
+        // Buscar auditorias da loja SEMPRE com filtro de data
+        // Isso garante que LojaDailyMetrics represente apenas os dados do período atual,
+        // evitando inflação dos valores ao incluir dados históricos acumulados
+        let filtroAuditoria;
         if (tipoAuditoria) {
           // Para tipo específico, buscar auditorias do dia atual desse tipo
           filtroAuditoria = {
@@ -1239,8 +1240,14 @@ class MetricsCalculationService {
             `🔍 Buscando auditorias específicas do tipo ${tipoAuditoria} para loja ${loja.codigo}`,
           );
         } else {
+          // Para recálculo completo, buscar TODAS as auditorias mas FILTRADAS por data
+          // Sem filtro de data os valores de custo ficam inflados com dados históricos
+          filtroAuditoria = {
+            loja: loja._id,
+            data: { $gte: dataInicio, $lte: dataFim },
+          };
           console.log(
-            `🔍 Buscando TODAS as auditorias para recálculo completo da loja ${loja.codigo}`,
+            `🔍 Buscando TODAS as auditorias do período ${dataInicio.toISOString()} a ${dataFim.toISOString()} para recálculo completo da loja ${loja.codigo}`,
           );
         }
 

@@ -476,7 +476,7 @@ async function processarRuptura(file, dataAuditoria, loja) {
         diasSemVenda: parseInt(item["Dias sem venda"] || 0),
         custoRuptura: parseFloat(
           String(item["Custo Ruptura"] || "0")
-            .replace(".", "")
+            .replaceAll(".", "")
             .replace(",", "."),
         ),
         dataAuditoria: dataAuditoriaFinal,
@@ -796,7 +796,7 @@ async function processarPresenca(file, dataAuditoria, loja) {
         diasSemVenda: parseInt(item["Dias sem venda"] || 0),
         custoRuptura: parseFloat(
           String(item["Custo Ruptura"] || "0")
-            .replace(".", "")
+            .replaceAll(".", "")
             .replace(",", "."),
         ),
         dataAuditoria: dataAuditoriaFinal,

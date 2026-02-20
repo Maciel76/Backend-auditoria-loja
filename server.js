@@ -27,6 +27,7 @@ import lojaDailyMetricsRoutes from "./routes/lojaDailyMetrics.js";
 import performanceMapRoutes from "./routes/performanceMap.js";
 import perfilLojaRoutes from "./routes/perfilLoja.js";
 import auditProductsRouter from "./routes/auditProducts.js";
+import tarefasAuditoriaRouter from "./routes/tarefasAuditoria.js";
 import storesRouter from "./routes/stores.js";
 import usuariosRouter from "./routes/usuarios.js";
 import "./utils/planilhaHelpers.js";
@@ -249,6 +250,7 @@ app.use("/api/loja-daily-metrics", lojaDailyMetricsRoutes);
 app.use("/api/perfil-loja", perfilLojaRoutes);
 app.use("/api/performance-map", performanceMapRoutes);
 app.use("/api/audit-products", auditProductsRouter);
+app.use("/api/tarefas-auditoria", tarefasAuditoriaRouter);
 app.use("/api/stores", storesRouter);
 app.use("/api/usuarios", usuariosRouter);
 

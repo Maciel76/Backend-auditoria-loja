@@ -46,84 +46,17 @@ const metricasEtiquetasSchema = new mongoose.Schema({
   // Contadores de leitura por local
   locaisLeitura: { type: locaisLeituraSchema, default: () => ({}) },
 
-  // Contadores específicos de etiquetas
+  // Contadores de classes de produto - DINÂMICO (salva as classes que existem na planilha de cada loja)
   contadorClasses: {
-    "A CLASSIFICAR": { type: Number, default: 0 },
-    "ALTO GIRO": { type: Number, default: 0 },
-    BAZAR: { type: Number, default: 0 },
-    DIVERSOS: { type: Number, default: 0 },
-    DPH: { type: Number, default: 0 },
-    FLV: { type: Number, default: 0 },
-    "LATICINIOS 1": { type: Number, default: 0 },
-    LIQUIDA: { type: Number, default: 0 },
-    "PERECIVEL 1": { type: Number, default: 0 },
-    "PERECIVEL 2": { type: Number, default: 0 },
-    "PERECIVEL 2 B": { type: Number, default: 0 },
-    "PERECIVEL 3": { type: Number, default: 0 },
-    "SECA DOCE": { type: Number, default: 0 },
-    "SECA SALGADA": { type: Number, default: 0 },
-    "SECA SALGADA 2": { type: Number, default: 0 },
+    type: Map,
+    of: Number,
+    default: () => new Map(),
   },
+  // Contadores de locais de leitura - DINÂMICO (salva os locais que existem na planilha de cada loja)
   contadorLocais: {
-    "C01 - C01": { type: Number, default: 0 },
-    "CS01 - CS01": { type: Number, default: 0 },
-    "F01 - F01": { type: Number, default: 0 },
-    "F02 - F02": { type: Number, default: 0 },
-    "FLV - FLV": { type: Number, default: 0 },
-    "G01A - G01A": { type: Number, default: 0 },
-    "G01B - G01B": { type: Number, default: 0 },
-    "G02A - G02A": { type: Number, default: 0 },
-    "G02B - G02B": { type: Number, default: 0 },
-    "G03A - G03A": { type: Number, default: 0 },
-    "G03B - G03B": { type: Number, default: 0 },
-    "G04A - G04A": { type: Number, default: 0 },
-    "G04B - G04B": { type: Number, default: 0 },
-    "G05A - G05A": { type: Number, default: 0 },
-    "G05B - G05B": { type: Number, default: 0 },
-    "G06A - G06A": { type: Number, default: 0 },
-    "G06B - G06B": { type: Number, default: 0 },
-    "G07A - G07A": { type: Number, default: 0 },
-    "G07B - G07B": { type: Number, default: 0 },
-    "G08A - G08A": { type: Number, default: 0 },
-    "G08B - G08B": { type: Number, default: 0 },
-    "G09A - G09A": { type: Number, default: 0 },
-    "G09B - G09B": { type: Number, default: 0 },
-    "G10A - G10A": { type: Number, default: 0 },
-    "G10B - G10B": { type: Number, default: 0 },
-    "G11A - G11A": { type: Number, default: 0 },
-    "G11B - G11B": { type: Number, default: 0 },
-    "G12A - G12A": { type: Number, default: 0 },
-    "G12B - G12B": { type: Number, default: 0 },
-    "G13A - G13A": { type: Number, default: 0 },
-    "G13B - G13B": { type: Number, default: 0 },
-    "G14A - G14A": { type: Number, default: 0 },
-    "G14B - G14B": { type: Number, default: 0 },
-    "G15A - G15A": { type: Number, default: 0 },
-    "G15B - G15B": { type: Number, default: 0 },
-    "G16A - G16A": { type: Number, default: 0 },
-    "G16B - G16B": { type: Number, default: 0 },
-    "G17A - G17A": { type: Number, default: 0 },
-    "G17B - G17B": { type: Number, default: 0 },
-    "G18A - G18A": { type: Number, default: 0 },
-    "G18B - G18B": { type: Number, default: 0 },
-    "G19A - G19A": { type: Number, default: 0 },
-    "G19B - G19B": { type: Number, default: 0 },
-    "G20A - G20A": { type: Number, default: 0 },
-    "G20B - G20B": { type: Number, default: 0 },
-    "G21A - G21A": { type: Number, default: 0 },
-    "G21B - G21B": { type: Number, default: 0 },
-    "G22A - G22A": { type: Number, default: 0 },
-    "G22B - G22B": { type: Number, default: 0 },
-    "GELO - GELO": { type: Number, default: 0 },
-    "I01 - I01": { type: Number, default: 0 },
-    "PA01 - PA01": { type: Number, default: 0 },
-    "PAO - PAO": { type: Number, default: 0 },
-    "PF01 - PF01": { type: Number, default: 0 },
-    "PF02 - PF02": { type: Number, default: 0 },
-    "PF03 - PF03": { type: Number, default: 0 },
-    "PL01 - PL01": { type: Number, default: 0 },
-    "PL02 - PL02": { type: Number, default: 0 },
-    "SORVETE - SORVETE": { type: Number, default: 0 },
+    type: Map,
+    of: Number,
+    default: () => new Map(),
   },
 });
 
@@ -143,85 +76,7 @@ const metricasRupturasSchema = new mongoose.Schema({
   // Contadores de leitura por local
   locaisLeitura: { type: locaisLeituraSchema, default: () => ({}) },
 
-  // Contadores específicos de rupturas
-  contadorClasses: {
-    "A CLASSIFICAR": { type: Number, default: 0 },
-    "ALTO GIRO": { type: Number, default: 0 },
-    BAZAR: { type: Number, default: 0 },
-    DIVERSOS: { type: Number, default: 0 },
-    DPH: { type: Number, default: 0 },
-    FLV: { type: Number, default: 0 },
-    "LATICINIOS 1": { type: Number, default: 0 },
-    LIQUIDA: { type: Number, default: 0 },
-    "PERECIVEL 1": { type: Number, default: 0 },
-    "PERECIVEL 2": { type: Number, default: 0 },
-    "PERECIVEL 2 B": { type: Number, default: 0 },
-    "PERECIVEL 3": { type: Number, default: 0 },
-    "SECA DOCE": { type: Number, default: 0 },
-    "SECA SALGADA": { type: Number, default: 0 },
-    "SECA SALGADA 2": { type: Number, default: 0 },
-  },
-  contadorLocais: {
-    "C01 - C01": { type: Number, default: 0 },
-    "CS01 - CS01": { type: Number, default: 0 },
-    "F01 - F01": { type: Number, default: 0 },
-    "F02 - F02": { type: Number, default: 0 },
-    "FLV - FLV": { type: Number, default: 0 },
-    "G01A - G01A": { type: Number, default: 0 },
-    "G01B - G01B": { type: Number, default: 0 },
-    "G02A - G02A": { type: Number, default: 0 },
-    "G02B - G02B": { type: Number, default: 0 },
-    "G03A - G03A": { type: Number, default: 0 },
-    "G03B - G03B": { type: Number, default: 0 },
-    "G04A - G04A": { type: Number, default: 0 },
-    "G04B - G04B": { type: Number, default: 0 },
-    "G05A - G05A": { type: Number, default: 0 },
-    "G05B - G05B": { type: Number, default: 0 },
-    "G06A - G06A": { type: Number, default: 0 },
-    "G06B - G06B": { type: Number, default: 0 },
-    "G07A - G07A": { type: Number, default: 0 },
-    "G07B - G07B": { type: Number, default: 0 },
-    "G08A - G08A": { type: Number, default: 0 },
-    "G08B - G08B": { type: Number, default: 0 },
-    "G09A - G09A": { type: Number, default: 0 },
-    "G09B - G09B": { type: Number, default: 0 },
-    "G10A - G10A": { type: Number, default: 0 },
-    "G10B - G10B": { type: Number, default: 0 },
-    "G11A - G11A": { type: Number, default: 0 },
-    "G11B - G11B": { type: Number, default: 0 },
-    "G12A - G12A": { type: Number, default: 0 },
-    "G12B - G12B": { type: Number, default: 0 },
-    "G13A - G13A": { type: Number, default: 0 },
-    "G13B - G13B": { type: Number, default: 0 },
-    "G14A - G14A": { type: Number, default: 0 },
-    "G14B - G14B": { type: Number, default: 0 },
-    "G15A - G15A": { type: Number, default: 0 },
-    "G15B - G15B": { type: Number, default: 0 },
-    "G16A - G16A": { type: Number, default: 0 },
-    "G16B - G16B": { type: Number, default: 0 },
-    "G17A - G17A": { type: Number, default: 0 },
-    "G17B - G17B": { type: Number, default: 0 },
-    "G18A - G18A": { type: Number, default: 0 },
-    "G18B - G18B": { type: Number, default: 0 },
-    "G19A - G19A": { type: Number, default: 0 },
-    "G19B - G19B": { type: Number, default: 0 },
-    "G20A - G20A": { type: Number, default: 0 },
-    "G20B - G20B": { type: Number, default: 0 },
-    "G21A - G21A": { type: Number, default: 0 },
-    "G21B - G21B": { type: Number, default: 0 },
-    "G22A - G22A": { type: Number, default: 0 },
-    "G22B - G22B": { type: Number, default: 0 },
-    "GELO - GELO": { type: Number, default: 0 },
-    "I01 - I01": { type: Number, default: 0 },
-    "PA01 - PA01": { type: Number, default: 0 },
-    "PAO - PAO": { type: Number, default: 0 },
-    "PF01 - PF01": { type: Number, default: 0 },
-    "PF02 - PF02": { type: Number, default: 0 },
-    "PF03 - PF03": { type: Number, default: 0 },
-    "PL01 - PL01": { type: Number, default: 0 },
-    "PL02 - PL02": { type: Number, default: 0 },
-    "SORVETE - SORVETE": { type: Number, default: 0 },
-  },
+  // Removido: contadorClasses e contadorLocais não são necessários para rupturas
 });
 
 // Schema para métricas de presenças
@@ -243,84 +98,17 @@ const metricasPresencasSchema = new mongoose.Schema({
   // Contadores de leitura por local
   locaisLeitura: { type: locaisLeituraSchema, default: () => ({}) },
 
-  // Contadores específicos de presenças
+  // Contadores de classes de produto - DINÂMICO (salva as classes que existem na planilha de cada loja)
   contadorClasses: {
-    "A CLASSIFICAR": { type: Number, default: 0 },
-    "ALTO GIRO": { type: Number, default: 0 },
-    BAZAR: { type: Number, default: 0 },
-    DIVERSOS: { type: Number, default: 0 },
-    DPH: { type: Number, default: 0 },
-    FLV: { type: Number, default: 0 },
-    "LATICINIOS 1": { type: Number, default: 0 },
-    LIQUIDA: { type: Number, default: 0 },
-    "PERECIVEL 1": { type: Number, default: 0 },
-    "PERECIVEL 2": { type: Number, default: 0 },
-    "PERECIVEL 2 B": { type: Number, default: 0 },
-    "PERECIVEL 3": { type: Number, default: 0 },
-    "SECA DOCE": { type: Number, default: 0 },
-    "SECA SALGADA": { type: Number, default: 0 },
-    "SECA SALGADA 2": { type: Number, default: 0 },
+    type: Map,
+    of: Number,
+    default: () => new Map(),
   },
+  // Contadores de locais de leitura - DINÂMICO (salva os locais que existem na planilha de cada loja)
   contadorLocais: {
-    "C01 - C01": { type: Number, default: 0 },
-    "CS01 - CS01": { type: Number, default: 0 },
-    "F01 - F01": { type: Number, default: 0 },
-    "F02 - F02": { type: Number, default: 0 },
-    "FLV - FLV": { type: Number, default: 0 },
-    "G01A - G01A": { type: Number, default: 0 },
-    "G01B - G01B": { type: Number, default: 0 },
-    "G02A - G02A": { type: Number, default: 0 },
-    "G02B - G02B": { type: Number, default: 0 },
-    "G03A - G03A": { type: Number, default: 0 },
-    "G03B - G03B": { type: Number, default: 0 },
-    "G04A - G04A": { type: Number, default: 0 },
-    "G04B - G04B": { type: Number, default: 0 },
-    "G05A - G05A": { type: Number, default: 0 },
-    "G05B - G05B": { type: Number, default: 0 },
-    "G06A - G06A": { type: Number, default: 0 },
-    "G06B - G06B": { type: Number, default: 0 },
-    "G07A - G07A": { type: Number, default: 0 },
-    "G07B - G07B": { type: Number, default: 0 },
-    "G08A - G08A": { type: Number, default: 0 },
-    "G08B - G08B": { type: Number, default: 0 },
-    "G09A - G09A": { type: Number, default: 0 },
-    "G09B - G09B": { type: Number, default: 0 },
-    "G10A - G10A": { type: Number, default: 0 },
-    "G10B - G10B": { type: Number, default: 0 },
-    "G11A - G11A": { type: Number, default: 0 },
-    "G11B - G11B": { type: Number, default: 0 },
-    "G12A - G12A": { type: Number, default: 0 },
-    "G12B - G12B": { type: Number, default: 0 },
-    "G13A - G13A": { type: Number, default: 0 },
-    "G13B - G13B": { type: Number, default: 0 },
-    "G14A - G14A": { type: Number, default: 0 },
-    "G14B - G14B": { type: Number, default: 0 },
-    "G15A - G15A": { type: Number, default: 0 },
-    "G15B - G15B": { type: Number, default: 0 },
-    "G16A - G16A": { type: Number, default: 0 },
-    "G16B - G16B": { type: Number, default: 0 },
-    "G17A - G17A": { type: Number, default: 0 },
-    "G17B - G17B": { type: Number, default: 0 },
-    "G18A - G18A": { type: Number, default: 0 },
-    "G18B - G18B": { type: Number, default: 0 },
-    "G19A - G19A": { type: Number, default: 0 },
-    "G19B - G19B": { type: Number, default: 0 },
-    "G20A - G20A": { type: Number, default: 0 },
-    "G20B - G20B": { type: Number, default: 0 },
-    "G21A - G21A": { type: Number, default: 0 },
-    "G21B - G21B": { type: Number, default: 0 },
-    "G22A - G22A": { type: Number, default: 0 },
-    "G22B - G22B": { type: Number, default: 0 },
-    "GELO - GELO": { type: Number, default: 0 },
-    "I01 - I01": { type: Number, default: 0 },
-    "PA01 - PA01": { type: Number, default: 0 },
-    "PAO - PAO": { type: Number, default: 0 },
-    "PF01 - PF01": { type: Number, default: 0 },
-    "PF02 - PF02": { type: Number, default: 0 },
-    "PF03 - PF03": { type: Number, default: 0 },
-    "PL01 - PL01": { type: Number, default: 0 },
-    "PL02 - PL02": { type: Number, default: 0 },
-    "SORVETE - SORVETE": { type: Number, default: 0 },
+    type: Map,
+    of: Number,
+    default: () => new Map(),
   },
 });
 
@@ -660,17 +448,15 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
       100 - this.etiquetas.percentualConclusao;
     this.etiquetas.usuariosAtivos = usuariosUnicos.size;
 
-    // Atualizar contadores
+    // Atualizar contadores dinamicamente (salva todas as classes/locais da planilha)
+    if (!this.etiquetas.contadorClasses) this.etiquetas.contadorClasses = new Map();
     for (const [classe, count] of classesMap) {
-      if (this.etiquetas.contadorClasses.hasOwnProperty(classe)) {
-        this.etiquetas.contadorClasses[classe] = count;
-      }
+      this.etiquetas.contadorClasses.set(classe, count);
     }
 
+    if (!this.etiquetas.contadorLocais) this.etiquetas.contadorLocais = new Map();
     for (const [local, count] of locaisMap) {
-      if (this.etiquetas.contadorLocais.hasOwnProperty(local)) {
-        this.etiquetas.contadorLocais[local] = count;
-      }
+      this.etiquetas.contadorLocais.set(local, count);
     }
   }
 
@@ -724,20 +510,7 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
 
     this.rupturas.usuariosAtivos = usuariosUnicos.size;
 
-    // Atualizar contadores
-    for (const [classe, count] of classesMap) {
-      if (this.rupturas.contadorClasses.hasOwnProperty(classe)) {
-        this.rupturas.contadorClasses[classe] = count;
-      }
-    }
-
-    for (const [local, count] of locaisMap) {
-      if (this.rupturas.contadorLocais.hasOwnProperty(local)) {
-        this.rupturas.contadorLocais[local] = count;
-      }
-    }
-
-    console.log(`📋 Contadores de classes atualizados para ruptura:`, this.rupturas.contadorClasses);
+    // contadorClasses e contadorLocais removidos de rupturas - não são mais necessários
   }
 
   if (tipo === "presencas") {
@@ -816,17 +589,15 @@ lojaDailyMetricsSchema.methods.processarAuditorias = function (
       100 - this.presencas.percentualConclusao;
     this.presencas.usuariosAtivos = usuariosUnicos.size;
 
-    // Atualizar contadores
+    // Atualizar contadores dinamicamente (salva todas as classes/locais da planilha)
+    if (!this.presencas.contadorClasses) this.presencas.contadorClasses = new Map();
     for (const [classe, count] of classesMap) {
-      if (this.presencas.contadorClasses.hasOwnProperty(classe)) {
-        this.presencas.contadorClasses[classe] = count;
-      }
+      this.presencas.contadorClasses.set(classe, count);
     }
 
+    if (!this.presencas.contadorLocais) this.presencas.contadorLocais = new Map();
     for (const [local, count] of locaisMap) {
-      if (this.presencas.contadorLocais.hasOwnProperty(local)) {
-        this.presencas.contadorLocais[local] = count;
-      }
+      this.presencas.contadorLocais.set(local, count);
     }
   }
 
@@ -853,35 +624,39 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
   // Primeiro, percorrer todas as auditorias para identificar todas as classes existentes
   for (const auditoria of auditorias) {
     const classe = auditoria.ClasseProduto || auditoria.classeProdutoRaiz;
-    if (!classe) continue; // Pular se não tiver classe definida
+    if (!classe) continue;
 
-    // Inicializar a classe no objeto se ainda não existir
     if (!metricasPorClasse.hasOwnProperty(classe)) {
-      metricasPorClasse[classe] = { total: 0, itensValidos: 0, lidos: 0, usuarios: {} };
+      metricasPorClasse[classe] = {
+        total: 0,
+        itensValidos: 0,
+        lidos: 0,
+        usuarios: {},
+        // Campos extras para rupturas - custo de ruptura por classe
+        custoRupturaTotal: 0,       // Soma do "Custo Ruptura" dos itens "Sem Presença e Com Estoque" (não lidos)
+        custoRupturaEvitada: 0,     // Soma do "Custo Ruptura" dos itens "Com Presença e Com Estoque" (lidos/evitados)
+        usuariosRupturaEvitada: {}, // Valor da ruptura evitada por cada usuário
+      };
     }
   }
 
   // Processar cada auditoria
   let contadorDebug = 0;
   for (const auditoria of auditorias) {
-    // Determinar classe do produto
     const classe = auditoria.ClasseProduto || auditoria.classeProdutoRaiz;
-    if (!classe) continue; // Pular se não tiver classe definida
+    if (!classe) continue;
 
-    // Determinar usuário da auditoria (ID e nome)
     const usuarioId = auditoria.usuarioId || auditoria.Usuario;
-    const usuarioNome = auditoria.usuarioNome || auditoria.Nome; // Procurar por possíveis campos de nome
+    const usuarioNome = auditoria.usuarioNome || auditoria.Nome;
 
-    // Agora a classe já está garantida no objeto de métricas
     if (metricasPorClasse.hasOwnProperty(classe)) {
       const situacao = auditoria.situacao || auditoria.Situacao;
+      const custoRuptura = auditoria.custoRuptura || 0;
 
       // Log de debug para as primeiras auditorias
       if (contadorDebug < 5 && (tipo === 'rupturas' || tipo === 'presencas')) {
         console.log(`🔍 [${tipo}] Processando auditoria ${contadorDebug + 1}:`, {
-          classe: classe,
-          situacao: situacao,
-          codigo: auditoria.codigo
+          classe, situacao, codigo: auditoria.codigo, custoRuptura
         });
         contadorDebug++;
       }
@@ -891,8 +666,6 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
 
       // Incrementar itens válidos (seguindo lógica específica por tipo de auditoria)
       if (tipo === 'etiquetas') {
-        // Para etiquetas: itens válidos = Atualizado + Desatualizado + Não lidos com estoque + Lido não pertence
-        // EXCLUINDO: "Sem Estoque" e "Lido sem estoque"
         if (
           situacao === "Atualizado" ||
           situacao === "Desatualizado" ||
@@ -902,20 +675,27 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
           metricasPorClasse[classe].itensValidos++;
         }
       } else if (tipo === 'rupturas') {
-        // Para rupturas: itens válidos = "Atualizado" (com presença e com estoque) + "Com problema" (sem presença mas com estoque)
-        // Ambos representam itens que podem ser processados no contexto de ruptura
-        if (
-          situacao === "Atualizado" ||
-          situacao === "Com problema"
-        ) {
+        if (situacao === "Atualizado" || situacao === "Com problema") {
           metricasPorClasse[classe].itensValidos++;
         }
+
+        // === CUSTOS DE RUPTURA POR CLASSE ===
+        // "Com problema" = "Sem Presença e Com Estoque" → custoRupturaTotal (ruptura real)
+        if (situacao === "Com problema" && custoRuptura > 0) {
+          metricasPorClasse[classe].custoRupturaTotal += custoRuptura;
+        }
+        // "Atualizado" = "Com Presença e Com Estoque" → custoRupturaEvitada (ruptura evitada pelo auditor)
+        if (situacao === "Atualizado" && custoRuptura > 0) {
+          metricasPorClasse[classe].custoRupturaEvitada += custoRuptura;
+
+          // Valor da ruptura evitada por cada usuário
+          if (usuarioId) {
+            const chave = usuarioNome || `Usuário ${usuarioId}`;
+            metricasPorClasse[classe].usuariosRupturaEvitada[chave] =
+              (metricasPorClasse[classe].usuariosRupturaEvitada[chave] || 0) + custoRuptura;
+          }
+        }
       } else if (tipo === 'presencas') {
-        // Para presenças: itens válidos devem incluir todos os itens que podem ter presença confirmada ou ausente
-        // Para presença: itens válidos = "Atualizado" (com presença e estoque) +
-        // "Com problema" (sem presença mas com estoque) +
-        // "Lido não pertence" (lido mas não pertence) +
-        // "Não lidos com estoque" (não lidos mas com estoque)
         if (
           situacao === "Atualizado" ||
           situacao === "Com problema" ||
@@ -928,7 +708,6 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
 
       // Incrementar itens lidos - definição varia por tipo de auditoria
       if (tipo === 'etiquetas') {
-        // Para etiquetas: itens lidos = "Atualizado" + "Desatualizado" + "Lido não pertence"
         if (
           situacao === "Atualizado" ||
           situacao === "Desatualizado" ||
@@ -937,15 +716,11 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
           metricasPorClasse[classe].lidos++;
         }
       } else if (tipo === 'rupturas') {
-        // Para rupturas: itens lidos = "Atualizado" (itens com presença e com estoque confirmados)
+        // itens lidos = "Atualizado" (Com Presença e Com Estoque)
         if (situacao === "Atualizado") {
           metricasPorClasse[classe].lidos++;
         }
       } else if (tipo === 'presencas') {
-        // Para presencas: itens lidos = "Atualizado" + "Com Presença e sem Estoque" + "Lido não pertence"
-        // "Atualizado" representa "Com Presença e com Estoque" (normalizado)
-        // "Com Presença e sem Estoque" pode estar em seu formato original
-        // "Lido não pertence" permanece como está
         if (
           situacao === "Atualizado" ||
           situacao === "Com Presença e sem Estoque" ||
@@ -956,20 +731,12 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
       }
 
       // Incrementar contagem de usuários por classe (somente se tiver ID de usuário)
-      if (usuarioId) { // Apenas se tiver ID de usuário
-        // Usar o nome do usuário como chave e armazenar a contagem
-        const usuarioChave = usuarioNome || `Usuário ${usuarioId}`; // Usar nome como chave
-
-        if (metricasPorClasse[classe].usuarios[usuarioChave]) {
-          // Se o usuário já existe na classe, apenas incrementar os itens lidos
-          metricasPorClasse[classe].usuarios[usuarioChave]++;
-        } else {
-          // Se for a primeira vez do usuário na classe, adicionar com 1 item lido
-          metricasPorClasse[classe].usuarios[usuarioChave] = 1;
-        }
+      if (usuarioId) {
+        const usuarioChave = usuarioNome || `Usuário ${usuarioId}`;
+        metricasPorClasse[classe].usuarios[usuarioChave] =
+          (metricasPorClasse[classe].usuarios[usuarioChave] || 0) + 1;
       } else {
-        // Registrar log de auditoria sem usuário para debug
-        console.log(`⚠️ Auditoria encontrada sem ID de usuário para tipo "${tipo}", classe "${classe}", situação "${situacao}", código "${auditoria.codigo}"`);
+        console.log(`⚠️ Auditoria sem ID de usuário: tipo="${tipo}", classe="${classe}", situação="${situacao}", código="${auditoria.codigo}"`);
       }
     }
   }
@@ -977,39 +744,59 @@ lojaDailyMetricsSchema.methods.calcularMetricasPorClasse = function (auditorias,
   // Calcular percentuais e atualizar o campo correspondente
   const classesLeitura = {};
   for (const [classe, valores] of Object.entries(metricasPorClasse)) {
-    // A fórmula correta para o percentual é (lidos / itensValidos)
     const percentual = valores.itensValidos > 0 ? (valores.lidos / valores.itensValidos) * 100 : 0;
 
-    // Log de debug para classes com percentual > 100%
     if (percentual > 100) {
       console.log(`⚠️ [${tipo}] AVISO: Percentual > 100% na classe ${classe}:`, {
-        total: valores.total,
-        itensValidos: valores.itensValidos,
-        lidos: valores.lidos,
-        percentual: percentual
+        total: valores.total, itensValidos: valores.itensValidos, lidos: valores.lidos, percentual
       });
     }
 
-    classesLeitura[classe] = {
+    // Estrutura base para todas as auditorias
+    const classeData = {
       total: valores.total,
       itensValidos: valores.itensValidos,
       lidos: valores.lidos,
       percentual: percentual,
       usuarios: valores.usuarios,
     };
+
+    // Campos extras para rupturas: custos de ruptura por classe e por usuário
+    if (tipo === 'rupturas') {
+      const custoTotal = valores.custoRupturaTotal;
+      const custoEvitada = valores.custoRupturaEvitada;
+      const custoTotalGeral = custoTotal + custoEvitada; // total potencial de ruptura na classe
+
+      classeData.custoRupturaTotal = custoTotal;            // Valor R$ da ruptura real (itens não lidos)
+      classeData.custoRupturaEvitada = custoEvitada;        // Valor R$ da ruptura evitada (itens lidos)
+      classeData.percentualRupturaEvitada = custoTotalGeral > 0
+        ? (custoEvitada / custoTotalGeral) * 100
+        : 0;                                                // % da ruptura evitada em relação ao custo total da classe
+
+      // Valor da ruptura evitada por cada usuário + percentual por usuário
+      const usuariosEvitada = {};
+      for (const [nomeUsuario, valorEvitado] of Object.entries(valores.usuariosRupturaEvitada)) {
+        usuariosEvitada[nomeUsuario] = {
+          valorEvitado: valorEvitado,                       // Valor R$ que o usuário evitou de ruptura
+          percentualEvitado: custoTotalGeral > 0
+            ? (valorEvitado / custoTotalGeral) * 100
+            : 0,                                            // % da ruptura evitada pelo usuário em relação ao custo total da classe
+        };
+      }
+      classeData.usuariosRupturaEvitada = usuariosEvitada;
+    }
+
+    classesLeitura[classe] = classeData;
   }
 
   // Atualizar os campos na estrutura correta para o tipo de auditoria
   if (tipo === 'etiquetas') {
-    // Garantir que o objeto esteja completamente atualizado
     this.etiquetas.classesLeitura = JSON.parse(JSON.stringify(classesLeitura));
   } else if (tipo === 'rupturas') {
-    // Garantir que o objeto esteja completamente atualizado
-    console.log(`📊 Atualizando classesLeitura para rupturas:`, JSON.stringify(classesLeitura, null, 2));
+    console.log(`📊 Atualizando classesLeitura para rupturas com custos de ruptura por classe`);
     this.rupturas.classesLeitura = JSON.parse(JSON.stringify(classesLeitura));
     console.log(`✅ classesLeitura para rupturas atualizadas. Total de classes: ${Object.keys(this.rupturas.classesLeitura).length}`);
   } else if (tipo === 'presencas') {
-    // Garantir que o objeto esteja completamente atualizado
     this.presencas.classesLeitura = JSON.parse(JSON.stringify(classesLeitura));
   }
 };
