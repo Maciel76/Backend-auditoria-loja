@@ -37,18 +37,29 @@ const app = express();
 // Conectar ao MongoDB
 conectarBanco();
 
+// Configuração de CORS para produção
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:3000",
+      "https://auditorias.site"
+    ];
+
 // Middleware ANTES das rotas
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3001",
-    "https://<seu-frontend>.vercel.app",  // Substitua com seu domínio do Vercel
-    "https://<seu-dominio-personalizado>.com"  // Se tiver domínio personalizado
-  ],
+  origin: function (origin, callback) {
+    // Permitir requisições sem origin (como mobile apps ou requests diretos)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('auditorias.site')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Não permitido pelo CORS'));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "x-loja", "Authorization"],
   credentials: true
@@ -60,17 +71,6 @@ app.use(express.static("uploads"));
 // Servir arquivos estáticos do frontend (incluindo imagens das lojas)
 app.use(express.static("../frontend/public"));
 
-// Middleware global de CORS como fallback
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:5173");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, x-loja");
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-  } else {
-    next();
-  }
-});
 
 // Rota simples para testar
 app.get("/test", (req, res) => {
