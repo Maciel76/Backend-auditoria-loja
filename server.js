@@ -64,8 +64,8 @@ app.use(cors({
   allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "x-loja", "Authorization"],
   credentials: true
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ limit: "100mb", extended: true }));
 app.use(express.static("uploads"));
 
 // Servir arquivos estáticos do frontend (incluindo imagens das lojas)
@@ -77,6 +77,24 @@ app.get("/test", (req, res) => {
   res.json({
     message: "Servidor funcionando",
     loja: req.headers["x-loja"] || "não especificada",
+  });
+});
+
+// Rota de teste da API
+app.get("/api/test", (req, res) => {
+  res.json({
+    message: "API OK",
+    loja: req.headers["x-loja"] || "não especificada",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Health check
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "OK",
+    server: "auditorias",
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -300,11 +318,4 @@ app.listen(PORT, () => {
   console.log(
     `\n📚 Documentação completa: http://localhost:${PORT}/api/endpoints\n`
   );
-  app.get('/api/health', (req, res) => {
-  res.json({
-    status: "OK",
-    server: "auditorias",
-    mongo: "connected"
-  });
-});
 });
