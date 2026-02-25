@@ -1,11 +1,8 @@
 // backend/routes/conquistas.js
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const conquistasService = require('../services/conquistasService');
-const authMiddleware = require('../middleware/auth');
-
-// Middleware para validar loja
-const validateLoja = require('../middleware/loja');
+import conquistasService from '../services/conquistasService.js';
+import { verificarLojaObrigatoria as validateLoja } from '../middleware/loja.js';
 
 // Obter todas as conquistas disponíveis
 router.get('/', validateLoja, async (req, res) => {
@@ -47,4 +44,4 @@ router.post('/verificar/:usuarioId', validateLoja, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

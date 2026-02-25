@@ -1,7 +1,7 @@
 // backend/services/conquistasService.js
-const UserDailyMetrics = require('../models/UserDailyMetrics');
-const Auditoria = require('../models/Auditoria');
-const Conquista = require('../models/Conquista');
+import UserDailyMetrics from '../models/UserDailyMetrics.js';
+import Auditoria from '../models/Auditoria.js';
+import Conquista from '../models/Conquista.js';
 
 class ConquistasService {
   constructor() {
@@ -338,4 +338,4 @@ class ConquistasService {
   }
 }
 
-module.exports = new ConquistasService();
+export default new ConquistasService();

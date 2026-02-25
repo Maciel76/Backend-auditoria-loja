@@ -31,6 +31,7 @@ import tarefasAuditoriaRouter from "./routes/tarefasAuditoria.js";
 import storesRouter from "./routes/stores.js";
 import usuariosRouter from "./routes/usuarios.js";
 import "./utils/planilhaHelpers.js";
+import conquistasAgentRouter from "./routes/conquistas.js";
 
 const app = express();
 
@@ -100,14 +101,14 @@ app.get("/api/health", (req, res) => {
 
 // Suas rotas originais (ATENÇÃO: uma delas pode ter problema)
 try {
-  app.use("/", lojaRouter);
+  app.use("/api", lojaRouter);
   console.log("✅ Rotas de loja carregadas");
 } catch (error) {
   console.log("❌ Erro nas rotas de loja:", error.message);
 }
 
 try {
-  app.use("/", uploadRouter);
+  app.use("/api", uploadRouter);
   console.log("✅ Rotas de upload carregadas");
 } catch (error) {
   console.log("❌ Erro nas rotas de upload:", error.message);
@@ -121,14 +122,14 @@ try {
 }
 
 try {
-  app.use("/", setoresRouter);
+  app.use("/api", setoresRouter);
   console.log("✅ Rotas de setores carregadas");
 } catch (error) {
   console.log("❌ Erro nas rotas de setores:", error.message);
 }
 
 try {
-  app.use("/", estatiscas);
+  app.use("/api", estatiscas);
   console.log("✅ Rotas de estatísticas carregadas");
 } catch (error) {
   console.log("❌ Erro nas rotas de estatísticas:", error.message);
@@ -229,7 +230,6 @@ try {
 
 // Adicionando a nova rota de conquistas para o agente de conquistas
 try {
-  const conquistasAgentRouter = require('./routes/conquistas.js');
   app.use('/api/conquistas-agent', conquistasAgentRouter);
   console.log("✅ Rotas de agente de conquistas carregadas");
 } catch (error) {
@@ -237,14 +237,14 @@ try {
 }
 
 try {
-  app.use("/", metricasUsuariosRoutes);
+  app.use("/api", metricasUsuariosRoutes);
   console.log("✅ Rotas de métricas de usuários carregadas");
 } catch (error) {
   console.log("❌ Erro nas rotas de métricas de usuários:", error.message);
 }
 
 try {
-  app.use("/", metricasLojasRoutes);
+  app.use("/api", metricasLojasRoutes);
   console.log("✅ Rotas de métricas de lojas carregadas");
 } catch (error) {
   console.log("❌ Erro nas rotas de métricas de lojas:", error.message);
