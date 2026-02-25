@@ -300,4 +300,11 @@ app.listen(PORT, () => {
   console.log(
     `\n📚 Documentação completa: http://localhost:${PORT}/api/endpoints\n`
   );
+  app.get('/api/health', (req, res) => {
+  res.json({
+    status: "OK",
+    server: "auditorias",
+    mongo: "connected"
+  });
+});
 });
