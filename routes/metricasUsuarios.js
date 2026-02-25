@@ -191,16 +191,42 @@ router.get("/metricas/usuarios/:usuarioId", async (req, res) => {
       return res.status(404).json({ erro: "Loja não encontrada" });
     }
 
-    // Buscar métricas do usuário
-    const metricas = await metricasUsuariosService.obterMetricasUsuario(
+    // Buscar métricas do usuário na loja selecionada
+    let metricas = await metricasUsuariosService.obterMetricasUsuario(
       loja._id,
       usuarioId,
     );
 
+    // Fallback: se não encontrar na loja selecionada, buscar em qualquer loja
     if (!metricas) {
+      metricas = await MetricasUsuario.findOne({
+        usuarioId: usuarioId,
+        periodo: "periodo_completo",
+      }).populate("loja", "nome codigo endereco imagem");
+    }
+
+    // Se ainda não encontrar, tentar buscar dados básicos do User
+    if (!metricas) {
+      const usuarioBasico = await User.findOne({ id: usuarioId });
+      if (usuarioBasico) {
+        return res.json({
+          id: usuarioBasico.id,
+          nome: usuarioBasico.nome,
+          loja: {
+            codigo: lojaCodigo,
+            nome: loja.nome,
+          },
+          metricas: { etiquetas: {}, rupturas: {}, presencas: {} },
+          totais: {},
+          totaisAcumulados: {},
+          contadores: { totalGeral: 0 },
+          achievements: {},
+          ultimaAtualizacao: null,
+        });
+      }
       return res
         .status(404)
-        .json({ erro: "Métricas não encontradas para este usuário" });
+        .json({ erro: "Usuário não encontrado no sistema" });
     }
 
     // Formatar resposta
