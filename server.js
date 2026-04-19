@@ -39,9 +39,9 @@ const app = express();
 conectarBanco();
 
 // Configuração de CORS para produção
-// Usa variável de ambiente ou defaults para desenvolvimento e produção
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
+// Usa variável de ambiente CORS_ORIGINS ou ALLOWED_ORIGINS, ou defaults
+const allowedOrigins = (process.env.CORS_ORIGINS || process.env.ALLOWED_ORIGINS)
+  ? (process.env.CORS_ORIGINS || process.env.ALLOWED_ORIGINS).split(',')
   : [
       "http://localhost:5173",
       "http://localhost:3000",
