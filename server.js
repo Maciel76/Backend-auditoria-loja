@@ -47,7 +47,9 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
       "http://localhost:3000",
       "http://127.0.0.1:5173",
       "http://127.0.0.1:3000",
-      "https://auditorias.site"
+      "https://auditorias.site",
+      "https://auditoria-loja.vercel.app",
+      "https://auditorias.freeddns.org"
     ];
 
 // Middleware ANTES das rotas
@@ -57,7 +59,7 @@ app.use(cors({
     if (!origin) return callback(null, true);
     
     // Permitir domínio de produção e origens de desenvolvimento
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('auditorias.site')) {
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('auditorias.site') || origin.includes('vercel.app') || origin.includes('auditorias.freeddns.org')) {
       callback(null, true);
     } else {
       callback(new Error('Não permitido pelo CORS'));
