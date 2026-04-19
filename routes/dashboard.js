@@ -1,7 +1,7 @@
 import express from "express";
 import DashboardActivity from "../models/DashboardActivity.js";
 import VotingItem from "../models/VotingItem.js";
-import { Achievement, UserAchievement } from "../models/UserAchievement.js";
+import { UserAchievement } from "../models/UserAchievement.js";
 
 const router = express.Router();
 

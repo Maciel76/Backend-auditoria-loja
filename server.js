@@ -30,6 +30,7 @@ import auditProductsRouter from "./routes/auditProducts.js";
 import tarefasAuditoriaRouter from "./routes/tarefasAuditoria.js";
 import storesRouter from "./routes/stores.js";
 import usuariosRouter from "./routes/usuarios.js";
+import dashboardRouter from "./routes/dashboard.js";
 import "./utils/planilhaHelpers.js";
 
 const app = express();
@@ -38,6 +39,7 @@ const app = express();
 conectarBanco();
 
 // Configuração de CORS para produção
+// Usa variável de ambiente ou defaults para desenvolvimento e produção
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
   : [
@@ -54,6 +56,7 @@ app.use(cors({
     // Permitir requisições sem origin (como mobile apps ou requests diretos)
     if (!origin) return callback(null, true);
     
+    // Permitir domínio de produção e origens de desenvolvimento
     if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('auditorias.site')) {
       callback(null, true);
     } else {
@@ -64,20 +67,23 @@ app.use(cors({
   allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "x-loja", "Authorization"],
   credentials: true
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Middleware para uploads grandes (100MB)
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ limit: "100mb", extended: true }));
 app.use(express.static("uploads"));
 
 // Servir arquivos estáticos do frontend (incluindo imagens das lojas)
 app.use(express.static("../frontend/public"));
 
-
-// Rota simples para testar
+// Rota simples para testar API
 app.get("/test", (req, res) => {
-  res.json({
-    message: "Servidor funcionando",
-    loja: req.headers["x-loja"] || "não especificada",
-  });
+  res.json({ status: "OK" });
+});
+
+// Rota de teste para API
+app.get("/api/test", (req, res) => {
+  res.json({ status: "API OK" });
 });
 
 // Suas rotas originais (ATENÇÃO: uma delas pode ter problema)
@@ -146,7 +152,7 @@ try {
 
 try {
   app.use("/api/metricas", metricasRouter);
-  console.log("✅ Rotas de métricas carregadas");
+  console.log("✅ Rotas de métricas carregadas"); // Esta é a rota que pode ter problema
 } catch (error) {
   console.log("❌ Erro nas rotas de métricas:", error.message);
 }
@@ -253,6 +259,13 @@ app.use("/api/audit-products", auditProductsRouter);
 app.use("/api/tarefas-auditoria", tarefasAuditoriaRouter);
 app.use("/api/stores", storesRouter);
 app.use("/api/usuarios", usuariosRouter);
+
+try {
+  app.use("/api/dashboard", dashboardRouter);
+  console.log("✅ Rotas de dashboard carregadas");
+} catch (error) {
+  console.log("❌ Erro nas rotas de dashboard:", error.message);
+}
 
 
 // Rota de sincronização removida - agora usa modelos unificados

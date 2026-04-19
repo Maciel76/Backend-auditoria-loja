@@ -1,7 +1,9 @@
 // Script de teste para atualizar cover da loja
 const http = require('http');
 
-const BACKEND_URL = 'http://localhost:3000';
+// Usa variável de ambiente ou default para desenvolvimento
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
+const url = new URL(BACKEND_URL);
 
 async function testarAtualizacaoCover() {
   try {
