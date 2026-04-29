@@ -35,7 +35,7 @@ router.get("/:codigo", async (req, res) => {
       loja: loja._id,
       data: { $gte: startDate, $lte: endDate },
     })
-      .sort({ "etiquetas.pontuacao": -1 }) // Ordenar por pontuação de etiquetas como padrão
+      .sort({ "metricas.totais.itensAtualizados": -1 })
       .limit(20)
       .lean();
 
@@ -44,19 +44,40 @@ router.get("/:codigo", async (req, res) => {
       loja,
       metricas: lojaMetrics || {},
       metricasSetores: lojaMetrics?.locaisEstatisticas || [],
-      colaboradores: rankingColaboradores.map(c => ({
-        nome: c.usuarioNome,
-        performance: c.etiquetas?.eficiencia || 0,
-        auditorias: c.etiquetas?.totalLidos || 0,
-      })),
-      atividadesRecentes: [], // Mockado por enquanto
+      colaboradores: rankingColaboradores
+        .map((c) => {
+          const m = c.metricas || {};
+          const totais = m.totais || {};
+          const etiquetas = m.etiquetas || {};
+          const rupturas = m.rupturas || {};
+          const presencas = m.presencas || {};
+          const auditorias =
+            (etiquetas.itensAtualizados || 0) +
+            (rupturas.itensAtualizados || 0) +
+            (presencas.itensAtualizados || 0);
+          return {
+            id: c.usuarioId,
+            nome: c.usuarioNome,
+            performance: totais.percentualConclusaoGeral || 0,
+            auditorias,
+            pontuacao: totais.pontuacaoTotal || 0,
+          };
+        })
+        .filter(
+          (c) =>
+            c.nome &&
+            !c.nome.toLowerCase().includes("produto não auditado") &&
+            !c.nome.toLowerCase().includes("usuário não identificado") &&
+            c.auditorias > 0,
+        ),
+      atividadesRecentes: [],
       metricasAuditoria: {
         etiquetas: lojaMetrics?.etiquetas || {},
         presencas: lojaMetrics?.presencas || {},
         rupturas: lojaMetrics?.rupturas || {},
       },
-      insights: [], // Mockado por enquanto
-      dadosGraficos: [], // Mockado por enquanto
+      insights: [],
+      dadosGraficos: [],
     };
 
     res.json(response);

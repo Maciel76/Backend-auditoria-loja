@@ -16,6 +16,13 @@ import MetricasUsuario from "../models/MetricasUsuario.js";
 import Loja from "../models/Loja.js";
 import achievementRulesService from "../services/achievementRulesService.js";
 import AuditProductsService from "../services/auditProductsService.js";
+import {
+  lerPlanilha,
+  encontrarColunaUsuario,
+  erroColunaUsuarioAusente,
+  normalizarSituacaoAtual,
+  insertManyTolerante,
+} from "../services/upload/parser.service.js";
 
 // Helper function to access obterPeriodo
 const obterPeriodo = (periodo, data) => {
@@ -75,6 +82,10 @@ function limparArquivoTemporario(filePath) {
   }
 }
 
+// Helpers de leitura/normalização/insert tolerante foram movidos para
+// backend/services/upload/parser.service.js (ver imports no topo).
+// Mantidos aqui apenas via imports nomeados.
+
 // Função para processar etiqueta
 async function processarEtiqueta(file, dataAuditoria, loja) {
   try {
@@ -82,26 +93,20 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
       `🏷️ Processando etiquetas para loja: ${loja.codigo} - ${loja.nome}`,
     );
 
-    // Lendo planilha
-
-    const workbook = xlsx.readFile(file.path, { cellDates: true });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
+    // Lendo planilha (defval:'' + união de chaves — fix BUG A)
+    const { jsonData, todasChaves } = lerPlanilha(file.path);
 
     const setoresBatch = [];
     const usuariosMap = new Map();
     let totalItensProcessados = 0;
 
     // Encontrar chaves das colunas
-    const primeiraLinha = jsonData[0] || {};
-    const todasChaves = Object.keys(primeiraLinha);
+    const usuarioKey = encontrarColunaUsuario(todasChaves);
 
-    const usuarioKey = todasChaves.find(
-      (key) =>
-        key.toLowerCase().includes("usuário") ||
-        key.toLowerCase().includes("usuario"),
-    );
+    if (!usuarioKey) {
+      throw erroColunaUsuarioAusente();
+    }
+
     const situacaoKey = todasChaves.find(
       (key) =>
         key.toLowerCase().includes("situação") ||
@@ -273,12 +278,21 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
       } na data ${dataAuditoria.toLocaleDateString()}`,
     );
 
-    // Salvar auditorias e capturar IDs
+    // Salvar auditorias e capturar IDs (com tolerância a falhas por linha — fix BUG B)
     let auditoriasInseridas = [];
+    let ignoradosEtiqueta = 0;
+    let errosLinhaEtiqueta = [];
     if (setoresBatch.length > 0) {
-      auditoriasInseridas = await Auditoria.insertMany(setoresBatch);
+      const r = await insertManyTolerante(
+        Auditoria,
+        setoresBatch,
+        `etiqueta loja ${loja.codigo}`,
+      );
+      auditoriasInseridas = r.inseridos;
+      ignoradosEtiqueta = r.ignorados;
+      errosLinhaEtiqueta = r.erros;
       console.log(
-        `💾 ${setoresBatch.length} auditorias salvos para loja ${loja.codigo}`,
+        `💾 ${auditoriasInseridas.length}/${setoresBatch.length} auditorias salvas para loja ${loja.codigo}`,
       );
     }
 
@@ -396,12 +410,19 @@ async function processarEtiqueta(file, dataAuditoria, loja) {
       loja: loja,
       dataAuditoria: dataAuditoria,
       auditoriasIds: auditoriasInseridas.map((a) => a._id), // IDs para cálculo incremental
+      ignorados: ignoradosEtiqueta,
+      errosLinha: errosLinhaEtiqueta,
     };
 
     return resultado;
   } catch (error) {
     console.error("❌ Erro ao processar etiqueta:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: error.message,
+      code: error.code,
+      status: error.status,
+    };
   }
 }
 
@@ -412,10 +433,13 @@ async function processarRuptura(file, dataAuditoria, loja) {
       `💔 Processando rupturas para loja: ${loja.codigo} - ${loja.nome}`,
     );
 
-    const workbook = xlsx.readFile(file.path, { cellDates: true });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
+    // Lendo planilha (defval:'' + união de chaves — fix BUG A)
+    const { jsonData, todasChaves } = lerPlanilha(file.path);
+
+    // Validar presença da coluna Usuário no cabeçalho (mesmo se vazia em todas as linhas)
+    if (!encontrarColunaUsuario(todasChaves)) {
+      throw erroColunaUsuarioAusente();
+    }
 
     // Para garantir consistência e evitar acúmulo indevido,
     // usaremos a data de auditoria padrão (data do upload) em vez da data extraída da planilha
@@ -553,7 +577,7 @@ async function processarRuptura(file, dataAuditoria, loja) {
           : "",
         local: item.local,
         situacao: item.situacao,
-        situacaoAtual: item.situacaoAuditoria || "",
+        situacaoAtual: normalizarSituacaoAtual(item.situacaoAuditoria),
         estoque: item.estoqueAtual,
         classeProdutoRaiz: item.classeProdutoRaiz,
         classeProduto: item.classeProduto,
@@ -577,9 +601,16 @@ async function processarRuptura(file, dataAuditoria, loja) {
         metadata: item.metadata,
       }));
 
-      const auditoriasInseridas = await Auditoria.insertMany(auditoriasBatch);
+      const rRup = await insertManyTolerante(
+        Auditoria,
+        auditoriasBatch,
+        `ruptura loja ${loja.codigo}`,
+      );
+      const auditoriasInseridas = rRup.inseridos;
+      var ignoradosRuptura = rRup.ignorados;
+      var errosLinhaRuptura = rRup.erros;
       console.log(
-        `💾 ${dadosProcessados.length} rupturas salvas para loja ${loja.codigo}`,
+        `💾 ${auditoriasInseridas.length}/${auditoriasBatch.length} rupturas salvas para loja ${loja.codigo}`,
       );
 
       // Verificar se as classes foram salvas corretamente
@@ -712,10 +743,18 @@ async function processarRuptura(file, dataAuditoria, loja) {
       loja: loja,
       dataAuditoria: dataAuditoriaFinal,
       auditoriasIds: auditoriasIdsRuptura, // IDs para cálculo incremental
+      ignorados: typeof ignoradosRuptura !== "undefined" ? ignoradosRuptura : 0,
+      errosLinha:
+        typeof errosLinhaRuptura !== "undefined" ? errosLinhaRuptura : [],
     };
   } catch (error) {
     console.error("❌ Erro ao processar ruptura:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: error.message,
+      code: error.code,
+      status: error.status,
+    };
   } finally {
     // Limpar arquivo temporário
     limparArquivoTemporario(file.path);
@@ -729,10 +768,13 @@ async function processarPresenca(file, dataAuditoria, loja) {
       `👥 Processando presenças para loja: ${loja.codigo} - ${loja.nome}`,
     );
 
-    const workbook = xlsx.readFile(file.path, { cellDates: true });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const jsonData = xlsx.utils.sheet_to_json(sheet, { raw: false });
+    // Lendo planilha (defval:'' + união de chaves — fix BUG A)
+    const { jsonData, todasChaves } = lerPlanilha(file.path);
+
+    // Validar presença da coluna Usuário no cabeçalho (mesmo se vazia em todas as linhas)
+    if (!encontrarColunaUsuario(todasChaves)) {
+      throw erroColunaUsuarioAusente();
+    }
 
     // Para garantir consistência e evitar acúmulo indevido,
     // usaremos a data de auditoria padrão (data do upload) em vez da data extraída da planilha
@@ -858,7 +900,7 @@ async function processarPresenca(file, dataAuditoria, loja) {
           : "",
         local: item.local,
         situacao: item.situacao,
-        situacaoAtual: item.situacaoAuditoria || "",
+        situacaoAtual: normalizarSituacaoAtual(item.situacaoAuditoria),
         estoque: item.estoque,
         presenca: item.presenca,
         presencaConfirmada: item.presencaConfirmada,
@@ -885,9 +927,16 @@ async function processarPresenca(file, dataAuditoria, loja) {
         metadata: item.metadata,
       }));
 
-      const auditoriasInseridas = await Auditoria.insertMany(auditoriasBatch);
+      const rPres = await insertManyTolerante(
+        Auditoria,
+        auditoriasBatch,
+        `presença loja ${loja.codigo}`,
+      );
+      const auditoriasInseridas = rPres.inseridos;
+      var ignoradosPresenca = rPres.ignorados;
+      var errosLinhaPresenca = rPres.erros;
       console.log(
-        `💾 ${dadosProcessados.length} presenças salvas para loja ${loja.codigo}`,
+        `💾 ${auditoriasInseridas.length}/${auditoriasBatch.length} presenças salvas para loja ${loja.codigo}`,
       );
 
       // Salvar IDs para retorno
@@ -1004,10 +1053,18 @@ async function processarPresenca(file, dataAuditoria, loja) {
       loja: loja,
       dataAuditoria: dataAuditoriaFinal,
       auditoriasIds: auditoriasIdsPresenca, // IDs para cálculo incremental
+      ignorados: typeof ignoradosPresenca !== "undefined" ? ignoradosPresenca : 0,
+      errosLinha:
+        typeof errosLinhaPresenca !== "undefined" ? errosLinhaPresenca : [],
     };
   } catch (error) {
     console.error("❌ Erro ao processar presença:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: error.message,
+      code: error.code,
+      status: error.status,
+    };
   } finally {
     // Limpar arquivo temporário
     limparArquivoTemporario(file.path);
@@ -1052,8 +1109,10 @@ router.post(
       }
 
       if (!resultado.success) {
-        return res.status(500).json({
-          erro: "Falha no processamento",
+        const status = resultado.status || 500;
+        return res.status(status).json({
+          erro: resultado.code || "Falha no processamento",
+          mensagem: resultado.error,
           detalhes: resultado.error,
         });
       }
@@ -1269,6 +1328,8 @@ router.post(
         totalItens: resultado.totalItens,
         totalProcessados: resultado.totalProcessados || resultado.totalItens,
         totalUsuarios: resultado.totalUsuarios || 0,
+        ignorados: resultado.ignorados || 0,
+        errosLinha: resultado.errosLinha || [],
         tipo: tipoAuditoria,
         loja: {
           codigo: loja.codigo,

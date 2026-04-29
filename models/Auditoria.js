@@ -66,7 +66,8 @@ const auditoriaSchema = new mongoose.Schema(
     },
     situacaoAtual: {
       type: String,
-      enum: ["Ativo", "Encerrada", "Pendente", "Cancelada"],
+      enum: ["Ativo", "Encerrada", "Pendente", "Cancelada", ""],
+      default: "",
     },
     estoque: String,
 
